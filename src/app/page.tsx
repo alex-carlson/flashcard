@@ -4,17 +4,20 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, useDragControls } from "framer-motion";
-import creds from "@/app/creds.json";
 
-const SHEET_ID = creds.SHEET_ID;
-const API_KEY = creds.API_KEY;
-const RANGE = "Sheet1!A:B"; // Adjust based on your sheet structure
+
+const SHEET_ID = process.env.NEXT_PUBLIC_SHEET_ID;
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+const RANGE = process.env.NEXT_PUBLIC_RANGE;
 
 const fetchFlashcards = async () => {
   try {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error("Failed to fetch data");
+    if (!response.ok) {
+      // write error to console
+      console.error("Error fetching flashcards:", response.statusText);
+    }
     const data = await response.json();
     return data.values ? data.values.slice(1) : [];
   } catch (error) {
