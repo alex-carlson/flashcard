@@ -1,103 +1,116 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion, useDragControls } from "framer-motion";
+import creds from "@/app/creds.json";
+
+const SHEET_ID = creds.SHEET_ID;
+const API_KEY = creds.API_KEY;
+const RANGE = "Sheet1!A:B"; // Adjust based on your sheet structure
+
+const fetchFlashcards = async () => {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch data");
+    const data = await response.json();
+    return data.values ? data.values.slice(1) : [];
+  } catch (error) {
+    console.error("Error fetching flashcards:", error);
+    return null;
+  }
+};
+
+export default function FlashcardsPage() {
+  const [flashcards, setFlashcards] = useState<[string, string][] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const controls = useDragControls();
+
+  useEffect(() => {
+    fetchFlashcards().then(setFlashcards);
+  }, []);
+
+  const nextCard = () => {
+    setShowAnswer(false);
+    setIndex((prev) => (prev + 1) % (flashcards?.length || 1));
+  };
+
+  const prevCard = () => {
+    setShowAnswer(false);
+    setIndex((prev) => (prev - 1 + (flashcards?.length || 1)) % (flashcards?.length || 1));
+  };
+
+  const shuffleCards = () => {
+    if (flashcards) {
+      const shuffledIndex = Math.floor(Math.random() * flashcards.length);
+      setIndex(shuffledIndex);
+    }
+  };
+
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      {flashcards === null ? (
+        <p className="text-red-500">Error loading flashcards. Please try again later.</p>
+      ) : flashcards.length === 0 ? (
+        <p className="text-gray-500">No flashcards available.</p>
+      ) : (
+        <div className="w-96 perspective-1000">
+          <motion.div
+            className="relative w-full h-full"
+            animate={{ rotateY: showAnswer ? 180 : 0 }}
+            transition={{ duration: 0.5 }}
+            drag="x"
+            dragControls={controls}
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={(event, info) => {
+              if (info.offset.x > 50 || info.offset.x < -50) {
+                setShowAnswer(!showAnswer);
+              }
+            }}
+          >
+            {/* Front card (question) */}
+            <div className="absolute w-full backface-hidden aspect-w-2 aspect-h-1">
+              <Card className="p-4 text-center">
+                <CardContent>
+                  {isValidUrl(flashcards[index][0]) ? (
+                    <img src={flashcards[index][0]} alt="Flashcard" className="w-full h-auto select-none" />
+                  ) : (
+                    <h2 className="text-xl font-bold">{flashcards[index][0]}</h2>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {/* Back card (answer), only rendered when flipped */}
+            {showAnswer && (
+              <div className="absolute w-full backface-hidden rotateY-180 aspect-w-2 aspect-h-1">
+                <Card className="p-4 text-center">
+                  <CardContent className="rotateY-180">
+                    <p className="mt-2" style={{ transform: "rotateY(180deg)" }}>{flashcards[index][1]}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </motion.div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+      <div className="absolute bottom-8 flex justify-center w-full">
+        <Button onClick={prevCard} className="mr-4">Prev</Button>
+        <Button onClick={shuffleCards} className="mx-4">Shuffle</Button>
+        <Button onClick={nextCard} className="ml-4">Next</Button>
+      </div>
     </div>
   );
 }
