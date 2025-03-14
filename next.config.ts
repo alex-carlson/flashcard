@@ -1,12 +1,11 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  output: 'export',  // Enable static export
-  eslint: {
-    ignoreDuringBuilds: true,  // Ignore ESLint during build (optional)
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: "export",  // Enables static export for GitHub Pages
+  images: {
+    unoptimized: true,  // Disables image optimization for static export
   },
-  basePath: '/flashcard',  // Adjust for GitHub Pages
-  assetPrefix: '/flashcard/',  // Adjust for GitHub Pages
+  basePath: "/flashcard", // Use your repo name if applicable
+  assetPrefix: "/flashcard/", // Ensures assets are loaded correctly
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -2,13 +2,15 @@
   "name": "flash",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://alex-carlson.github.io/flashcard",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "export": "next export",
+    "postbuild": "cp out/404.html out/index.html",
+    "export": "next build && next export",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "gh-pages -d out"
+    "deploy": "next build && gh-pages -d out"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
@@ -32,6 +34,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.2",
     "gh-pages": "^6.3.0",
+    "swr": "^2.3.3",
     "tailwindcss": "^4.0.13",
     "typescript": "^5"
   }

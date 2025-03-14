@@ -46,9 +46,10 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: #861818;
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --header: #eaea3b;
+  --card: #ebebeb;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -120,6 +121,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
