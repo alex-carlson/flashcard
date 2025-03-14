@@ -2,7 +2,7 @@
   "name": "flash",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://alex-carlson.github.io/flashcard",
+  "homepage": "https://alex-carlson.github.io/flashcard/",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

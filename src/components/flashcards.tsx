@@ -9,42 +9,47 @@ import { motion, useDragControls } from "framer-motion";
 const SHEET_ID = process.env.NEXT_PUBLIC_SHEET_ID;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+interface Sheet {
+    properties: {
+        title: string;
+    };
+}
+
+interface SheetData {
+    sheets: Sheet[];
+}
+
+
+const fetcher = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch data");
+    return response.json();
+};
 
 export default function Flashcards() {
-    const { data: sheetNames, error: sheetError } = useSWR(
+    const { data: sheetData, error: sheetError } = useSWR(
         `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?key=${API_KEY}`,
-        async (url) => {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch sheet names");
-            const data = await response.json();
-            return data.sheets.map((sheet: any) => sheet.properties.title);
-        }
+        fetcher
     );
+    const sheetNames = (sheetData as SheetData)?.sheets?.map((sheet) => sheet.properties.title) || [];
 
-    const [selectedSheet, setSelectedSheet] = useState<string | null>(null);
+    const [selectedSheet, setSelectedSheet] = useState<string | null>(sheetNames[0] || null);
 
-    const { data: flashcards, error: flashcardsError } = useSWR(
+    const { data: flashcardData, error: flashcardsError } = useSWR(
         selectedSheet
             ? `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${selectedSheet}!A:B?key=${API_KEY}`
             : null,
-        async (url) => {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch flashcards");
-            const data = await response.json();
-            return data.values ? data.values.slice(1) : [];
-        }
+        fetcher
     );
+    const flashcards = flashcardData?.values?.slice(1) || [];
 
     const [index, setIndex] = useState(0);
     const [showAnswer, setShowAnswer] = useState(false);
     const controls = useDragControls();
 
-    if (sheetError || flashcardsError)
-        return <div>Error loading data</div>;
-    if (!sheetNames) return <div>Loading sheets...</div>;
+    if (sheetError || flashcardsError) return <div>Error loading data</div>;
+    if (!sheetData) return <div>Loading sheets...</div>;
 
-    // if is valid url function
     function isValidUrl(string: string) {
         try {
             new URL(string);
@@ -68,7 +73,7 @@ export default function Flashcards() {
 
             <div className="relative flex items-center justify-center p-4">
                 <div className="w-96 aspect-square perspective-1000">
-                    {flashcards && flashcards[index] ? (
+                    {flashcards[index] ? (
                         <motion.div
                             className="relative w-full h-full"
                             animate={{ rotateY: showAnswer ? 180 : 0 }}
@@ -85,7 +90,6 @@ export default function Flashcards() {
                             <div className="absolute w-full h-full">
                                 <Card className="p-4 text-center w-full h-full">
                                     <CardContent className="flex items-center justify-center w-full h-full overflow-hidden">
-                                        {/* if is a valid url, make it an image, otherwise render as an h2 */}
                                         {isValidUrl(flashcards[index][0]) ? (
                                             <img
                                                 src={flashcards[index][0]}
@@ -104,11 +108,9 @@ export default function Flashcards() {
                                 <div className="absolute w-full h-full backface-hidden rotateY-180">
                                     <Card className="p-4 text-center w-full h-full relative">
                                         <CardContent className="absolute inset-0 flex items-center justify-center w-full h-full overflow-hidden">
-                                            <p className="text-xl font-bold"
-                                                style={{
-                                                    transform: "rotateY(180deg)", // Ensure this side is rotated properly
-                                                }}
-                                            >{flashcards[index][1]}</p>
+                                            <p className="text-xl font-bold" style={{ transform: "rotateY(180deg)" }}>
+                                                {flashcards[index][1]}
+                                            </p>
                                         </CardContent>
                                     </Card>
                                 </div>
@@ -120,13 +122,13 @@ export default function Flashcards() {
                 </div>
 
                 <div className="fixed bottom-20 flex justify-center w-full text-center">
-                    <Button onClick={() => setIndex((prev) => (prev - 1 + flashcards?.length!) % flashcards?.length!)} className="mr-4 bg-yellow-500 text-black hover:bg-yellow-200">
+                    <Button onClick={() => setIndex((prev) => (prev - 1 + flashcards.length) % flashcards.length)} className="mr-4 bg-yellow-500 text-black hover:bg-yellow-200">
                         Prev
                     </Button>
-                    <Button onClick={() => setIndex(Math.floor(Math.random() * (flashcards?.length || 1)))} className="mx-4 bg-yellow-500 text-black hover:bg-yellow-200">
+                    <Button onClick={() => setIndex(Math.floor(Math.random() * flashcards.length))} className="mx-4 bg-yellow-500 text-black hover:bg-yellow-200">
                         Shuffle
                     </Button>
-                    <Button onClick={() => setIndex((prev) => (prev + 1) % flashcards?.length!)} className="ml-4 bg-yellow-500 text-black hover:bg-yellow-200">
+                    <Button onClick={() => setIndex((prev) => (prev + 1) % flashcards.length)} className="ml-4 bg-yellow-500 text-black hover:bg-yellow-200">
                         Next
                     </Button>
                 </div>
