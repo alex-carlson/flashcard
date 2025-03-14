@@ -1,22 +1,20 @@
 {
-  "name": "flash",
-  "version": "0.1.0",
+  "name": "flashcard",
+  "version": "1.0",
   "private": true,
   "homepage": "https://alex-carlson.github.io/flashcard/",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "postbuild": "cp out/404.html out/index.html",
-    "export": "next build && next export",
-    "start": "next start",
-    "lint": "next lint",
-    "deploy": "next build && gh-pages -d out"
+    "export": "next export",
+    "deploy": "gh-pages -d out"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.5.0",
+    "googleapis": "^146.0.0",
     "lucide-react": "^0.479.0",
     "next": "15.2.2",
     "postcss": "^8.5.3",

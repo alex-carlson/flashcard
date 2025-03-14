@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import { ReactNode } from 'react';
+import Image from 'next/image';
 import './globals.css'; // Add your global styles here
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Header */}
           <header className="py-4 bg-yellow-500 text-black">
             <div className="container mx-auto text-center">
+              <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH}/boot.jpg`} alt="Logo" width={50} height={50} priority />
               <h1 className="text-2xl font-bold">Prost Free Beer Generator</h1>
             </div>
           </header>

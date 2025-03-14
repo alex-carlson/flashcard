@@ -1,11 +1,10 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: "export",  // Enables static export for GitHub Pages
-  images: {
-    unoptimized: true,  // Disables image optimization for static export
-  },
-  basePath: "/flashcard", // Use your repo name if applicable
-  assetPrefix: "/flashcard/", // Ensures assets are loaded correctly
-};
+const isProd = process.env.NODE_ENV === 'production';
 
-module.exports = nextConfig;
+module.exports = {
+  output: 'export', // Required for GitHub Pages
+  basePath: isProd ? '/flashcard' : '', // Replace with your repo name
+  assetPrefix: isProd ? '/flashcard/' : '',
+  images: {
+    unoptimized: true, // Fixes images issue on GitHub Pages
+  },
+};

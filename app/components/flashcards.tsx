@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
 import { motion, useDragControls } from "framer-motion";
 
 const SHEET_ID = process.env.NEXT_PUBLIC_SHEET_ID;
