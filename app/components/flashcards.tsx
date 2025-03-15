@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
@@ -46,6 +46,12 @@ export default function Flashcards() {
     const [index, setIndex] = useState(0);
     const [showAnswer, setShowAnswer] = useState(false);
     const controls = useDragControls();
+
+    // when setindex is called, reset showAnswer
+    useEffect(() => {
+        setShowAnswer(false);
+    }
+        , [index]);
 
     if (sheetError || flashcardsError) return <div>Error loading data</div>;
     if (!sheetData) return <div>Loading sheets...</div>;
