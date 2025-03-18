@@ -1,39 +1,25 @@
 {
-  "name": "flashcard",
-  "version": "1.0",
+  "name": "flashcards",
   "private": true,
-  "homepage": "https://alex-carlson.github.io/flashcard/",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "export": "next export",
-    "deploy": "gh-pages -d out"
-  },
-  "dependencies": {
-    "@radix-ui/react-slot": "^1.1.2",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.5.0",
-    "googleapis": "^146.0.0",
-    "lucide-react": "^0.479.0",
-    "next": "15.2.2",
-    "postcss": "^8.5.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.2",
-    "tailwindcss-animate": "^1.0.7"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4.0.13",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.2.2",
-    "gh-pages": "^6.3.0",
-    "swr": "^2.3.3",
-    "tailwindcss": "^4.0.13",
-    "typescript": "^5"
+    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "svelte": "^5.20.2",
+    "svelte-check": "^4.1.4",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "jwt-decode": "^4.0.0",
+    "svelte-spa-router": "^4.0.1"
   }
 }
