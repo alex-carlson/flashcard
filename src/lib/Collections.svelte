@@ -8,12 +8,15 @@
     // Fetch collections when the component mounts
     onMount(async () => {
         try {
-            const res = await fetch("http://localhost:5000/user/collections", {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+            const res = await fetch(
+                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/user/collections",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
                 },
-            });
+            );
 
             const contentType = res.headers.get("Content-Type");
 

@@ -5,13 +5,16 @@
 
     const login = async () => {
         try {
-            const response = await fetch("http://localhost:5000/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetch(
+                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/login",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username, password }),
                 },
-                body: JSON.stringify({ username, password }),
-            });
+            );
 
             if (!response.ok) {
                 throw new Error("Login failed");

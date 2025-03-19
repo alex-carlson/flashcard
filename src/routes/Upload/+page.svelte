@@ -13,12 +13,15 @@
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {
-            const response = await fetch("http://localhost:5000/collections", {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const response = await fetch(
+                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/collections",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 },
-            });
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to fetch collections");
@@ -34,7 +37,7 @@
     async function fetchImageFromGridFS(imageId) {
         try {
             const response = await fetch(
-                `http://localhost:5000/image/${imageId}`,
+                `https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/image/${imageId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -58,7 +61,7 @@
     async function fetchCollectionData(id) {
         try {
             const response = await fetch(
-                `http://localhost:5000/collection/${id}`,
+                `https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/collection/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -165,14 +168,17 @@
         console.log(data);
 
         try {
-            const response = await fetch("http://localhost:5000/upload", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
+            const response = await fetch(
+                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/upload",
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
                 },
-                body: JSON.stringify(data),
-            })
+            )
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error(
