@@ -9,7 +9,7 @@
     onMount(async () => {
         try {
             const res = await fetch(
-                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/user/collections",
+                `${import.meta.env.VITE_API_URL}/user/collections`,
                 {
                     method: "GET",
                     headers: {

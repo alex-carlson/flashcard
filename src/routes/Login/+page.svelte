@@ -6,7 +6,7 @@
     const login = async () => {
         try {
             const response = await fetch(
-                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/login",
+                `${import.meta.env.VITE_API_URL}/login`,
                 {
                     method: "POST",
                     headers: {

@@ -14,7 +14,7 @@
 
         try {
             const response = await fetch(
-                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/signup",
+                `${import.meta.env.VITE_API_URL}/signup`,
                 {
                     method: "POST",
                     headers: {

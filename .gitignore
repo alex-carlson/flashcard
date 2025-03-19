@@ -27,3 +27,8 @@ dist-ssr
 .netlify
 
 .vercel
+.env.local
+.env.development.local
+.env.production
+# any file starting with .env
+.env*

@@ -14,7 +14,7 @@
     async function fetchCollections() {
         try {
             const response = await fetch(
-                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/collections",
+                `${import.meta.env.VITE_API_URL}/collections`,
                 {
                     method: "GET",
                     headers: {
@@ -37,7 +37,7 @@
     async function fetchImageFromGridFS(imageId) {
         try {
             const response = await fetch(
-                `https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/image/${imageId}`,
+                `${import.meta.env.VITE_API_URL}/image/${imageId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -61,7 +61,7 @@
     async function fetchCollectionData(id) {
         try {
             const response = await fetch(
-                `https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/collection/${id}`,
+                `${import.meta.env.VITE_API_URL}/collection/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -167,18 +167,17 @@
 
         console.log(data);
 
+        let url = import.meta.env.VITE_API_URL + "/upload";
+
         try {
-            const response = await fetch(
-                "https://flash-backend-fl5b9bwj4-alex-carlsons-projects.vercel.app/upload",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(data),
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
                 },
-            )
+                body: JSON.stringify(data),
+            })
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error(
