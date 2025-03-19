@@ -22,7 +22,6 @@
 
             const data = await response.json();
             console.log("Login successful:", data.username);
-            console.log("Token:", data.token);
             localStorage.setItem("token", data.token);
             localStorage.setItem("username", data.username);
             errorMessage = "";

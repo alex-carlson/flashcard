@@ -3,12 +3,11 @@
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
-    let items = [{ id: 1, file: null, preview: null, answer: "" }];
+    let items = [];
     let errorMessage = "";
     let successMessage = "";
-
     let collections = [];
-    let selectedCollectionId = "";
+    let localItem = {id: 1, file: null, answer: ""};
 
     // Fetch collections from the server on load
     async function fetchCollections() {
@@ -120,38 +119,50 @@
     // Fetch collections when the page loads
     fetchCollections();
 
-    function addItem() {
-        items = [
-            ...items,
-            { id: items.length + 1, file: null, preview: null, answer: "" },
-        ];
+    async function removeItem(id){
+        // ask server to delete file
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/deleteImage/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                console.log("Error deleting image:", response.statusText);
+                throw new Error(`Error deleting image ${id}`);
+            }
+
+            const blob = await response.blob();
+            return URL.createObjectURL(blob); // Convert blob to a local URL
+        } catch (error) {
+            console.error("Error loading image:", error);
+            return ""; // Return empty if there's an error
+        }
     }
 
-    function handleFileChange(event, index) {
+    function handleFileChange(event) {
         const file = event.target.files[0];
 
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
-                items[index].preview = reader.result;
-                items[index].file = reader.result.split(",")[1];
-                items = [...items]; // Trigger reactivity
+                localItem.file = reader.result;
             };
             reader.readAsDataURL(file);
         }
     }
 
     async function uploadData() {
+
         const data = {
             category,
             author: username,
-            items: items.map((item) => ({
-                imageData: item.file,
-                answer: item.answer,
-            })),
-        };
-
-        console.log(data);
+            item: localItem
+        }
 
         let url = import.meta.env.VITE_API_URL + "/upload";
 
@@ -187,11 +198,12 @@
     {#if !token}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
+     {#if collections.length > 0}
         <Collections
             {collections}
             on:selectCollection={handleCollectionSelection}
         />
-
+    {/if}
         <input
             type="text"
             bind:value={category}
@@ -200,35 +212,33 @@
 
         {#each items as item, index}
             <div class="item">
-                <input
-                    type="file"
-                    accept="image/*"
-                    on:change={(e) => handleFileChange(e, index)}
+                <img
+                    src={item.file}
+                    alt="Preview"
+                    style="max-width: 100px; max-height: 100px; margin-top: 10px;"
                 />
-
-                {#if item.preview}
-                    <img
-                        src={item.preview}
-                        alt="Preview"
-                        style="max-width: 100px; max-height: 100px; margin-top: 10px;"
-                    />
-                {/if}
-
-                <input
-                    type="text"
-                    bind:value={item.answer}
-                    on:change={(e) => (items[index].answer = e.target.value)}
-                    placeholder="Enter answer"
-                />
+                <span>{item.answer}</span>
                 <button
-                    on:click={() =>
-                        (items = items.filter((_, i) => i !== index))}>X</button
+                    class="remove"
+                    on:click={removeItem}>X</button
                 >
             </div>
         {/each}
 
-        <button on:click={addItem}>Add Another Item</button>
-        <button on:click={uploadData}>Upload</button>
+        <!-- on submit form, call UploadFile -->
+        <form on:submit|preventDefault={uploadData}>
+            <input
+                type="file"
+                accept="image/*"
+                on:change={handleFileChange}
+            />
+            <input
+                type="text"
+                bind:value={localItem.answer}
+                placeholder="Enter an answer"
+            />
+            <button type="button" on:click={uploadData}>Add item</button>
+        </form>
 
         {#if errorMessage}
             <p style="color: red">{errorMessage}</p>
@@ -261,8 +271,8 @@
         font-size: 1rem;
         border: 1px solid #ccc;
         border-radius: 5px;
-        background-color: #666666;
-        color: #000;
+        background-color: #dedede;
+        color: #373737;
         height: 40px;
     }
     .container .item {
@@ -271,6 +281,19 @@
         gap: 1rem;
         align-items: center;
         width: 100%;
+        justify-content: center;
+        justify-items: center;
+    }
+
+    .container .remove {
+        background-color: #ff0000;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5rem;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
     }
 
     .container .item input[type="file"] {
