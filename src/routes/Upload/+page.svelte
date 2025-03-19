@@ -142,20 +142,6 @@
     }
 
     async function uploadData() {
-        const formData = new FormData();
-
-        formData.append("category", category);
-        formData.append("author", username);
-
-        items.forEach((item) => {
-            if (item.file) {
-                formData.append("items", item.file);
-                formData.append("answers", item.answer);
-            }
-        });
-
-        formData.append("jsonFile", JSON.stringify(formData));
-
         const data = {
             category,
             author: username,
@@ -194,26 +180,6 @@
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";
         }
-    }
-
-    async function processItems(items) {
-        return Promise.all(
-            items.map(async (item) => {
-                if (!item.imageData) return null;
-
-                const imageBuffer = base64ToBuffer(item.imageData);
-                const compressedBuffer = await sharp(imageBuffer)
-                    .resize(400)
-                    .jpeg({ quality: 50 })
-                    .toBuffer();
-
-                const fileId = await saveImageToDB(
-                    compressedBuffer,
-                    item.answer,
-                );
-                return { imageUrl: fileId, text: item.answer };
-            }),
-        ).then((results) => results.filter(Boolean)); // Remove null values
     }
 </script>
 

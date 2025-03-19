@@ -26,7 +26,7 @@
             localStorage.setItem("token", data.token);
             localStorage.setItem("username", data.username);
             errorMessage = "";
-            // window.location.href = "/"; // Redirect to the upload page
+            window.location.href = "/"; // Redirect to the upload page
         } catch (error) {
             errorMessage = "Invalid credentials";
         }
