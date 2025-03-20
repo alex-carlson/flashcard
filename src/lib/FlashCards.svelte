@@ -1,13 +1,85 @@
 <script>
-    import { sheetData, bestMatch } from "./sheetStore";
+    import { onMount } from "svelte";
     import { writable } from "svelte/store";
+    import fetchImageFromGridFS from "./ImageFetcher.svelte";
+
+    let collectionName = "";
+    let collectionAuthor = "";
+    let cards = [];
+
+    // get collection id from local storage
+    let selectedCollection = localStorage.getItem("selectedCollection");
+
+    // function to fetch collection from id
+    async function fetchCollection() {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/collection/${selectedCollection}`,
+                {
+                    method: "GET",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch collection");
+            }
+
+            let responseJson = await response.json();
+
+            collectionName = responseJson.category;
+            collectionAuthor = responseJson.author;
+
+            // loop through items and fetch images
+            let images = [];
+            for (let item of responseJson.items) {
+                const url = await getImageUrl(item.id);
+                images.push(url);
+            }
+
+            cards = responseJson.items.map((item, index) => {
+                return {
+                    id: item.id,
+                    image: images[index],
+                    answer: item.answer,
+                };
+            });
+
+            console.log(cards);
+
+        } catch (error) {
+            console.error("Error fetching collection:", error);
+        }
+    }
+
+    async function getImageUrl(imageId) {
+        const token = localStorage.getItem("token");
+        console.log(`Fetching image with ID: ${imageId} and token: ${token}`);
+
+        try {
+            const imageUrl = await fetchImageFromGridFS(imageId, token);
+            return imageUrl;
+        } catch (error) {
+            console.error("Error fetching image:", error);
+            return "";
+        }
+    }
+
+    //onmount, fetch collection
+    onMount(() => {
+        fetchCollection();
+    });
+
+    //subscribe to changes in local storage for selected collection
+    window.addEventListener("storage", (event) => {
+        if (event.key === "selectedCollection") {
+            selectedCollection = event.newValue;
+            console.log("selectedCollection:", selectedCollection);
+            fetchCollection();
+        }
+    });
 
     let revealed = writable([]);
     let imageLoaded = writable([]);
-
-    $: if ($sheetData.length > 0 && revealed.length !== $sheetData.length) {
-        revealed.set(Array($sheetData.length).fill(false));
-    }
 
     function toggleReveal(index) {
         revealed.update((r) => {
@@ -26,56 +98,39 @@
     }
 
     function shuffleCards() {
-        sheetData.update((data) => {
-            return data.sort(() => Math.random() - 0.5);
-        });
+        // shuffle cards array
     }
 
     function resetCards() {
-        revealed.set(Array($sheetData.length).fill(false));
     }
 </script>
 
-<!-- if best match is empty, show h2 as "Pick a category!" -->
+<!-- loop through cards -->
 
-{#if $bestMatch === ""}
-    <h1>Pick a category!</h1>
-{:else}
-    <h2>Flashcards for: {$bestMatch}</h2>
-{/if}
+{#if cards.length > 0}
 
-{#if $sheetData.length > 0 && $bestMatch !== ""}
+<h2>{collectionName} by: {collectionAuthor}</h2>
+
     <div class="flashcards">
-        {#each $sheetData as row, i}
+        {#each cards as item, i}
             <button
                 type="button"
                 class="card"
                 on:click={() => toggleReveal(i)}
                 on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-                aria-expanded={$revealed[i]}
             >
                 <div class="card-front">
-                    {#if isValidUrl(row[0])}
-                        <div class="image-wrapper">
-                            {#if !imageLoaded[i]}
-                                <div class="loading-spinner"></div>
-                            {/if}
-                            <img
-                                src={row[0]}
-                                alt=""
-                                class="flashcard-image"
-                                on:load={() => (imageLoaded[i] = true)}
-                                style="display: {imageLoaded[i]
-                                    ? 'block'
-                                    : 'none'};"
-                            />
-                        </div>
-                    {:else}
-                        {row[0]}
-                    {/if}
+                    <div class="image-wrapper">
+                        <!-- embed image at url + item.image -->
+                         <img
+                            src={item.image}
+                            class="flashcard-image"
+                            alt="flashcard image"
+                         />
+                    </div>
                 </div>
                 {#if $revealed[i]}
-                    <div class="card-back">{row[1]}</div>
+                    <div class="card-back">{item.answer}</div>
                 {/if}
             </button>
         {/each}

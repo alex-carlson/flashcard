@@ -46,10 +46,11 @@
 
 <div>
     <label for="collections">Choose a collection:</label>
-    <select on:change={(e) => selectCollection(e.target.value)}>
+    <select on:change={(e) => selectCollection(e.target.value)}
+        >
         <option value="" disabled>Select a collection</option>
         {#each collections as collection}
-            <option value={collection._id}>{collection.category}</option>
+            <option value={collection._id} on:click={selectCollection(collection._id)}>{collection.category}</option>
         {/each}
     </select>
 </div>

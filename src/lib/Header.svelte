@@ -3,7 +3,9 @@
     import { link } from "svelte-spa-router";
     import { onMount } from "svelte";
     import { jwtDecode } from "jwt-decode"; // Use named import
+    import { createEventDispatcher } from "svelte";
 
+    const dispatch = createEventDispatcher();
     let token = localStorage.getItem("token");
     let isLoggedIn = !!token;
 
@@ -26,12 +28,17 @@
         // go to home page
         window.location.href = "#/";
     }
+
+    // on collectionSelected, pass up to parent
+    function collectionSelected(event) {
+        dispatch("collectionSelected", { collection: event.detail.collection });
+    }
 </script>
 
 <header>
     <div class="header">
         <h1>Prost Free 🍺 Generator</h1>
-        <Search />
+        <Search on:collectionSelected={collectionSelected} />
         <nav>
             <ul>
                 <li><a href="#/" use:link>Home</a></li>

@@ -1,5 +1,7 @@
 <script>
     import Collections from "../../lib/Collections.svelte";
+    import FileUpload from "../../lib/FileUpload.svelte";
+    import fetchImageFromGridFS from "../../lib/ImageFetcher.svelte";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
@@ -33,30 +35,6 @@
         }
     }
 
-    async function fetchImageFromGridFS(imageId) {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/image/${imageId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
-
-            if (!response.ok) {
-                console.log("Error fetching image:", response.statusText);
-                throw new Error(`Error fetching image ${imageId}`);
-            }
-
-            const blob = await response.blob();
-            return URL.createObjectURL(blob); // Convert blob to a local URL
-        } catch (error) {
-            console.error("Error loading image:", error);
-            return ""; // Return empty if there's an error
-        }
-    }
-
     async function fetchCollectionData(id) {
         try {
             const response = await fetch(
@@ -74,7 +52,6 @@
             }
 
             const collectionData = await response.json();
-            console.log("Fetched collection data:", collectionData);
 
             category = collectionData.category;
 
@@ -87,16 +64,13 @@
             // Fetch images from GridFS using their IDs
             const updatedItems = await Promise.all(
                 collectionData.items.map(async (item, index) => {
-                    let imageUrl = "";
-                    if (item._id) {
-                        imageUrl = await fetchImageFromGridFS(item._id);
-                    }
+                    let image = await fetchImageFromGridFS(item.id);
 
                     return {
-                        id: index + 1,
+                        id: item.id,
                         file: null,
-                        preview: imageUrl, // Set fetched image URL
-                        answer: item.text || "",
+                        preview: image, // Set fetched image URL
+                        answer: item.answer || "",
                     };
                 }),
             );
@@ -109,51 +83,56 @@
         }
     }
 
-    // When a collection is selected, fetch its data
     function handleCollectionSelection(event) {
         const collectionId = event.detail;
-        selectedCollectionId = collectionId;
         fetchCollectionData(collectionId);
     }
 
     // Fetch collections when the page loads
     fetchCollections();
 
-    async function removeItem(id){
-        // ask server to delete file
+    // remove item on server based on item id
+    async function removeItem(itemId) {
+        console.log("Removing item:", itemId);
+
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/deleteImage/${id}`,
+                `${import.meta.env.VITE_API_URL}/remove`, 
                 {
+                    method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
                     },
-                },
-            );
+                    body: JSON.stringify({ id: itemId, collection: category }),
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Remove failed: ${response.statusText}`,
+                        );
+                    }
 
-            if (!response.ok) {
-                console.log("Error deleting image:", response.statusText);
-                throw new Error(`Error deleting image ${id}`);
-            }
-
-            const blob = await response.blob();
-            return URL.createObjectURL(blob); // Convert blob to a local URL
+                    // remove item from local items array
+                    items = items.filter((item) => item.id !== itemId);
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
         } catch (error) {
-            console.error("Error loading image:", error);
-            return ""; // Return empty if there's an error
+            console.error("Error removing item:", error);
+            errorMessage = "Remove failed. Please try again.";
         }
     }
 
+    // on resizeImage event, set the localItem.file to the resized image
     function handleFileChange(event) {
-        const file = event.target.files[0];
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                localItem.file = reader.result;
-            };
-            reader.readAsDataURL(file);
-        }
+        // convert image blob to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(event.detail.resizedImage);
+        reader.onload = () => {
+            localItem.file = reader.result;
+        };
     }
 
     async function uploadData() {
@@ -163,6 +142,8 @@
             author: username,
             item: localItem
         }
+
+        console.log("Uploading data:", data);
 
         let url = import.meta.env.VITE_API_URL + "/upload";
 
@@ -213,25 +194,28 @@
         {#each items as item, index}
             <div class="item">
                 <img
-                    src={item.file}
+                    src={item.preview}
                     alt="Preview"
                     style="max-width: 100px; max-height: 100px; margin-top: 10px;"
                 />
                 <span>{item.answer}</span>
                 <button
                     class="remove"
-                    on:click={removeItem}>X</button
+                    on:click={() => removeItem(item.id)}>X</button
                 >
             </div>
         {/each}
 
         <!-- on submit form, call UploadFile -->
         <form on:submit|preventDefault={uploadData}>
-            <input
-                type="file"
-                accept="image/*"
-                on:change={handleFileChange}
-            />
+            <FileUpload on:resizeImage={handleFileChange} />
+            {#if localItem.file}
+                <img
+                    src={localItem.file}
+                    alt="Preview"
+                    style="max-width: 100px; max-height: 100px; margin-top: 10px;"
+                />
+            {/if}
             <input
                 type="text"
                 bind:value={localItem.answer}
