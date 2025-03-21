@@ -117,10 +117,12 @@
                 <div class="card-front">
                     <div class="image-wrapper">
                          <img
-                            src={item.image}
+                            src={`${item.image}?cache-buster=${i}`}
                             class="flashcard-image"
                             alt={item.answer}
-                            on:load={() => onCardLoad(i)}
+                            on:load={() => {
+                                onCardLoad(i);
+                            }}
                             style="display: {item.loaded ? 'block' : 'none'}"
                          />
                         {#if !item.loaded}
