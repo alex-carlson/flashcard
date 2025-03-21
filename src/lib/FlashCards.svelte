@@ -38,7 +38,9 @@
                     image: "",
                     answer: item.answer,
                     flipped: false,
-                    loaded: false
+                    loaded: false,
+                    loadAttempts: 0,
+                    hidden: false,
                 };
             });
 
@@ -126,7 +128,14 @@
                                 onCardLoad(i);
                             }}
                             on:error={() => {
-                                console.error("Failed to load image for card:", item);
+                                item.loadAttempts++;
+                                if (item.loadAttempts < 3) {
+                                    console.log("retrying to load image");
+                                    item.image = fetchImageFromGridFS(item.imageId);
+                                } else {
+                                    console.error("Failed to load image after 3 attempts");
+                                    item.loaded = true;
+                                }
                                 cards = [...cards];
                             }}
                             style="display: {item.loaded ? 'block' : 'none'}"
