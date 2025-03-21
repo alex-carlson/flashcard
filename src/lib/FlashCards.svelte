@@ -119,11 +119,15 @@
                 <div class="card-front">
                     <div class="image-wrapper">
                          <img
-                            src={`${item.image}?cache-buster=${i}`}
+                            src={`${item.image}`}
                             class="flashcard-image"
                             alt={item.answer}
                             on:load={() => {
                                 onCardLoad(i);
+                            }}
+                            on:error={() => {
+                                console.error("Failed to load image for card:", item);
+                                cards = [...cards];
                             }}
                             style="display: {item.loaded ? 'block' : 'none'}"
                          />
