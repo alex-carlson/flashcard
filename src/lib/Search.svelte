@@ -46,11 +46,6 @@
 </div>
 
 <style>
-    input,
-    button,
-    select {
-        margin: 10px;
-    }
 
     select {
         padding: 0.5rem;

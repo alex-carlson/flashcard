@@ -2,6 +2,8 @@
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { fetchImageFromGridFS } from "../../lib/ImageFetcher";
+    import { selectedCollection } from "../../stores/collectionStore";
+    import { onDestroy } from "svelte";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
@@ -10,7 +12,25 @@
     let successMessage = "";
     let collections = [];
     let collectionId;
+    let collection = null;
     let localItem = {id: 1, file: null, answer: ""};
+    // import font awesome icon fa-pen-to-square
+    import Fa from "svelte-fa";
+    import {faPenToSquare, faSquareMinus} from "@fortawesome/free-solid-svg-icons";
+
+    // Subscribe to the store
+    const unsubscribe = selectedCollection.subscribe((value) => {
+        collection = value;
+        if (collection) {
+            console.log("Selected collection:", collection);
+            fetchCollectionData(collection.id); // Fetch data for the selected collection
+        }
+    });
+
+    // Cleanup the subscription when the component is destroyed
+    onDestroy(() => {
+        unsubscribe();
+    });
 
     // Fetch collections from the server on load
     async function fetchCollections() {
@@ -127,6 +147,48 @@
         }
     }
 
+    async function editItem(itemId) {
+        let url = import.meta.env.VITE_API_URL + "/edit";
+        const data = {
+            collection: category,
+            id: itemId,
+            answer: items.find((item) => item.id === itemId).answer,
+        }
+
+        try {
+            const respone = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+            .then((response) => {
+                if(!response.ok){
+                    throw new Error(`Edit failed with error: ${response.statusText}`);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+        }
+        catch (error) {
+            console.error("Error editing item:", error);
+            errorMessage = "Edit failed. Please try again.";
+        }
+    }
+
+    function onEditClick(itemId){
+        //move the data to the localItem and scroll down to form
+        localItem = items.find((item) => item.id === itemId);
+        const form = document.querySelector("form");
+        // load image into file input
+        const fileInput = form.querySelector("input[type='file']");
+        fileInput.files = localItem.file;
+        form.scrollIntoView({behavior: "smooth"});
+    }
+
     // on resizeImage event, set the localItem.file to the resized image
     function handleFileChange(event) {
         // convert image blob to base64
@@ -201,12 +263,19 @@
                 <img
                     src={item.preview}
                     alt="Preview"
-                    style="max-width: 100px; max-height: 100px; margin-top: 10px;"
                 />
                 <span>{item.answer}</span>
+                <button 
+                    class="edit"
+                    on:click={() => onEditClick(item.id)}
+                    >
+                    <Fa icon={faPenToSquare} />
+                </button>
                 <button
                     class="remove"
-                    on:click={() => removeItem(item.id)}>X</button
+                    on:click={() => removeItem(item.id)}>
+                    <Fa icon={faSquareMinus} />
+                </button
                 >
             </div>
         {/each}
@@ -265,24 +334,46 @@
         height: 40px;
     }
     .container .item {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-        align-items: center;
         width: 100%;
-        justify-content: center;
-        justify-items: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
     }
 
-    .container .remove {
-        background-color: #ff0000;
-        color: #fff;
+    /* make every other item gray */
+    .container .item:nth-child(even) {
+        background-color: #f0f0f0;
+    }
+
+    .container .item span {
+        /* fill extra space */
+        flex-grow: 1;
+        font-size: 1.5rem;
+    }
+
+    .container .item img {
+        width: 120px;
+    }
+
+    .container .item .remove {
+        /* transparent background */
+        background-color: transparent;
+        color: #b73232;
+        font-size: 2.5rem;
+    }
+    
+    .container .item button {
         border: none;
         border-radius: 5px;
         padding: 0.5rem;
         cursor: pointer;
         width: 40px;
         height: 40px;
+        font-size: 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;        
     }
 
     .container .item input[type="file"] {

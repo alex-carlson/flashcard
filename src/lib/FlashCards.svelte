@@ -1,19 +1,34 @@
 <script>
-    import { onMount } from "svelte";
+    import { onDestroy } from "svelte";
     import { fetchImageFromGridFS } from "./ImageFetcher";
+    import { selectedCollection } from "../stores/collectionStore";
+    import Fa from "svelte-fa";
+    import { faShuffle, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
     let collectionName = "";
     let collectionAuthor = "";
     let cards = [];
+    let collection = null;
 
-    // get collection id from local storage
-    let selectedCollection = localStorage.getItem("selectedCollection");
+
+    // Subscribe to the store
+    const unsubscribe = selectedCollection.subscribe((value) => {
+        collection = value;
+        if (collection) {
+            fetchCollection(); // Fetch data for the selected collection
+        }
+    });
+
+    // Cleanup the subscription when the component is destroyed
+    onDestroy(() => {
+        unsubscribe();
+    });
 
     // function to fetch collection from id
     async function fetchCollection() {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collection/${selectedCollection}`,
+                `${import.meta.env.VITE_API_URL}/collection/${collection}`,
                 {
                     method: "GET",
                 }
@@ -40,33 +55,19 @@
 
             for (let card of cards) {
                 if (card.imageId) {
-                    card.image = await await fetchImageFromGridFS(card.imageId);
+                    card.image = await fetchImageFromGridFS(card.imageId);
                 } else {
                     console.warn("Card does not have an imageId:", card);
                 }
             }
 
-            //force reload cards
+            // whenever a card promise finishes, reload the cards
             cards = [...cards];
 
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
     }
-
-    //onmount, fetch collection
-    onMount(() => {
-        fetchCollection();
-    });
-
-    //subscribe to changes in local storage for selected collection
-    window.addEventListener("storage", (event) => {
-        if (event.key === "selectedCollection") {
-            selectedCollection = event.newValue;
-            fetchCollection();
-            cards = [...cards];
-        }
-    });
 
     function toggleReveal(index) {
         cards[index].revealed = !cards[index].revealed;
@@ -93,8 +94,9 @@
 <!-- loop through cards -->
 
 {#if cards.length > 0}
-
-<h2>{collectionName} by: {collectionAuthor}</h2>
+    <div class="headline">
+        <h1>{collectionName}</h1> <p>by: {collectionAuthor}</p>
+    </div>
 
     <div class="flashcards">
         {#each cards as item, i}
@@ -123,12 +125,21 @@
 
 <div class="controls">
     <!-- shuffle cards button -->
-    <button type="button" on:click={shuffleCards}>Shuffle Cards</button>
+    <button type="button" on:click={shuffleCards}><Fa icon={faShuffle}/></button>
     <!-- reset cards button -->
-    <button type="button" on:click={resetCards}>Reset Cards</button>
+    <button type="button" on:click={resetCards}><Fa icon={faEyeSlash} /></button>
 </div>
 
 <style>
+    .headline {
+        margin-bottom: 40px;
+        font-weight: 800;
+    }
+
+    .headline h1 {
+        font-size: 2.4em;
+        margin-bottom: 0;
+    }
     .flashcards {
         display: flex;
         flex-wrap: wrap;

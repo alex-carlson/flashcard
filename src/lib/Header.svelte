@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { jwtDecode } from "jwt-decode"; // Use named import
     import { createEventDispatcher } from "svelte";
+    import { selectedCollection } from "../stores/collectionStore";
 
     const dispatch = createEventDispatcher();
     let token = localStorage.getItem("token");
@@ -31,6 +32,7 @@
 
     // on collectionSelected, pass up to parent
     function collectionSelected(event) {
+        selectedCollection.set(event.detail.collection);
         dispatch("collectionSelected", { collection: event.detail.collection });
     }
 </script>
@@ -67,10 +69,9 @@
     nav ul {
         display: flex;
         list-style: none;
-    }
-
-    nav ul li {
-        margin-right: 1rem;
+        align-items: center;
+        justify-content: center;
+        padding-left: 0;
     }
 
     nav ul li a {
@@ -84,5 +85,17 @@
 
     nav ul li a:visited {
         color: white;
+    }
+
+    nav ul li a, nav ul li button {
+        padding: 0.6em 1.2em;
+        margin: 0;
+    }
+
+    nav ul li button {
+        background-color: #d7c117;
+        color: white;
+        border: none;
+        cursor: pointer;
     }
 </style>

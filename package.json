@@ -20,8 +20,10 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "jwt-decode": "^4.0.0",
     "react-image-file-resizer": "^0.4.8",
+    "svelte-fa": "^4.0.3",
     "svelte-spa-router": "^4.0.1"
   }
 }
