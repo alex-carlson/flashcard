@@ -90,7 +90,7 @@
     
     $: {
         if(cards.length > 0){
-            lazyLoadImages();
+            // lazyLoadImages();
         }
     }
 
