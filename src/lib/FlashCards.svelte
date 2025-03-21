@@ -46,8 +46,6 @@
                 }
             }
 
-            console.log(cards);
-
             //force reload cards
             cards = [...cards];
 
@@ -65,8 +63,8 @@
     window.addEventListener("storage", (event) => {
         if (event.key === "selectedCollection") {
             selectedCollection = event.newValue;
-            console.log("selectedCollection:", selectedCollection);
             fetchCollection();
+            cards = [...cards];
         }
     });
 

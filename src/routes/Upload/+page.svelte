@@ -9,6 +9,7 @@
     let errorMessage = "";
     let successMessage = "";
     let collections = [];
+    let collectionId;
     let localItem = {id: 1, file: null, answer: ""};
 
     // Fetch collections from the server on load
@@ -84,7 +85,7 @@
     }
 
     function handleCollectionSelection(event) {
-        const collectionId = event.detail;
+        collectionId = event.detail;
         fetchCollectionData(collectionId);
     }
 
@@ -93,19 +94,21 @@
 
     // remove item on server based on item id
     async function removeItem(itemId) {
-        console.log("Removing item:", itemId);
+        let url = import.meta.env.VITE_API_URL + "/remove";
+        const data = {
+            collection: category,
+            id: itemId,
+        }
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/remove`, 
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ id: itemId, collection: category }),
-                })
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error(
@@ -113,7 +116,6 @@
                         );
                     }
 
-                    // remove item from local items array
                     items = items.filter((item) => item.id !== itemId);
                 })
                 .catch((error) => {
@@ -143,8 +145,6 @@
             item: localItem
         }
 
-        console.log("Uploading data:", data);
-
         let url = import.meta.env.VITE_API_URL + "/upload";
 
         try {
@@ -172,6 +172,11 @@
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";
         }
+
+        //clear form
+        localItem = {id: 1, file: null, answer: ""};
+        //refresh items
+        fetchCollectionData(collectionId);
     }
 </script>
 

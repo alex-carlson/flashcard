@@ -27,7 +27,6 @@
 
     // pass the selected collection to the parent component
     function handleChange(event) {
-        console.log(event.target.value);
         // set local storage to persist the selected collection
         localStorage.setItem("selectedCollection", event.target.value);
         //pass the selected collection event and data to the parent component
