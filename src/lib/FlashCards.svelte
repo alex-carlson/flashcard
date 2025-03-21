@@ -1,31 +1,20 @@
 <script>
-    import { onDestroy } from "svelte";
     import { fetchImageFromGridFS } from "./ImageFetcher";
-    import { selectedCollection } from "../stores/collectionStore";
+    import Search from "./Search.svelte";
     import Fa from "svelte-fa";
     import { faShuffle, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+    import { createEventDispatcher } from "svelte";
+    import { selectedCollection } from "../stores/collectionStore";
 
     let collectionName = "";
     let collectionAuthor = "";
     let cards = [];
     let collection = null;
-
-
-    // Subscribe to the store
-    const unsubscribe = selectedCollection.subscribe((value) => {
-        collection = value;
-        if (collection) {
-            fetchCollection(); // Fetch data for the selected collection
-        }
-    });
-
-    // Cleanup the subscription when the component is destroyed
-    onDestroy(() => {
-        unsubscribe();
-    });
+    const dispatch = createEventDispatcher();
 
     // function to fetch collection from id
     async function fetchCollection() {
+        console.log("fetching collection");
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collection/${collection}`,
@@ -97,9 +86,17 @@
         //reload cards
         cards = [...cards];
     }
+
+    function collectedSelected(event){
+        console.log("collection selected", event.detail.collection);
+        collection = event.detail.collection;
+        fetchCollection();
+    }
 </script>
 
-<!-- loop through cards -->
+<div class="container">
+    <Search on:collectionSelected={collectedSelected} />
+</div>
 
 {#if cards.length > 0}
     <div class="headline">
@@ -146,6 +143,12 @@
 </div>
 
 <style>
+
+    .container {
+        max-width: 800px;
+        margin: 10px auto;
+        padding: 0 10px;
+    }
     .headline {
         margin-bottom: 40px;
         font-weight: 800;
@@ -158,7 +161,7 @@
     .flashcards {
         display: flex;
         flex-wrap: wrap;
-        gap: 40px;
+        gap: 10px;
         justify-content: center;
     }
 
