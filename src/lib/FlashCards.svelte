@@ -14,7 +14,6 @@
 
     // function to fetch collection from id
     async function fetchCollection() {
-        console.log("fetching collection");
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collection/${collection}`,
@@ -27,35 +26,71 @@
                 throw new Error("Failed to fetch collection");
             }
 
-            let responseJson = await response.json();
+            const data = await response.json();
 
-            collectionName = responseJson.category;
-            collectionAuthor = responseJson.author;
+            collectionName = data.category;
+            collectionAuthor = data.author;
 
-            cards = responseJson.items.map((item, index) => {
-                return {
-                    imageId: item.id,
-                    image: "",
-                    answer: item.answer,
-                    flipped: false,
-                    loaded: false,
-                    hidden: false
-                };
-            });
-
-            for (let card of cards) {
-                if (card.imageId) {
-                    card.image = await fetchImageFromGridFS(card.imageId);
-                } else {
-                    console.warn("Card does not have an imageId:", card);
-                }
-            }
-
-            // whenever a card promise finishes, reload the cards
-            cards = [...cards];
-
+            cards = data.items.map((card) => ({
+                ...card,
+                imageUrl: `${import.meta.env.VITE_API_URL}/image/${card.id}`,
+                revealed: false,
+                loaded: false,
+            }));
         } catch (error) {
             console.error("Error fetching collection:", error);
+        }
+
+    }
+
+    function lazyLoadImages(){
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const cardIndex = cards.findIndex((card) => card.imageUrl === img.dataset.src);
+
+                        if(cardIndex === -1){
+                            return;
+                        }
+
+                        if (cards[cardIndex].loaded) {
+                            return;
+                        }
+
+                        if (!img.dataset.src) {
+                            return;
+                        }
+
+                        // set img.src to img data-src
+                        img.src = img.dataset.src;
+
+                        // remove dataset src
+                        img.removeAttribute("data-src");
+
+                        cards[cardIndex].loaded = true;
+
+                        observer.unobserve(img);
+                    }
+                });
+            },
+            {
+                root: null,
+                rootMargin: "0px 0px 50px 0px",
+                threshold: 0.1,
+            }
+        );
+
+        const images = document.querySelectorAll(".flashcard-image");
+        images.forEach((img) => {
+            observer.observe(img);
+        });
+    }
+    
+    $: {
+        if(cards.length > 0){
+            lazyLoadImages();
         }
     }
 
@@ -94,9 +129,10 @@
     }
 
     function collectedSelected(event){
-        console.log("collection selected", event.detail.collection);
         collection = event.detail.collection;
-        fetchCollection();
+        fetchCollection().then(() => {
+            lazyLoadImages();
+        });
     }
 </script>
 
@@ -120,9 +156,9 @@
                 <div class="card-front">
                     <div class="image-wrapper">
                          <img
-                            src={`${item.image}`}
                             class="flashcard-image"
                             alt={item.answer}
+                            data-src={item.imageUrl}
                             on:load={() => {
                                 onCardLoad(i);
                             }}
@@ -130,7 +166,6 @@
                                 console.error("Failed to load image for card:", item);
                                 cards = [...cards];
                             }}
-                            style="display: {item.loaded ? 'block' : 'none'}"
                          />
                         {#if !item.loaded}
                             <div class="loading-spinner"></div>
@@ -222,6 +257,7 @@
         object-fit: cover;
         border-radius: 8px;
         user-select: none;
+        border-radius: 2px solid red;
     }
 
     .controls {
