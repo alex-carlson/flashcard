@@ -1,16 +1,13 @@
 <script>
-    import { fetchImageFromGridFS } from "./ImageFetcher";
     import Search from "./Search.svelte";
     import Fa from "svelte-fa";
     import { faShuffle, faEyeSlash, faEye } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
-    import { selectedCollection } from "../stores/collectionStore";
 
     let collectionName = "";
     let collectionAuthor = "";
     let cards = [];
     let collection = null;
-    const dispatch = createEventDispatcher();
 
     // function to fetch collection from id
     async function fetchCollection() {
@@ -165,7 +162,6 @@
                             }}
                             on:error={() => {
                                 console.error("Failed to load image for card:", item.imageUrl);
-                                cards = [...cards];
                             }}
                          />
                         {#if !item.loaded}
