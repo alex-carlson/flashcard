@@ -18,20 +18,6 @@
     import Fa from "svelte-fa";
     import {faPenToSquare, faSquareMinus} from "@fortawesome/free-solid-svg-icons";
 
-    // Subscribe to the store
-    const unsubscribe = selectedCollection.subscribe((value) => {
-        collection = value;
-        if (collection) {
-            console.log("Selected collection:", collection);
-            fetchCollectionData(collection.id); // Fetch data for the selected collection
-        }
-    });
-
-    // Cleanup the subscription when the component is destroyed
-    onDestroy(() => {
-        unsubscribe();
-    });
-
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {

@@ -75,7 +75,6 @@
     }
 
     nav ul li a {
-        color: white;
         text-decoration: none;
     }
 
@@ -84,17 +83,19 @@
     }
 
     nav ul li a:visited {
-        color: white;
+        color: black;
     }
 
     nav ul li a, nav ul li button {
         padding: 0.6em 1.2em;
         margin: 0;
+        color: black;
+        font-weight: 500;
     }
 
     nav ul li button {
         background-color: #d7c117;
-        color: white;
+        color: black;
         border: none;
         cursor: pointer;
     }

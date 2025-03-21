@@ -112,7 +112,12 @@
                             src={item.image}
                             class="flashcard-image"
                             alt={item.answer}
+                            on:load={() => (cards[i].loaded = true)}
+                            style="display: {item.loaded ? 'block' : 'none'}"
                          />
+                        {#if !item.loaded}
+                            <div class="loading-spinner"></div>
+                        {/if}
                     </div>
                 </div>
                 {#if item.revealed}
@@ -148,7 +153,6 @@
     }
 
     .flashcards button {
-        box-shadow: 0 10px 15px 5px rgba(0, 0, 0, 0.1);
         margin: 10px;
         border: none;
         background: none;
@@ -168,9 +172,6 @@
 
     .card-front {
         padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
         font-size: 1.2em;
         background: white;
     }
