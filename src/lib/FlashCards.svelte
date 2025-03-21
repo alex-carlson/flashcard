@@ -39,8 +39,7 @@
                     answer: item.answer,
                     flipped: false,
                     loaded: false,
-                    loadAttempts: 0,
-                    hidden: false,
+                    hidden: false
                 };
             });
 
@@ -128,14 +127,7 @@
                                 onCardLoad(i);
                             }}
                             on:error={() => {
-                                item.loadAttempts++;
-                                if (item.loadAttempts < 3) {
-                                    console.log("retrying to load image");
-                                    item.image = fetchImageFromGridFS(item.imageId);
-                                } else {
-                                    console.error("Failed to load image after 3 attempts");
-                                    item.loaded = true;
-                                }
+                                console.error("Failed to load image for card:", item);
                                 cards = [...cards];
                             }}
                             style="display: {item.loaded ? 'block' : 'none'}"
