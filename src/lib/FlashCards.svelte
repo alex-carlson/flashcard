@@ -69,6 +69,15 @@
         }
     }
 
+    function updateCards() {
+        cards = [...cards];
+    }
+
+    function onCardLoad(index) {
+        cards[index].loaded = true;
+        updateCards();
+    }
+
     function toggleReveal(index) {
         cards[index].revealed = !cards[index].revealed;
     }
@@ -76,8 +85,7 @@
     function shuffleCards() {
         // shuffle cards array
         cards = cards.sort(() => Math.random() - 0.5);
-        //reload cards
-        cards = [...cards];
+        updateCards();
     }
 
     function resetCards() {
@@ -112,7 +120,7 @@
                             src={item.image}
                             class="flashcard-image"
                             alt={item.answer}
-                            on:load={() => (cards[i].loaded = true)}
+                            on:load={() => onCardLoad(i)}
                             style="display: {item.loaded ? 'block' : 'none'}"
                          />
                         {#if !item.loaded}
