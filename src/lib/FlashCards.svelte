@@ -2,7 +2,7 @@
     import { fetchImageFromGridFS } from "./ImageFetcher";
     import Search from "./Search.svelte";
     import Fa from "svelte-fa";
-    import { faShuffle, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+    import { faShuffle, faEyeSlash, faEye } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { selectedCollection } from "../stores/collectionStore";
 
@@ -77,14 +77,19 @@
         updateCards();
     }
 
-    function resetCards() {
+    function toggleCards() {
+        const areAnyRevealed = areAnyCardsRevealed();
         // reset cards array
         cards = cards.map((card) => {
-            card.revealed = false;
+            card.revealed = !areAnyRevealed;
             return card;
         });
         //reload cards
         cards = [...cards];
+    }
+
+    function areAnyCardsRevealed() {
+        return cards.some((card) => card.revealed);
     }
 
     function collectedSelected(event){
@@ -138,8 +143,11 @@
 <div class="controls">
     <!-- shuffle cards button -->
     <button type="button" on:click={shuffleCards}><Fa icon={faShuffle}/></button>
-    <!-- reset cards button -->
-    <button type="button" on:click={resetCards}><Fa icon={faEyeSlash} /></button>
+    {#if areAnyCardsRevealed()}
+        <button type="button" on:click={toggleCards}><Fa icon={faEyeSlash} /></button>
+    {:else}
+        <button type="button" on:click={toggleCards}><Fa icon={faEye} /></button>
+    {/if}
 </div>
 
 <style>
