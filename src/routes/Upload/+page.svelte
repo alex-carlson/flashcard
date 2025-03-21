@@ -1,7 +1,7 @@
 <script>
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
-    import fetchImageFromGridFS from "../../lib/ImageFetcher.svelte";
+    import { fetchImageFromGridFS } from "../../lib/ImageFetcher";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";

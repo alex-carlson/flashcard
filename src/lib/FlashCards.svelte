@@ -1,7 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { writable } from "svelte/store";
-    import fetchImageFromGridFS from "./ImageFetcher.svelte";
+    import { fetchImageFromGridFS } from "./ImageFetcher";
 
     let collectionName = "";
     let collectionAuthor = "";
@@ -29,38 +28,31 @@
             collectionName = responseJson.category;
             collectionAuthor = responseJson.author;
 
-            // loop through items and fetch images
-            let images = [];
-            for (let item of responseJson.items) {
-                const url = await getImageUrl(item.id);
-                images.push(url);
-            }
-
             cards = responseJson.items.map((item, index) => {
                 return {
-                    id: item.id,
-                    image: images[index],
+                    imageId: item.id,
+                    image: "",
                     answer: item.answer,
+                    flipped: false,
+                    loaded: false
                 };
             });
 
+            for (let card of cards) {
+                if (card.imageId) {
+                    card.image = await await fetchImageFromGridFS(card.imageId);
+                } else {
+                    console.warn("Card does not have an imageId:", card);
+                }
+            }
+
             console.log(cards);
+
+            //force reload cards
+            cards = [...cards];
 
         } catch (error) {
             console.error("Error fetching collection:", error);
-        }
-    }
-
-    async function getImageUrl(imageId) {
-        const token = localStorage.getItem("token");
-        console.log(`Fetching image with ID: ${imageId} and token: ${token}`);
-
-        try {
-            const imageUrl = await fetchImageFromGridFS(imageId, token);
-            return imageUrl;
-        } catch (error) {
-            console.error("Error fetching image:", error);
-            return "";
         }
     }
 
@@ -78,30 +70,25 @@
         }
     });
 
-    let revealed = writable([]);
-    let imageLoaded = writable([]);
-
     function toggleReveal(index) {
-        revealed.update((r) => {
-            r[index] = !r[index];
-            return [...r];
-        });
-    }
-
-    function isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
+        cards[index].revealed = !cards[index].revealed;
     }
 
     function shuffleCards() {
         // shuffle cards array
+        cards = cards.sort(() => Math.random() - 0.5);
+        //reload cards
+        cards = [...cards];
     }
 
     function resetCards() {
+        // reset cards array
+        cards = cards.map((card) => {
+            card.revealed = false;
+            return card;
+        });
+        //reload cards
+        cards = [...cards];
     }
 </script>
 
@@ -121,15 +108,14 @@
             >
                 <div class="card-front">
                     <div class="image-wrapper">
-                        <!-- embed image at url + item.image -->
                          <img
                             src={item.image}
                             class="flashcard-image"
-                            alt="flashcard image"
+                            alt={item.answer}
                          />
                     </div>
                 </div>
-                {#if $revealed[i]}
+                {#if item.revealed}
                     <div class="card-back">{item.answer}</div>
                 {/if}
             </button>
