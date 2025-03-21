@@ -131,7 +131,7 @@
     function collectedSelected(event){
         collection = event.detail.collection;
         fetchCollection().then(() => {
-            lazyLoadImages();
+            // lazyLoadImages();
         });
     }
 </script>
@@ -157,13 +157,14 @@
                     <div class="image-wrapper">
                          <img
                             class="flashcard-image"
-                            alt={item.answer}
+                            alt="flashcard"
+                            src={item.imageUrl}
                             data-src={item.imageUrl}
                             on:load={() => {
                                 onCardLoad(i);
                             }}
                             on:error={() => {
-                                console.error("Failed to load image for card:", item);
+                                console.error("Failed to load image for card:", item.imageUrl);
                                 cards = [...cards];
                             }}
                          />
