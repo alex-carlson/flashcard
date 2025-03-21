@@ -266,6 +266,8 @@
             </div>
         {/each}
 
+        <hr />
+
         <!-- on submit form, call UploadFile -->
         <form on:submit|preventDefault={uploadData}>
             <FileUpload on:resizeImage={handleFileChange} />
@@ -297,7 +299,6 @@
     .container {
         max-width: 600px;
         margin: 0 auto;
-        padding: 1rem;
         /* vertical align elements inside of container */
         display: flex;
         flex-direction: column;
@@ -325,11 +326,19 @@
         justify-content: space-between;
         align-items: center;
         gap: 1rem;
+        padding: 1rem;
+        box-sizing: border-box;
     }
 
     /* make every other item gray */
     .container .item:nth-child(even) {
         background-color: #f0f0f0;
+    }
+
+    .container hr {
+        border: none;
+        border-top: 1px solid #ccc;
+        margin: 1rem 0;
     }
 
     .container .item span {
@@ -339,7 +348,8 @@
     }
 
     .container .item img {
-        width: 120px;
+        /* make img width 20% of parent */
+        width: 20%;
     }
 
     .container .item .remove {
@@ -364,5 +374,14 @@
 
     .container .item input[type="file"] {
         max-width: 200px;
+    }
+
+    .container form {
+        padding: 2rem;
+        box-sizing: border-box;
+    }
+
+    .container form button {
+        height: 60px;
     }
 </style>
