@@ -136,7 +136,7 @@
     
     onMount(() => {
         fetchCollections();
-        initializeSortable();
+        // initializeSortable();
     });
 
     // remove item on server based on item id
