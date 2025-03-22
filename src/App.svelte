@@ -2,7 +2,7 @@
   import Router from "svelte-spa-router";
   import Header from "./lib/Header.svelte";
   import Footer from "./lib/Footer.svelte";
-  import Home from "./routes/+page.svelte";
+  import Home from "./routes/Home/+page.svelte";
   import Login from "./routes/Login/+page.svelte";
   import Signup from "./routes/Signup/+page.svelte";
   import UploadForm from "./routes/Upload/+page.svelte";
@@ -14,7 +14,7 @@
     "/login": Login,
     "/signup": Signup,
     "/upload": UploadForm,
-    "/:collectionId": FlashCards,
+    "/:author/:category": FlashCards,
     "*": NotFound,
   };
 </script>

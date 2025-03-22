@@ -25,9 +25,19 @@
         }
     });
 
+    // Utility function to generate a slug
+    function generateSlug(category, author) {
+        return `${author}/${category}`
+            .toLowerCase()
+            .replace(/\s+/g, "-") // Replace spaces with hyphens
+            .replace(/[^a-z0-9-/]/g, ""); // Remove invalid characters    
+    }
+
     // pass the selected collection to the parent component
     function handleChange(event) {
         dispatch("collectionSelected", { collection: event.target.value });
+        // navigate to the selected collection
+        window.location.href = `#/${event.target.value}`;
     }
 </script>
 
@@ -36,7 +46,7 @@
     <select on:change={handleChange}>
         <option value="">Select a collection</option>
         {#each collections as collection}
-            <option value={collection._id}>{collection.category} by: {collection.author}</option>
+            <option value={generateSlug(collection.category, collection.author)}>{collection.category} by: {collection.author}</option>
         {/each}
     </select>
 </div>

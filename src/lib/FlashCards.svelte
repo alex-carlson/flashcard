@@ -1,16 +1,28 @@
 <script>
-    import Search from "./Search.svelte";
     import Fa from "svelte-fa";
     import { faShuffle, faEyeSlash, faEye, faTableCells } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
+    import { onMount } from "svelte";
 
+    let slug;
+    export let collectionId = null;
     let collectionName = "";
     let collectionAuthor = "";
     let cards = [];
     let collection = null;
 
+
+    // Utility function to generate a slug in the format "author/category"
+    function generateSlug(author, category) {
+        return `${author}/${category}`
+            .toLowerCase()
+            .replace(/\s+/g, "-") // Replace spaces with hyphens
+            .replace(/[^a-z0-9-/]/g, ""); // Remove invalid characters
+    }
+
     // function to fetch collection from id
     async function fetchCollection() {
+        console.log("Fetching collection:", collection);
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collection/${collection}`,
@@ -136,18 +148,23 @@
         const grid = document.querySelector(".flashcards");
         grid.classList.toggle("grid");
         const hasGrid = grid.classList.contains("grid");
-        console.log("grid is: ", hasGrid);
     }
-</script>
 
-<div class="container">
-    <Search on:collectionSelected={collectedSelected} />
-</div>
+    onMount(() => {
+        // fetchCollection();
+        // try to get collection id from params
+        console.log("Collection ID:", collectionId);
+        collection = collectionId;
+        fetchCollection().then(() => {
+            // lazyLoadImages();
+        });
+    });
+</script>
 
 {#if cards.length > 0}
     <div class="headline">
         <h1>
-            <a href={`/${collection}`}>{collectionName}</a>
+            {collectionName}
         </h1> <p>by: {collectionAuthor}</p>
     </div>
 
