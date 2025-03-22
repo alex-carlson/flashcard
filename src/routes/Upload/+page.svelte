@@ -4,6 +4,8 @@
     import { fetchImageFromGridFS } from "../../lib/ImageFetcher";
     import { selectedCollection } from "../../stores/collectionStore";
     import { onDestroy } from "svelte";
+    import Fa from "svelte-fa";
+    import {faPenToSquare, faSquareMinus, faFloppyDisk, faBan} from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
@@ -13,10 +15,9 @@
     let collections = [];
     let collectionId;
     let collection = null;
+    let editableItemId = null;
     let localItem = {id: 1, file: null, answer: ""};
     // import font awesome icon fa-pen-to-square
-    import Fa from "svelte-fa";
-    import {faPenToSquare, faSquareMinus} from "@fortawesome/free-solid-svg-icons";
 
     // Fetch collections from the server on load
     async function fetchCollections() {
@@ -142,7 +143,7 @@
         }
 
         try {
-            const respone = await fetch(url, {
+            const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -166,13 +167,28 @@
     }
 
     function onEditClick(itemId){
+        editableItemId = itemId;
         //move the data to the localItem and scroll down to form
-        localItem = items.find((item) => item.id === itemId);
-        const form = document.querySelector("form");
-        // load image into file input
-        const fileInput = form.querySelector("input[type='file']");
-        fileInput.files = localItem.file;
-        form.scrollIntoView({behavior: "smooth"});
+        localItem = {...items.find((item) => item.id === itemId)};
+    }
+
+    function saveEdit(){
+        try {
+            // Update the item in the items array
+            items = items.map((item) =>
+                item.id === editableItemId ? { ...item, ...localItem } : item
+            );
+            editableItemId = null; // Reset editable item ID
+            editItem(localItem.id);
+        } catch (error) {
+            console.error("Error saving item:", error);
+            errorMessage = "Save failed. Please try again.";
+        }
+    }
+
+    function cancelEdit(){
+        editableItemId = null;
+        localItem = null;
     }
 
     // on resizeImage event, set the localItem.file to the resized image
@@ -246,23 +262,35 @@
 
         {#each items as item, index}
             <div class="item">
-                <img
-                    src={item.preview}
-                    alt="Preview"
-                />
-                <span>{item.answer}</span>
-                <button 
-                    class="edit"
-                    on:click={() => onEditClick(item.id)}
-                    >
-                    <Fa icon={faPenToSquare} />
-                </button>
-                <button
-                    class="remove"
-                    on:click={() => removeItem(item.id)}>
-                    <Fa icon={faSquareMinus} />
-                </button
-                >
+                {#if editableItemId === item.id}
+                    <img
+                        src={localItem.preview}
+                        alt="Preview">
+                    <input
+                        type="text"
+                        bind:value={localItem.answer}
+                        placeholder="Enter an answer"
+                    />
+                    <button on:click={saveEdit}><Fa icon={faFloppyDisk}/></button>
+                    <button on:click={cancelEdit}><Fa icon={faBan}/></button>
+                {:else}
+                    <img
+                        src={item.preview}
+                        alt="Preview"
+                    />
+                    <span>{item.answer}</span>
+                    <button 
+                        class="edit"
+                        on:click={() => onEditClick(item.id)}
+                        >
+                        <Fa icon={faPenToSquare} />
+                    </button>
+                    <button
+                        class="remove"
+                        on:click={() => removeItem(item.id)}>
+                        <Fa icon={faSquareMinus} />
+                    </button>
+                {/if}
             </div>
         {/each}
 
@@ -379,6 +407,9 @@
     .container form {
         padding: 2rem;
         box-sizing: border-box;
+        display: flex; 
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .container form button {
