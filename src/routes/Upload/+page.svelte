@@ -2,8 +2,8 @@
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { fetchImageFromGridFS } from "../../lib/ImageFetcher";
-    import { selectedCollection } from "../../stores/collectionStore";
-    import { onDestroy } from "svelte";
+    import Sortable from "sortablejs";
+    import { onMount } from "svelte";
     import Fa from "svelte-fa";
     import {faPenToSquare, faSquareMinus, faFloppyDisk, faBan} from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
@@ -91,13 +91,53 @@
         }
     }
 
+    function initializeSortable(){
+        const sortable = new Sortable(document.querySelector(".container"), {
+            animation: 150,
+            onEnd: async (event) => {
+                const item = items.splice(event.oldIndex, 1)[0];
+                items.splice(event.newIndex, 0, item);
+
+                const data = {
+                    collection: category,
+                    items: items.map((item) => ({
+                        id: item.id,
+                        answer: item.answer,
+                    })),
+                };
+
+                try {
+                    const response = await fetch(
+                        `${import.meta.env.VITE_API_URL}/reorder`,
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(data),
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Failed to reorder items");
+                    }
+                } catch (error) {
+                    console.error("Error reordering items:", error);
+                }
+            },
+        });
+    }
+
     function handleCollectionSelection(event) {
         collectionId = event.detail;
         fetchCollectionData(collectionId);
     }
-
-    // Fetch collections when the page loads
-    fetchCollections();
+    
+    onMount(() => {
+        fetchCollections();
+        initializeSortable();
+    });
 
     // remove item on server based on item id
     async function removeItem(itemId) {

@@ -146,7 +146,9 @@
 
 {#if cards.length > 0}
     <div class="headline">
-        <h1>{collectionName}</h1> <p>by: {collectionAuthor}</p>
+        <h1>
+            <a href={`/${collection}`}>{collectionName}</a>
+        </h1> <p>by: {collectionAuthor}</p>
     </div>
 
     <div class="flashcards">

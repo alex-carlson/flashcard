@@ -1,9 +1,21 @@
 <script>
     let username = "";
+    let email = "";
     let password = "";
     let errorMessage = "";
 
     const login = async () => {
+        // if username is an email, use it as email
+        
+        //regex to check if the username is an email
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if(username && emailRegex.test(username)){
+            email = username;
+            username = "";
+            console.log("Email:", email);
+        } else {
+            console.log("Username:", username);
+        }
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/login`,
@@ -12,7 +24,7 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ username, password }),
+                    body: JSON.stringify({ username, email, password }),
                 },
             );
 
@@ -34,7 +46,7 @@
 
 <div>
     <h2>Login</h2>
-    <input type="text" bind:value={username} placeholder="Username" />
+    <input type="text" bind:value={username} placeholder="Username/Email" />
     <input type="password" bind:value={password} placeholder="Password" />
     <button on:click={login}>Login</button>
     {#if errorMessage}

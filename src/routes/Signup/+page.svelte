@@ -26,6 +26,7 @@
 
             if (!response.ok) {
                 throw new Error("Signup failed");
+                errorMessage = "Signup failed";
             }
 
             successMessage = "Account created successfully!";
@@ -34,7 +35,8 @@
             password = "";
             confirmPassword = "";
         } catch (error) {
-            errorMessage = "Error creating account";
+            console.log("Signup failed:", error);
+            errorMessage = "Signup failed: " + error.error;
             successMessage = "";
         }
     };
