@@ -46,17 +46,10 @@
 </header>
 
 <style>
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        background-color: #d7c117;
-        color: rgb(46, 46, 46);
-    }
 
     header h1 {
-        margin: 0;
+        /* margin: 0; */
+        margin-bottom: 5px;
     }
 
     nav ul {
@@ -65,7 +58,7 @@
         align-items: center;
         justify-content: center;
         padding-left: 0;
-        margin-bottom: 0;
+        margin-bottom: 5px;
     }
 
     nav ul li a {

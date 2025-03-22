@@ -196,7 +196,16 @@
 </div>
 
 <div class="flashcards grid" style="display: none;">
-
+    <button class="card">
+        <div class="card-front">
+            <div class="image-wrapper">
+                <img
+                    class="flashcard-image"
+                    alt="flashcard">
+            </div>
+        </div>
+        <div class="card-back">Answer</div>
+    </button>
 </div>
 
 <style global>
@@ -226,6 +235,16 @@
 
     .flashcards.grid {
         flex-direction: row;
+        width: 1020px;
+        gap: 5px;
+        /* center horizontally on page */
+        margin: 0 auto;
+    }
+
+    .flashcards.grid .card {
+        width: 200px;
+        height: 200px;
+        margin: 0;
     }
 
     .flashcards button {
@@ -235,6 +254,7 @@
         padding: 0;
         cursor: pointer;
         transition: transform 0.2s;
+        overflow: hidden;
     }
 
     .card {
@@ -247,32 +267,35 @@
     }
 
     .card-front {
-        padding: 20px;
+        padding: 5px;
         font-size: 1.2em;
         background: white;
+        height: 100%;
+        width: 100%;
     }
 
     .card-back {
         margin-top: 10px;
         padding: 10px;
-        border-radius: 8px;
         background: #242424;
         color: white;
-        font-size: 2.4em;
-        /* absolute positioned, center the back of the card */
+        font-size: 1.2rem;
+        /* put answer on the bottom of the card */
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        opacity: 0.75;
     }
 
     .flashcard-image {
         max-width: 100%;
         max-height: 100%;
-        object-fit: cover;
+        object-fit: contain;
+        width: auto;
+        height: auto;
         border-radius: 8px;
         user-select: none;
-        border-radius: 2px solid red;
     }
 
     .controls {
@@ -286,12 +309,12 @@
     }
 
     .image-wrapper {
-        position: relative;
+        width: 100%;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
-        height: 100%;
+        overflow: hidden;
     }
 
     .loading-spinner {
