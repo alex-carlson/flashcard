@@ -1,7 +1,7 @@
 <script>
     import Search from "./Search.svelte";
     import Fa from "svelte-fa";
-    import { faShuffle, faEyeSlash, faEye } from "@fortawesome/free-solid-svg-icons";
+    import { faShuffle, faEyeSlash, faEye, faTableCells } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
 
     let collectionName = "";
@@ -131,6 +131,13 @@
             // lazyLoadImages();
         });
     }
+
+    function toggleGrid(){
+        const grid = document.querySelector(".flashcards");
+        grid.classList.toggle("grid");
+        const hasGrid = grid.classList.contains("grid");
+        console.log("grid is: ", hasGrid);
+    }
 </script>
 
 <div class="container">
@@ -185,9 +192,14 @@
     {:else}
         <button type="button" on:click={toggleCards}><Fa icon={faEye} /></button>
     {/if}
+    <button type="button" on:click={toggleGrid}><Fa icon={faTableCells} /></button>
 </div>
 
-<style>
+<div class="flashcards grid" style="display: none;">
+
+</div>
+
+<style global>
 
     .container {
         max-width: 800px;
@@ -206,8 +218,14 @@
     .flashcards {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        flex-direction: column;
         justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .flashcards.grid {
+        flex-direction: row;
     }
 
     .flashcards button {
