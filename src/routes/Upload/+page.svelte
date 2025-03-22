@@ -272,7 +272,7 @@
                         placeholder="Enter an answer"
                     />
                     <button on:click={saveEdit}><Fa icon={faFloppyDisk}/></button>
-                    <button on:click={cancelEdit}><Fa icon={faBan}/></button>
+                    <button class="cancel" on:click={cancelEdit}><Fa icon={faBan}/></button>
                 {:else}
                     <img
                         src={item.preview}
@@ -380,6 +380,12 @@
         width: 20%;
     }
 
+    .container .item input[type="text"] {
+        /* fill extra space */
+        flex-grow: 1;
+        font-size: 1.5rem;
+    }
+
     .container .item .remove {
         /* transparent background */
         background-color: transparent;
@@ -400,8 +406,9 @@
         align-items: center;        
     }
 
-    .container .item input[type="file"] {
-        max-width: 200px;
+    .container .item button.cancel {
+        background-color: #373737;
+        color: #dedede;
     }
 
     .container form {
