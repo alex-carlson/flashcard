@@ -11,7 +11,6 @@
     let cards = [];
     let collection = null;
 
-
     // Utility function to generate a slug in the format "author/category"
     function generateSlug(author, category) {
         return `${author}/${category}`
@@ -45,11 +44,11 @@
                 imageUrl: `${import.meta.env.VITE_API_URL}/image/${card.id}`,
                 revealed: false,
                 loaded: false,
+                hidden: false
             }));
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
-
     }
 
     function lazyLoadImages(){
@@ -165,7 +164,7 @@
     <div class="headline">
         <h1>
             {collectionName}
-        </h1> <p>by: {collectionAuthor}</p>
+        </h1> <p>by: <a href={`#/${collectionAuthor}`}>{collectionAuthor}</a></p>
     </div>
 
     <div class="flashcards">
@@ -173,9 +172,12 @@
             <button
                 type="button"
                 class="card"
-                on:click={() => toggleReveal(i)}
+                on:click={(e) => {
+                    e.preventDefault();
+                    toggleReveal(i);
+                }}
                 on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-            >
+                >
                 <div class="card-front">
                     <div class="image-wrapper">
                          <img
@@ -196,7 +198,11 @@
                     </div>
                 </div>
                 {#if item.revealed}
-                    <div class="card-back">{item.answer}</div>
+                    <div class="card-back">
+                        <span>
+                            {item.answer}
+                        </span>
+                    </div>
                 {/if}
             </button>
         {/each}
@@ -315,6 +321,7 @@
         height: auto;
         border-radius: 8px;
         user-select: none;
+        pointer-events: none;
     }
 
     .controls {

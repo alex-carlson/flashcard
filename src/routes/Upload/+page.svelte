@@ -17,6 +17,7 @@
     let collection = null;
     let editableItemId = null;
     let localItem = {id: 1, file: null, answer: ""};
+    let isRenaming = true;
     // import font awesome icon fa-pen-to-square
 
     // Fetch collections from the server on load
@@ -89,6 +90,39 @@
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
+    }
+
+    async function renameCollection(){
+        isRenaming = false;
+        //rename collection on server
+        let url = import.meta.env.VITE_API_URL + "/renameCollection";
+
+        const data = {
+            id: collectionId,
+            category: category,
+            author: username,
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to rename collection");
+            }
+
+            console.log("Collection renamed successfully");
+        } catch (error) {
+            console.error("Error renaming collection:", error);
+            errorMessage = "Rename failed. Please try again.";
+        }
+
     }
 
     function initializeSortable(){
@@ -231,6 +265,10 @@
         localItem = null;
     }
 
+    function toggleRenaming(){
+        isRenaming = !isRenaming;
+    }
+
     // on resizeImage event, set the localItem.file to the resized image
     function handleFileChange(event) {
         // convert image blob to base64
@@ -294,11 +332,17 @@
             on:selectCollection={handleCollectionSelection}
         />
     {/if}
-        <input
-            type="text"
-            bind:value={category}
-            placeholder="Enter a category"
-        />
+    {#if isRenaming}
+            <input
+                type="text"
+                bind:value={category}
+                placeholder="Enter a category"
+            />
+            <button on:click={renameCollection}>Save</button>
+        {:else}
+            <h2>{category}</h2>
+            <button on:click={toggleRenaming}>Rename</button>
+        {/if}
 
         {#each items as item, index}
             <div class="item">
@@ -334,6 +378,7 @@
             </div>
         {/each}
 
+        {#if category}
         <hr />
 
         <!-- on submit form, call UploadFile -->
@@ -353,7 +398,7 @@
             />
             <button type="button" on:click={uploadData}>Add item</button>
         </form>
-
+        {/if}
         {#if errorMessage}
             <p style="color: red">{errorMessage}</p>
         {/if}
@@ -361,10 +406,18 @@
             <p style="color: green">{successMessage}</p>
         {/if}
     {/if}
+    <div class="container" style="display: none;">
+        <form action="">
+            <input type="file" name="file" id="file" />
+            <input type="text" name="answer" id="answer" />
+            <button type="submit">Upload</button>
+        </form>
+    </div>
 </div>
 
 <style>
     .container {
+        width: 100%;
         max-width: 600px;
         margin: 0 auto;
         /* vertical align elements inside of container */
@@ -376,6 +429,7 @@
         border-radius: 5px;
         margin-top: 40px;
         color: #303030;
+        padding: 2rem;
     }
 
     .container input,
@@ -452,11 +506,15 @@
     }
 
     .container form {
-        padding: 2rem;
         box-sizing: border-box;
         display: flex; 
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .container form input[type="file"] {
+        background-color: #bbbbbb;
+        height: 120px;
     }
 
     .container form button {

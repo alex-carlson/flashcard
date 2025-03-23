@@ -7,6 +7,7 @@
   import Signup from "./routes/Signup/+page.svelte";
   import UploadForm from "./routes/Upload/+page.svelte";
   import FlashCards from "./routes/[collectionId]/+page.svelte";
+  import Author from "./routes/[author]/+page.svelte";
   import NotFound from "./routes/NotFound/+page.svelte";
 
   const routes = {
@@ -15,10 +16,13 @@
     "/signup": Signup,
     "/upload": UploadForm,
     "/:author/:category": FlashCards,
+    "/:author": Author,
     "*": NotFound,
   };
 </script>
 
 <Header />
-<Router {routes}></Router>
+<main>
+  <Router {routes}></Router>
+</main>
 <Footer />
