@@ -6,7 +6,6 @@
     
     // Function to fetch the collectionId from the server
     async function getCollectionId(author, collectionName) {
-        console.log
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collectionId/${author}/${collectionName}`,

@@ -44,7 +44,7 @@
     };
 </script>
 
-<div>
+<div class="container">
     <h2>Login</h2>
     <input type="text" bind:value={username} placeholder="Username/Email" />
     <input type="password" bind:value={password} placeholder="Password" />

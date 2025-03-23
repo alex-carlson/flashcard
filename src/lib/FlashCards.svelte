@@ -285,6 +285,7 @@
     .card {
         width: 300px;
         max-width: 100vw;
+        height: auto;
         cursor: pointer;
         font-weight: 800;
         text-align: center;
@@ -326,12 +327,16 @@
 
     .controls {
         position: fixed;
-        bottom: 15px;
+        bottom: 4rem;
         left: 0px;
         width: 100%;
         display: flex;
         justify-content: center;
         gap: 10px;
+    }
+
+    .controls button {
+        border: solid 1px white;
     }
 
     .image-wrapper {

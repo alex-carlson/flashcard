@@ -85,6 +85,23 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  height: 60px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  border-radius: 8px;
+  border: 1px solid #d7c117;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  color: white;
+  transition: border-color 0.25s;
+  height: 60px;
+  box-sizing: border-box;
 }
 
 button:hover {
@@ -94,6 +111,16 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background-color: white;
+  color: black;
+  padding: 2rem;
 }
 
 @media (prefers-color-scheme: light) {

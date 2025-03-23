@@ -42,7 +42,7 @@
     };
 </script>
 
-<div>
+<div class="container">
     <h2>Create an Account</h2>
     <input type="text" bind:value={username} placeholder="Username" />
     <input type="email" bind:value={email} placeholder="Email" />
