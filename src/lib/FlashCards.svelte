@@ -1,6 +1,11 @@
 <script>
     import Fa from "svelte-fa";
-    import { faShuffle, faEyeSlash, faEye, faTableCells } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faShuffle,
+        faEyeSlash,
+        faEye,
+        faTableCells,
+    } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
 
@@ -27,7 +32,7 @@
                 `${import.meta.env.VITE_API_URL}/collection/${collection}`,
                 {
                     method: "GET",
-                }
+                },
             );
 
             if (!response.ok) {
@@ -41,25 +46,27 @@
 
             cards = data.items.map((card) => ({
                 ...card,
-                imageUrl: `${import.meta.env.VITE_API_URL}/image/${card.id}`,
+                imageUrl: `${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${card.id}.jpeg`,
                 revealed: false,
                 loaded: false,
-                hidden: false
+                hidden: false,
             }));
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
     }
 
-    function lazyLoadImages(){
+    function lazyLoadImages() {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        const cardIndex = cards.findIndex((card) => card.imageUrl === img.dataset.src);
+                        const cardIndex = cards.findIndex(
+                            (card) => card.imageUrl === img.dataset.src,
+                        );
 
-                        if(cardIndex === -1){
+                        if (cardIndex === -1) {
                             return;
                         }
 
@@ -87,7 +94,7 @@
                 root: null,
                 rootMargin: "0px 0px 50px 0px",
                 threshold: 0.1,
-            }
+            },
         );
 
         const images = document.querySelectorAll(".flashcard-image");
@@ -95,9 +102,9 @@
             observer.observe(img);
         });
     }
-    
+
     $: {
-        if(cards.length > 0){
+        if (cards.length > 0) {
             // lazyLoadImages();
         }
     }
@@ -136,14 +143,14 @@
         return cards.some((card) => card.revealed);
     }
 
-    function collectedSelected(event){
+    function collectedSelected(event) {
         collection = event.detail.collection;
         fetchCollection().then(() => {
             // lazyLoadImages();
         });
     }
 
-    function toggleGrid(){
+    function toggleGrid() {
         const grid = document.querySelector(".flashcards");
         grid.classList.toggle("grid");
         const hasGrid = grid.classList.contains("grid");
@@ -164,7 +171,8 @@
     <div class="headline">
         <h1>
             {collectionName}
-        </h1> <p>by: <a href={`#/${collectionAuthor}`}>{collectionAuthor}</a></p>
+        </h1>
+        <p>by: <a href={`#/${collectionAuthor}`}>{collectionAuthor}</a></p>
     </div>
 
     <div class="flashcards">
@@ -177,10 +185,10 @@
                     toggleReveal(i);
                 }}
                 on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-                >
+            >
                 <div class="card-front">
                     <div class="image-wrapper">
-                         <img
+                        <img
                             class="flashcard-image"
                             alt="flashcard"
                             src={item.imageUrl}
@@ -189,9 +197,12 @@
                                 onCardLoad(i);
                             }}
                             on:error={() => {
-                                console.error("Failed to load image for card:", item.imageUrl);
+                                console.error(
+                                    "Failed to load image for card:",
+                                    item.imageUrl,
+                                );
                             }}
-                         />
+                        />
                         {#if !item.loaded}
                             <div class="loading-spinner"></div>
                         {/if}
@@ -211,22 +222,27 @@
 
 <div class="controls">
     <!-- shuffle cards button -->
-    <button type="button" on:click={shuffleCards}><Fa icon={faShuffle}/></button>
+    <button type="button" on:click={shuffleCards}
+        ><Fa icon={faShuffle} /></button
+    >
     {#if areAnyCardsRevealed()}
-        <button type="button" on:click={toggleCards}><Fa icon={faEyeSlash} /></button>
+        <button type="button" on:click={toggleCards}
+            ><Fa icon={faEyeSlash} /></button
+        >
     {:else}
-        <button type="button" on:click={toggleCards}><Fa icon={faEye} /></button>
+        <button type="button" on:click={toggleCards}><Fa icon={faEye} /></button
+        >
     {/if}
-    <button type="button" on:click={toggleGrid}><Fa icon={faTableCells} /></button>
+    <button type="button" on:click={toggleGrid}
+        ><Fa icon={faTableCells} /></button
+    >
 </div>
 
 <div class="flashcards grid" style="display: none;">
     <button class="card">
         <div class="card-front">
             <div class="image-wrapper">
-                <img
-                    class="flashcard-image"
-                    alt="flashcard">
+                <img class="flashcard-image" alt="flashcard" />
             </div>
         </div>
         <div class="card-back">Answer</div>
@@ -234,7 +250,6 @@
 </div>
 
 <style global>
-
     .container {
         max-width: 800px;
         margin: 10px auto;
