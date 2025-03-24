@@ -6,7 +6,6 @@
     let author = null;
 
     function fetchCollections(author) {
-        console.log("Fetching collections for", author);
         // Fetch collections from the server
         fetch(`${import.meta.env.VITE_API_URL}/collections/${author}`)
             .then((response) => {
@@ -16,7 +15,6 @@
                 return response.json();
             })
             .then((data) => {
-                console.log(data);
                 collections = data;
             })
             .catch((error) => {
@@ -27,16 +25,10 @@
     $: if ($params) {
         author = $params.author;
 
-        console.log(author);
         if (author) {
             fetchCollections(author);
         }
     }
-
-    onMount(() => {
-        author = $params.author;
-        fetchCollections(author);
-    });
 </script>
 
 <div>

@@ -73,11 +73,8 @@
                 );
             }
 
-            // Fetch images from GridFS using their IDs
             const updatedItems = await Promise.all(
                 collectionData.items.map(async (item, index) => {
-                    // let image = await fetchImageFromGridFS(item.id);
-
                     return {
                         id: item.id,
                         file: null,
@@ -249,6 +246,8 @@
             author: username,
             item: localItem,
         };
+
+        console.log("uploading data", localItem);
 
         let url = import.meta.env.VITE_API_URL + "/upload";
 

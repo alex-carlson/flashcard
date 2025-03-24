@@ -10,11 +10,9 @@
     import { onMount } from "svelte";
 
     let slug;
-    export let collectionId = null;
-    let collectionName = "";
-    let collectionAuthor = "";
+    export let author = "";
+    export let collection = null;
     let cards = [];
-    let collection = null;
 
     // Utility function to generate a slug in the format "author/category"
     function generateSlug(author, category) {
@@ -26,10 +24,10 @@
 
     // function to fetch collection from id
     async function fetchCollection() {
-        console.log("Fetching collection:", collection);
+        console.log("Fetching collection:", slug);
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collection/${collection}`,
+                `${import.meta.env.VITE_API_URL}/collection/${author}/${collection}`,
                 {
                     method: "GET",
                 },
@@ -41,12 +39,14 @@
 
             const data = await response.json();
 
-            collectionName = data.category;
-            collectionAuthor = data.author;
+            console.log("Collection data:", data);
+
+            collection = data.category;
+            author = data.author;
 
             cards = data.items.map((card) => ({
                 ...card,
-                imageUrl: `${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${card.id}.jpeg`,
+                imageUrl: card.image,
                 revealed: false,
                 loaded: false,
                 hidden: false,
@@ -143,13 +143,6 @@
         return cards.some((card) => card.revealed);
     }
 
-    function collectedSelected(event) {
-        collection = event.detail.collection;
-        fetchCollection().then(() => {
-            // lazyLoadImages();
-        });
-    }
-
     function toggleGrid() {
         const grid = document.querySelector(".flashcards");
         grid.classList.toggle("grid");
@@ -157,10 +150,8 @@
     }
 
     onMount(() => {
-        // fetchCollection();
-        // try to get collection id from params
-        console.log("Collection ID:", collectionId);
-        collection = collectionId;
+        slug = generateSlug(author, collection);
+        console.log("Slug:", slug);
         fetchCollection().then(() => {
             // lazyLoadImages();
         });
@@ -170,9 +161,9 @@
 {#if cards.length > 0}
     <div class="headline">
         <h1>
-            {collectionName}
+            {collection}
         </h1>
-        <p>by: <a href={`#/${collectionAuthor}`}>{collectionAuthor}</a></p>
+        <p>by: <a href={`#/${author}`}>{author}</a></p>
     </div>
 
     <div class="flashcards">
