@@ -1,10 +1,14 @@
 <script>
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
-    import { fetchImageFromGridFS } from "../../lib/ImageFetcher";
     import { onMount } from "svelte";
     import Fa from "svelte-fa";
-    import {faPenToSquare, faSquareMinus, faFloppyDisk, faBan} from "@fortawesome/free-solid-svg-icons";
+    import {
+        faPenToSquare,
+        faSquareMinus,
+        faFloppyDisk,
+        faBan,
+    } from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
@@ -15,7 +19,7 @@
     let collectionId;
     let collection = null;
     let editableItemId = null;
-    let localItem = {id: 1, file: null, answer: ""};
+    let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = true;
     // import font awesome icon fa-pen-to-square
 
@@ -72,12 +76,12 @@
             // Fetch images from GridFS using their IDs
             const updatedItems = await Promise.all(
                 collectionData.items.map(async (item, index) => {
-                    let image = await fetchImageFromGridFS(item.id);
+                    // let image = await fetchImageFromGridFS(item.id);
 
                     return {
                         id: item.id,
                         file: null,
-                        preview: image, // Set fetched image URL
+                        preview: `${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${item.id}.jpeg`, // Set fetched image URL
                         answer: item.answer || "",
                     };
                 }),
@@ -91,7 +95,7 @@
         }
     }
 
-    async function renameCollection(){
+    async function renameCollection() {
         isRenaming = false;
         //rename collection on server
         let url = import.meta.env.VITE_API_URL + "/renameCollection";
@@ -100,7 +104,7 @@
             id: collectionId,
             category: category,
             author: username,
-        }
+        };
 
         try {
             const response = await fetch(url, {
@@ -110,7 +114,7 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(data),
-            })
+            });
 
             if (!response.ok) {
                 throw new Error("Failed to rename collection");
@@ -121,14 +125,13 @@
             console.error("Error renaming collection:", error);
             errorMessage = "Rename failed. Please try again.";
         }
-
     }
 
     function handleCollectionSelection(event) {
         collectionId = event.detail;
         fetchCollectionData(collectionId);
     }
-    
+
     onMount(() => {
         fetchCollections();
     });
@@ -139,7 +142,7 @@
         const data = {
             collection: category,
             id: itemId,
-        }
+        };
 
         try {
             const response = await fetch(url, {
@@ -174,7 +177,7 @@
             collection: category,
             id: itemId,
             answer: items.find((item) => item.id === itemId).answer,
-        }
+        };
 
         try {
             const response = await fetch(url, {
@@ -185,32 +188,33 @@
                 },
                 body: JSON.stringify(data),
             })
-            .then((response) => {
-                if(!response.ok){
-                    throw new Error(`Edit failed with error: ${response.statusText}`);
-                }
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-            });
-        }
-        catch (error) {
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Edit failed with error: ${response.statusText}`,
+                        );
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        } catch (error) {
             console.error("Error editing item:", error);
             errorMessage = "Edit failed. Please try again.";
         }
     }
 
-    function onEditClick(itemId){
+    function onEditClick(itemId) {
         editableItemId = itemId;
         //move the data to the localItem and scroll down to form
-        localItem = {...items.find((item) => item.id === itemId)};
+        localItem = { ...items.find((item) => item.id === itemId) };
     }
 
-    function saveEdit(){
+    function saveEdit() {
         try {
             // Update the item in the items array
             items = items.map((item) =>
-                item.id === editableItemId ? { ...item, ...localItem } : item
+                item.id === editableItemId ? { ...item, ...localItem } : item,
             );
             editableItemId = null; // Reset editable item ID
             editItem(localItem.id);
@@ -220,12 +224,12 @@
         }
     }
 
-    function cancelEdit(){
+    function cancelEdit() {
         editableItemId = null;
         localItem = null;
     }
 
-    function toggleRenaming(){
+    function toggleRenaming() {
         isRenaming = !isRenaming;
     }
 
@@ -240,12 +244,11 @@
     }
 
     async function uploadData() {
-
         const data = {
             category,
             author: username,
-            item: localItem
-        }
+            item: localItem,
+        };
 
         let url = import.meta.env.VITE_API_URL + "/upload";
 
@@ -276,7 +279,7 @@
         }
 
         //clear form
-        localItem = {id: 1, file: null, answer: ""};
+        localItem = { id: 1, file: null, answer: "" };
         //refresh items
         fetchCollectionData(collectionId);
     }
@@ -286,13 +289,13 @@
     {#if !token}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
-     {#if collections.length > 0}
-        <Collections
-            {collections}
-            on:selectCollection={handleCollectionSelection}
-        />
-    {/if}
-    {#if isRenaming}
+        {#if collections.length > 0}
+            <Collections
+                {collections}
+                on:selectCollection={handleCollectionSelection}
+            />
+        {/if}
+        {#if isRenaming}
             <input
                 type="text"
                 bind:value={category}
@@ -307,31 +310,25 @@
         {#each items as item, index}
             <div class="item">
                 {#if editableItemId === item.id}
-                    <img
-                        src={localItem.preview}
-                        alt="Preview">
+                    <img src={localItem.preview} alt="Preview" />
                     <input
                         type="text"
                         bind:value={localItem.answer}
                         placeholder="Enter an answer"
                     />
-                    <button on:click={saveEdit}><Fa icon={faFloppyDisk}/></button>
-                    <button class="cancel" on:click={cancelEdit}><Fa icon={faBan}/></button>
+                    <button on:click={saveEdit}
+                        ><Fa icon={faFloppyDisk} /></button
+                    >
+                    <button class="cancel" on:click={cancelEdit}
+                        ><Fa icon={faBan} /></button
+                    >
                 {:else}
-                    <img
-                        src={item.preview}
-                        alt="Preview"
-                    />
+                    <img src={item.preview} alt="Preview" />
                     <span>{item.answer}</span>
-                    <button 
-                        class="edit"
-                        on:click={() => onEditClick(item.id)}
-                        >
+                    <button class="edit" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />
                     </button>
-                    <button
-                        class="remove"
-                        on:click={() => removeItem(item.id)}>
+                    <button class="remove" on:click={() => removeItem(item.id)}>
                         <Fa icon={faSquareMinus} />
                     </button>
                 {/if}
@@ -339,25 +336,25 @@
         {/each}
 
         {#if category}
-        <hr />
+            <hr />
 
-        <!-- on submit form, call UploadFile -->
-        <form on:submit|preventDefault={uploadData}>
-            <FileUpload on:resizeImage={handleFileChange} />
-            {#if localItem.file}
-                <img
-                    src={localItem.file}
-                    alt="Preview"
-                    style="max-width: 100px; max-height: 100px; margin-top: 10px;"
+            <!-- on submit form, call UploadFile -->
+            <form on:submit|preventDefault={uploadData}>
+                <FileUpload on:resizeImage={handleFileChange} />
+                {#if localItem.file}
+                    <img
+                        src={localItem.file}
+                        alt="Preview"
+                        style="max-width: 100px; max-height: 100px; margin-top: 10px;"
+                    />
+                {/if}
+                <input
+                    type="text"
+                    bind:value={localItem.answer}
+                    placeholder="Enter an answer"
                 />
-            {/if}
-            <input
-                type="text"
-                bind:value={localItem.answer}
-                placeholder="Enter an answer"
-            />
-            <button type="button" on:click={uploadData}>Add item</button>
-        </form>
+                <button type="button" on:click={uploadData}>Add item</button>
+            </form>
         {/if}
         {#if errorMessage}
             <p style="color: red">{errorMessage}</p>
@@ -446,7 +443,7 @@
         color: #b73232;
         font-size: 2.5rem;
     }
-    
+
     .container .item button {
         border: none;
         border-radius: 5px;
@@ -457,7 +454,7 @@
         font-size: 1.5rem;
         display: flex;
         justify-content: center;
-        align-items: center;        
+        align-items: center;
     }
 
     .container .item button.cancel {
@@ -467,7 +464,7 @@
 
     .container form {
         box-sizing: border-box;
-        display: flex; 
+        display: flex;
         flex-direction: column;
         gap: 1rem;
     }

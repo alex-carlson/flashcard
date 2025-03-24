@@ -28,7 +28,7 @@
         author = $params.author;
 
         console.log(author);
-        if(author){
+        if (author) {
             fetchCollections(author);
         }
     }
@@ -37,17 +37,22 @@
         author = $params.author;
         fetchCollections(author);
     });
-
 </script>
+
 <div>
     {#if author}
         <h1>Collections for {author}</h1>
         <ul>
             {#each collections as item}
-            <li><a href={`/#/${item.slug}`}>
-                <img src={`${import.meta.env.VITE_API_URL}/image/${item.items[0].id}`} alt={item.category} />
-                <span>{item.category} - {item.items.length}</span>
-            </a></li>
+                <li>
+                    <a href={`/#/${item.slug}`}>
+                        <img
+                            src={`${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${item.items[0].id}.jpeg`}
+                            alt={item.category}
+                        />
+                        <span>{item.category} - {item.items.length}</span>
+                    </a>
+                </li>
             {/each}
         </ul>
     {:else}
