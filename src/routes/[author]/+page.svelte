@@ -7,7 +7,9 @@
 
     function fetchCollections(author) {
         // Fetch collections from the server
-        fetch(`${import.meta.env.VITE_API_URL}/collections/${author}`)
+        fetch(
+            `${import.meta.env.VITE_API_URL}/collections/${author}/all-collections`,
+        )
             .then((response) => {
                 if (!response.ok) {
                     throw new Error("Failed to fetch collections");
@@ -37,11 +39,8 @@
         <ul>
             {#each collections as item}
                 <li>
-                    <a href={`/#/${item.slug}`}>
-                        <img
-                            src={item.items[0].image}
-                            alt={item.category}
-                        />
+                    <a href={`/#/${item.author}/${item.category}`}>
+                        <img src={item.items[0].image} alt={item.category} />
                         <span>{item.category} - {item.items.length}</span>
                     </a>
                 </li>
