@@ -151,7 +151,8 @@
         const scaleValue = parseFloat(event.target.value); // Extract numeric value
         const cards = document.querySelectorAll(".card");
         cards.forEach((card) => {
-            card.style.width = `${300 * scaleValue}px`;
+            // card.style.width = `${300 * scaleValue}px`;
+            card.style.transform = `scale(${scaleValue})`;
         });
     }
 
@@ -171,9 +172,9 @@
             <input
                 on:input={scaleCards}
                 type="range"
-                min="0.5"
+                min="0.1"
                 max="2"
-                step="0.1"
+                step="0.025"
                 value="1"
             />
             <Fa icon={faMagnifyingGlassPlus} />
@@ -291,7 +292,7 @@
 
     .flashcards.grid {
         flex-direction: row;
-        width: 1020px;
+        width: auto;
         gap: 5px;
         /* center horizontally on page */
         margin: 0 auto;
@@ -348,7 +349,6 @@
         object-fit: contain;
         width: auto;
         height: auto;
-        border-radius: 8px;
         user-select: none;
         pointer-events: none;
     }
@@ -403,12 +403,11 @@
         align-items: center;
         color: #fff;
         background: #4e0000;
-        width: 100%;
         padding: 1em 0.4em;
         font-size: 25px;
         border-radius: 15px;
         gap: 20px;
-        max-width: 600px;
+        width: auto;
         flex-direction: column;
         box-sizing: border-box;
     }
