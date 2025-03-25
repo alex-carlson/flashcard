@@ -44,6 +44,7 @@
     }
 
     async function fetchCollectionData(detail) {
+        isRenaming = false;
         const [username, collection] = detail.split("/");
         const url = `${import.meta.env.VITE_API_URL}/collections/${username}/${collection}`;
         console.log("Fetching collection data from:", url);

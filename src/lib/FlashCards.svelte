@@ -5,6 +5,8 @@
         faEyeSlash,
         faEye,
         faTableCells,
+        faMagnifyingGlassMinus,
+        faMagnifyingGlassPlus,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
@@ -162,6 +164,21 @@
     });
 </script>
 
+<div class="toolbar">
+    <span>
+        <Fa icon={faMagnifyingGlassMinus} />
+        <input
+            on:input={scaleCards}
+            type="range"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+        />
+        <Fa icon={faMagnifyingGlassPlus} />
+    </span>
+</div>
+
 {#if cards.length > 0}
     <div class="headline">
         <h1>
@@ -234,16 +251,6 @@
             ><Fa icon={faTableCells} /></button
         >
     </div>
-    <!-- <div class="row">
-        <input
-            on:change={scaleCards}
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value="1"
-        />
-    </div> -->
 </div>
 
 <div class="flashcards grid" style="display: none;">
@@ -316,7 +323,6 @@
 
     .card-front {
         font-size: 1.2em;
-        background: white;
         height: 100%;
         width: 100%;
     }
@@ -324,7 +330,7 @@
     .card-back {
         margin-top: 10px;
         padding: 10px;
-        background: #242424;
+        background: #000;
         color: white;
         font-size: 1.2rem;
         /* put answer on the bottom of the card */
@@ -400,5 +406,17 @@
         100% {
             transform: rotate(360deg);
         }
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #000000;
+        background: #4e0000;
+        width: 100%;
+        padding: 0.4em;
+        font-size: 25px;
+        border-radius: 15px;
     }
 </style>
