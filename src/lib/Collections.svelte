@@ -2,14 +2,16 @@
     import { onMount, createEventDispatcher } from "svelte";
     let collections = [];
     let selectedCollection = "";
+    import {sanitize} from "../lib/utils.js";
 
     const dispatch = createEventDispatcher();
 
     // Fetch collections when the component mounts
     onMount(async () => {
+        const username = localStorage.getItem("username");
         try {
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/user/collections`,
+                `${import.meta.env.VITE_API_URL}/api/${username}/collections`,
                 {
                     method: "GET",
                     headers: {
@@ -50,7 +52,7 @@
         >
         <option value="">Select a collection</option>
         {#each collections as collection}
-            <option value={collection._id} on:click={selectCollection(collection._id)}>{collection.category}</option>
+            <option value={collection.author + "/" + collection.category} on:click={selectCollection(collection.author + "/" + collection.category)}>{collection.category}</option>
         {/each}
     </select>
 </div>

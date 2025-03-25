@@ -8,26 +8,19 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
+    import { slugify } from "./utils.js";
 
     let slug;
     export let author = "";
     export let collection = null;
     let cards = [];
 
-    // Utility function to generate a slug in the format "author/category"
-    function generateSlug(author, category) {
-        return `${author}/${category}`
-            .toLowerCase()
-            .replace(/\s+/g, "-") // Replace spaces with hyphens
-            .replace(/[^a-z0-9-/]/g, ""); // Remove invalid characters
-    }
-
     // function to fetch collection from id
     async function fetchCollection() {
         console.log("Fetching collection:", slug);
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collection/${author}/${collection}`,
+                `${import.meta.env.VITE_API_URL}/api/collections/${author}/${collection}`,
                 {
                     method: "GET",
                 },
@@ -39,10 +32,13 @@
 
             const data = await response.json();
 
-            console.log("Collection data:", data);
-
             collection = data.category;
             author = data.author;
+
+            // if items length is 0, or is undefined, return
+            if (!data.items || data.items.length === 0) {
+                return;
+            }
 
             cards = data.items.map((card) => ({
                 ...card,
@@ -150,7 +146,7 @@
     }
 
     onMount(() => {
-        slug = generateSlug(author, collection);
+        slug = slugify(author + "-" + collection);
         console.log("Slug:", slug);
         fetchCollection().then(() => {
             // lazyLoadImages();

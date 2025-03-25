@@ -39,7 +39,7 @@
                 <li>
                     <a href={`/#/${item.slug}`}>
                         <img
-                            src={`${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${item.items[0].id}.jpeg`}
+                            src={item.items[0].image}
                             alt={item.category}
                         />
                         <span>{item.category} - {item.items.length}</span>

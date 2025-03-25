@@ -13,21 +13,17 @@
     let username = localStorage.getItem("username") || "Anonymous";
     let category = "";
     let items = [];
-    let errorMessage = "";
-    let successMessage = "";
+    let errorMessage, successMessage = "";
     let collections = [];
-    let collectionId;
-    let collection = null;
     let editableItemId = null;
     let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = true;
-    // import font awesome icon fa-pen-to-square
 
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections`,
+                `${import.meta.env.VITE_API_URL}/api/collections`,
                 {
                     method: "GET",
                     headers: {
@@ -40,17 +36,16 @@
                 throw new Error("Failed to fetch collections");
             }
 
-            const data = await response.json();
-            collections = data; // Store collections in the local variable
+            collections = await response.json();
         } catch (error) {
             console.error("Error fetching collections:", error);
         }
     }
 
-    async function fetchCollectionData(id) {
+    async function fetchCollectionData(detail) {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collection/${id}`,
+                `${import.meta.env.VITE_API_URL}/collection/${detail}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -76,9 +71,7 @@
             const updatedItems = await Promise.all(
                 collectionData.items.map(async (item, index) => {
                     return {
-                        id: item.id,
-                        file: null,
-                        preview: `${import.meta.env.VITE_IMAGE_UPLOAD_URL}/${item.id}.jpeg`, // Set fetched image URL
+                        image: item.image || "",
                         answer: item.answer || "",
                     };
                 }),
@@ -92,14 +85,38 @@
         }
     }
 
+    async function createCollection(){
+        let url = import.meta.env.VITE_API_URL + "/createCollection";
+        const data = {
+            category,
+            author: username,
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+
+        } catch (error) {
+            console.error("Error creating collection:", error);
+            errorMessage = "Create failed. Please try again.";
+        }
+    }
+
     async function renameCollection() {
         isRenaming = false;
         //rename collection on server
         let url = import.meta.env.VITE_API_URL + "/renameCollection";
 
+        console.log("Renaming to: ", category);
+
         const data = {
-            id: collectionId,
-            category: category,
+            category,
             author: username,
         };
 
@@ -125,8 +142,8 @@
     }
 
     function handleCollectionSelection(event) {
-        collectionId = event.detail;
-        fetchCollectionData(collectionId);
+        console.log("Selected collection:", event.detail);
+        fetchCollectionData(event.detail);
     }
 
     onMount(() => {
@@ -247,9 +264,7 @@
             item: localItem,
         };
 
-        console.log("uploading data", localItem);
-
-        let url = import.meta.env.VITE_API_URL + "/upload";
+        let url = import.meta.env.VITE_API_URL + "/api/upload";
 
         try {
             const response = await fetch(url, {
@@ -268,6 +283,8 @@
                     }
 
                     successMessage = "Upload successful!";
+                    localItem = { id: 1, file: null, answer: "" };
+                    console.log("Uploaded item, returned as: ", response);
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -277,10 +294,7 @@
             errorMessage = "Upload failed. Please try again.";
         }
 
-        //clear form
-        localItem = { id: 1, file: null, answer: "" };
-        //refresh items
-        fetchCollectionData(collectionId);
+        fetchCollectionData(username + "/" + category);
     }
 </script>
 
@@ -300,7 +314,7 @@
                 bind:value={category}
                 placeholder="Enter a category"
             />
-            <button on:click={renameCollection}>Save</button>
+            <button on:click={createCollection}>Save</button>
         {:else}
             <h2>{category}</h2>
             <button on:click={toggleRenaming}>Rename</button>
@@ -309,7 +323,7 @@
         {#each items as item, index}
             <div class="item">
                 {#if editableItemId === item.id}
-                    <img src={localItem.preview} alt="Preview" />
+                    <img src={localItem.image} alt="Preview" />
                     <input
                         type="text"
                         bind:value={localItem.answer}
@@ -322,7 +336,7 @@
                         ><Fa icon={faBan} /></button
                     >
                 {:else}
-                    <img src={item.preview} alt="Preview" />
+                    <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
                     <button class="edit" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />

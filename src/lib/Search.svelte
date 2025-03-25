@@ -8,7 +8,7 @@
     onMount(async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections`,
+                `${import.meta.env.VITE_API_URL}/api/collections`,
                 {
                     method: "GET",
                 }
@@ -25,14 +25,6 @@
         }
     });
 
-    // Utility function to generate a slug
-    function generateSlug(category, author) {
-        return `${author}/${category}`
-            .toLowerCase()
-            .replace(/\s+/g, "-") // Replace spaces with hyphens
-            .replace(/[^a-z0-9-/]/g, ""); // Remove invalid characters    
-    }
-
     // pass the selected collection to the parent component
     function handleChange(event) {
         dispatch("collectionSelected", { collection: event.target.value });
@@ -46,7 +38,7 @@
     <select on:change={handleChange}>
         <option value="">Select a collection</option>
         {#each collections as collection}
-            <option value={generateSlug(collection.category, collection.author)}>{collection.category} by: {collection.author}</option>
+            <option value={collection.author + "/" + collection.category}>{collection.category} by: {collection.author}</option>
         {/each}
     </select>
 </div>
