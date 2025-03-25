@@ -6,19 +6,9 @@
 
     const login = async () => {
         // if username is an email, use it as email
-        
-        //regex to check if the username is an email
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-        if(username && emailRegex.test(username)){
-            email = username;
-            username = "";
-            console.log("Email:", email);
-        } else {
-            console.log("Username:", username);
-        }
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/login`,
+                `${import.meta.env.VITE_API_URL}/users/login`,
                 {
                     method: "POST",
                     headers: {
@@ -33,11 +23,13 @@
             }
 
             const data = await response.json();
-            console.log("Login successful:", data.username);
+            console.log("Login successful:", data);
             localStorage.setItem("token", data.token);
-            localStorage.setItem("username", data.username);
+            localStorage.setItem("username", data.user);
+            // navigate to home page
+            console.log(localStorage.getItem("username"));
+            window.location.href = "/";
             errorMessage = "";
-            window.location.href = "/"; // Redirect to the upload page
         } catch (error) {
             errorMessage = "Invalid credentials";
         }

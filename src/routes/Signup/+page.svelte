@@ -14,7 +14,7 @@
 
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/signup`,
+                `${import.meta.env.VITE_API_URL}/users/signup`,
                 {
                     method: "POST",
                     headers: {
@@ -26,7 +26,6 @@
 
             if (!response.ok) {
                 throw new Error("Signup failed");
-                errorMessage = "Signup failed";
             }
 
             successMessage = "Account created successfully!";

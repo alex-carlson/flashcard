@@ -17,10 +17,10 @@
 
     // function to fetch collection from id
     async function fetchCollection() {
-        console.log("Fetching collection:", slug);
+        console.log("Fetching collection:", collection + " by " + author);
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/collections/${author}/${collection}`,
+                `${import.meta.env.VITE_API_URL}/collections/${author}/${collection}`,
                 {
                     method: "GET",
                 },

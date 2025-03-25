@@ -8,10 +8,10 @@
     onMount(async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/collections`,
+                `${import.meta.env.VITE_API_URL}/collections`,
                 {
                     method: "GET",
-                }
+                },
             );
 
             if (!response.ok) {
@@ -38,13 +38,14 @@
     <select on:change={handleChange}>
         <option value="">Select a collection</option>
         {#each collections as collection}
-            <option value={collection.author + "/" + collection.category}>{collection.category} by: {collection.author}</option>
+            <option value={collection.author + "/" + collection.category}
+                >{collection.category} by: {collection.author}</option
+            >
         {/each}
     </select>
 </div>
 
 <style>
-
     select {
         padding: 0.5rem;
         font-size: 1rem;

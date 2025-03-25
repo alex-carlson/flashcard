@@ -10,10 +10,11 @@
         faBan,
     } from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
-    let username = localStorage.getItem("username") || "Anonymous";
+    let username = localStorage.getItem("username");
     let category = "";
     let items = [];
-    let errorMessage, successMessage = "";
+    let errorMessage,
+        successMessage = "";
     let collections = [];
     let editableItemId = null;
     let localItem = { id: 1, file: null, answer: "" };
@@ -23,7 +24,7 @@
     async function fetchCollections() {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/collections`,
+                `${import.meta.env.VITE_API_URL}/collections/${username}/all-collections`,
                 {
                     method: "GET",
                     headers: {
@@ -43,22 +44,24 @@
     }
 
     async function fetchCollectionData(detail) {
+        const [username, collection] = detail.split("/");
+        const url = `${import.meta.env.VITE_API_URL}/collections/${username}/${collection}`;
+        console.log("Fetching collection data from:", url);
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collection/${detail}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
                 },
-            );
+            });
 
             if (!response.ok) {
                 throw new Error("Error fetching collection data");
             }
 
             const collectionData = await response.json();
+
+            console.log("Collection data:", collectionData);
 
             category = collectionData.category;
 
@@ -68,25 +71,15 @@
                 );
             }
 
-            const updatedItems = await Promise.all(
-                collectionData.items.map(async (item, index) => {
-                    return {
-                        image: item.image || "",
-                        answer: item.answer || "",
-                    };
-                }),
-            );
-
-            items = [...updatedItems]; // Ensure reactivity
-
-            console.log("Updated items:", items);
+            items = collectionData.items;
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
     }
 
-    async function createCollection(){
-        let url = import.meta.env.VITE_API_URL + "/createCollection";
+    async function createCollection() {
+        let url =
+            import.meta.env.VITE_API_URL + "/collections/createCollection";
         const data = {
             category,
             author: username,
@@ -101,7 +94,6 @@
                 },
                 body: JSON.stringify(data),
             });
-
         } catch (error) {
             console.error("Error creating collection:", error);
             errorMessage = "Create failed. Please try again.";
@@ -142,7 +134,6 @@
     }
 
     function handleCollectionSelection(event) {
-        console.log("Selected collection:", event.detail);
         fetchCollectionData(event.detail);
     }
 
@@ -261,10 +252,15 @@
         const data = {
             category,
             author: username,
-            item: localItem,
+            item: {
+                name: localItem.answer,
+                image: null,
+            },
+            base64Image: localItem.file,
+            folder: `${username}/${category}`,
         };
 
-        let url = import.meta.env.VITE_API_URL + "/api/upload";
+        let url = import.meta.env.VITE_API_URL + "/items/upload";
 
         try {
             const response = await fetch(url, {
@@ -283,8 +279,18 @@
                     }
 
                     successMessage = "Upload successful!";
-                    localItem = { id: 1, file: null, answer: "" };
-                    console.log("Uploaded item, returned as: ", response);
+
+                    //append the new item to the items array
+                    items = [
+                        ...items,
+                        {
+                            id: items.length + 1,
+                            answer: localItem.answer,
+                            image: localItem.file,
+                        },
+                    ];
+
+                    items = [...items];
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -293,8 +299,6 @@
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";
         }
-
-        fetchCollectionData(username + "/" + category);
     }
 </script>
 
