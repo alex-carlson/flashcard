@@ -164,110 +164,112 @@
     });
 </script>
 
-<div class="toolbar">
-    <span>
-        <Fa icon={faMagnifyingGlassMinus} />
-        <input
-            on:input={scaleCards}
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value="1"
-        />
-        <Fa icon={faMagnifyingGlassPlus} />
-    </span>
-    <div class="row">
-        <!-- shuffle cards button -->
-        <button type="button" on:click={shuffleCards}
-            ><Fa icon={faShuffle} /></button
-        >
-        {#if areAnyCardsRevealed()}
-            <button type="button" on:click={toggleCards}
-                ><Fa icon={faEyeSlash} /></button
-            >
-        {:else}
-            <button type="button" on:click={toggleCards}
-                ><Fa icon={faEye} /></button
-            >
-        {/if}
-        <button type="button" on:click={toggleGrid}
-            ><Fa icon={faTableCells} /></button
-        >
-    </div>
-</div>
-
-{#if cards.length > 0}
-    <div class="headline">
-        <h1>
-            {collection}
-        </h1>
-        <p>by: <a href={`#/${author}`}>{author}</a></p>
-    </div>
-
-    <div class="flashcards">
-        {#each cards as item, i}
-            <button
-                type="button"
-                class="card"
-                on:click={(e) => {
-                    e.preventDefault();
-                    toggleReveal(i);
-                }}
-                on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-            >
-                <div class="card-front">
-                    <div class="image-wrapper">
-                        <img
-                            class="flashcard-image"
-                            alt="flashcard"
-                            src={item.imageUrl}
-                            data-src={item.imageUrl}
-                            on:load={() => {
-                                onCardLoad(i);
-                            }}
-                            on:error={() => {
-                                console.error(
-                                    "Failed to load image for card:",
-                                    item.imageUrl,
-                                );
-                            }}
-                        />
-                        {#if !item.loaded}
-                            <div class="loading-spinner"></div>
-                        {/if}
-                    </div>
-                </div>
-                {#if item.revealed}
-                    <div class="card-back">
-                        <span>
-                            {item.answer}
-                        </span>
-                    </div>
-                {/if}
-            </button>
-        {/each}
-    </div>
-{/if}
-
-<div class="controls"></div>
-
-<div class="flashcards grid" style="display: none;">
-    <button class="card">
-        <div class="card-front">
-            <div class="image-wrapper">
-                <img class="flashcard-image" alt="flashcard" />
-            </div>
+<div class="container">
+    <div class="toolbar">
+        <div class="row">
+            <Fa icon={faMagnifyingGlassMinus} />
+            <input
+                on:input={scaleCards}
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value="1"
+            />
+            <Fa icon={faMagnifyingGlassPlus} />
         </div>
-        <div class="card-back">Answer</div>
-    </button>
+        <div class="row">
+            <!-- shuffle cards button -->
+            <button type="button" on:click={shuffleCards}
+                ><Fa icon={faShuffle} /></button
+            >
+            {#if areAnyCardsRevealed()}
+                <button type="button" on:click={toggleCards}
+                    ><Fa icon={faEyeSlash} /></button
+                >
+            {:else}
+                <button type="button" on:click={toggleCards}
+                    ><Fa icon={faEye} /></button
+                >
+            {/if}
+            <button type="button" on:click={toggleGrid}
+                ><Fa icon={faTableCells} /></button
+            >
+        </div>
+    </div>
+
+    {#if cards.length > 0}
+        <div class="headline">
+            <h1>
+                {collection}
+            </h1>
+            <p>by: <a href={`#/${author}`}>{author}</a></p>
+        </div>
+
+        <div class="flashcards">
+            {#each cards as item, i}
+                <button
+                    type="button"
+                    class="card"
+                    on:click={(e) => {
+                        e.preventDefault();
+                        toggleReveal(i);
+                    }}
+                    on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
+                >
+                    <div class="card-front">
+                        <div class="image-wrapper">
+                            <img
+                                class="flashcard-image"
+                                alt="flashcard"
+                                src={item.imageUrl}
+                                data-src={item.imageUrl}
+                                on:load={() => {
+                                    onCardLoad(i);
+                                }}
+                                on:error={() => {
+                                    console.error(
+                                        "Failed to load image for card:",
+                                        item.imageUrl,
+                                    );
+                                }}
+                            />
+                            {#if !item.loaded}
+                                <div class="loading-spinner"></div>
+                            {/if}
+                        </div>
+                    </div>
+                    {#if item.revealed}
+                        <div class="card-back">
+                            <span>
+                                {item.answer}
+                            </span>
+                        </div>
+                    {/if}
+                </button>
+            {/each}
+        </div>
+    {/if}
+
+    <div class="controls"></div>
+
+    <div class="flashcards grid" style="display: none;">
+        <button class="card">
+            <div class="card-front">
+                <div class="image-wrapper">
+                    <img class="flashcard-image" alt="flashcard" />
+                </div>
+            </div>
+            <div class="card-back">Answer</div>
+        </button>
+    </div>
 </div>
 
 <style global>
     .container {
-        max-width: 800px;
-        margin: 10px auto;
-        padding: 0 10px;
+        background: transparent;
+        color: rgba(246, 233, 50, 0.87);
+        box-sizing: border-box;
     }
     .headline {
         margin-bottom: 40px;
@@ -355,8 +357,7 @@
         display: flex;
         justify-content: center;
         gap: 20px;
-        /* width: 100%; */
-        clear: both;
+        width: 100%;
     }
 
     .row button {
@@ -400,12 +401,15 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        color: #000000;
+        color: #fff;
         background: #4e0000;
         width: 100%;
-        padding: 0.4em;
+        padding: 1em 0.4em;
         font-size: 25px;
         border-radius: 15px;
         gap: 20px;
+        max-width: 600px;
+        flex-direction: column;
+        box-sizing: border-box;
     }
 </style>
