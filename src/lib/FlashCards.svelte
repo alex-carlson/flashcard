@@ -151,8 +151,8 @@
         const scaleValue = parseFloat(event.target.value); // Extract numeric value
         const cards = document.querySelectorAll(".card");
         cards.forEach((card) => {
-            // card.style.width = `${300 * scaleValue}px`;
-            card.style.transform = `scale(${scaleValue})`;
+            card.style.width = `${300 * scaleValue}px`;
+            // card.style.transform = `scale(${scaleValue})`;
         });
     }
 
