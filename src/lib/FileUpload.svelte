@@ -29,8 +29,8 @@
         return new Promise((resolve, reject) => {
             resize(
                 file,
-                1200,
-                1200,
+                600,
+                600,
                 "JPEG",
                 60,
                 0,
