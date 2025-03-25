@@ -177,6 +177,24 @@
         />
         <Fa icon={faMagnifyingGlassPlus} />
     </span>
+    <div class="row">
+        <!-- shuffle cards button -->
+        <button type="button" on:click={shuffleCards}
+            ><Fa icon={faShuffle} /></button
+        >
+        {#if areAnyCardsRevealed()}
+            <button type="button" on:click={toggleCards}
+                ><Fa icon={faEyeSlash} /></button
+            >
+        {:else}
+            <button type="button" on:click={toggleCards}
+                ><Fa icon={faEye} /></button
+            >
+        {/if}
+        <button type="button" on:click={toggleGrid}
+            ><Fa icon={faTableCells} /></button
+        >
+    </div>
 </div>
 
 {#if cards.length > 0}
@@ -232,26 +250,7 @@
     </div>
 {/if}
 
-<div class="controls">
-    <div class="row">
-        <!-- shuffle cards button -->
-        <button type="button" on:click={shuffleCards}
-            ><Fa icon={faShuffle} /></button
-        >
-        {#if areAnyCardsRevealed()}
-            <button type="button" on:click={toggleCards}
-                ><Fa icon={faEyeSlash} /></button
-            >
-        {:else}
-            <button type="button" on:click={toggleCards}
-                ><Fa icon={faEye} /></button
-            >
-        {/if}
-        <button type="button" on:click={toggleGrid}
-            ><Fa icon={faTableCells} /></button
-        >
-    </div>
-</div>
+<div class="controls"></div>
 
 <div class="flashcards grid" style="display: none;">
     <button class="card">
@@ -352,18 +351,7 @@
         pointer-events: none;
     }
 
-    .controls {
-        position: fixed;
-        bottom: 2rem;
-        left: 0px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 30px;
-    }
-
-    .controls .row {
+    .row {
         display: flex;
         justify-content: center;
         gap: 20px;
@@ -371,13 +359,13 @@
         clear: both;
     }
 
-    .controls button {
+    .row button {
         border: solid 1px white;
-    }
-
-    .controls input {
-        /* width: 100%; */
-        width: 250px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .image-wrapper {
@@ -418,5 +406,6 @@
         padding: 0.4em;
         font-size: 25px;
         border-radius: 15px;
+        gap: 20px;
     }
 </style>
