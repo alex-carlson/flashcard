@@ -121,6 +121,7 @@ button:focus-visible {
   background-color: white;
   color: black;
   padding: 2rem;
+  box-sizing: border-box;
 }
 
 @media (prefers-color-scheme: light) {

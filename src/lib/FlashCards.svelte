@@ -234,7 +234,7 @@
             ><Fa icon={faTableCells} /></button
         >
     </div>
-    <div class="row">
+    <!-- <div class="row">
         <input
             on:change={scaleCards}
             type="range"
@@ -243,7 +243,7 @@
             step="0.1"
             value="1"
         />
-    </div>
+    </div> -->
 </div>
 
 <div class="flashcards grid" style="display: none;">

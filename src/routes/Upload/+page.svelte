@@ -178,7 +178,7 @@
     }
 
     async function editItem(itemId) {
-        let url = import.meta.env.VITE_API_URL + "/edit";
+        let url = import.meta.env.VITE_API_URL + "/items/edit";
         const data = {
             collection: category,
             id: itemId,
@@ -394,9 +394,9 @@
                 {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
-                    <button class="edit" on:click={() => onEditClick(item.id)}>
+                    <!-- <button class="edit" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />
-                    </button>
+                    </button> -->
                     <button
                         class="remove"
                         on:click={() => removeItem(item.answer)}
