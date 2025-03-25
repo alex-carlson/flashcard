@@ -270,7 +270,6 @@
 
     .flashcards.grid .card {
         width: 200px;
-        height: 200px;
         margin: 0;
     }
 
@@ -295,7 +294,6 @@
     }
 
     .card-front {
-        padding: 5px;
         font-size: 1.2em;
         background: white;
         height: 100%;

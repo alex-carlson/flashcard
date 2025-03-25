@@ -142,11 +142,11 @@
     });
 
     // remove item on server based on item id
-    async function removeItem(itemId) {
-        let url = import.meta.env.VITE_API_URL + "/remove";
+    async function removeItem(itemAnswer) {
+        let url = import.meta.env.VITE_API_URL + "/items/remove";
         const data = {
-            collection: category,
-            id: itemId,
+            category,
+            itemAnswer,
         };
 
         try {
@@ -165,7 +165,8 @@
                         );
                     }
 
-                    items = items.filter((item) => item.id !== itemId);
+                    // remove the item from the items array
+                    items = items.filter((item) => item.answer !== itemAnswer);
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -248,6 +249,53 @@
         };
     }
 
+    function confirmDelete() {
+        //show popup to confirm delete
+        if (confirm("Are you sure you want to proceed?")) {
+            deleteCollection();
+            alert("Collection Deleted! 💨");
+        }
+    }
+
+    async function deleteCollection() {
+        let url =
+            import.meta.env.VITE_API_URL +
+            `/collections/${username}/${category}`;
+        const data = {
+            category,
+            username,
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Delete failed: ${response.statusText}`,
+                        );
+                    }
+
+                    // remove the item from the items array
+                    collections = collections.filter(
+                        (collection) => collection.category !== category,
+                    );
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        } catch (error) {
+            console.error("Error removing item:", error);
+            errorMessage = "Remove failed. Please try again.";
+        }
+    }
+
     async function uploadData() {
         const data = {
             category,
@@ -291,6 +339,10 @@
                     ];
 
                     items = [...items];
+                    // clear file and answer
+                    localItem = { id: 1, file: null, answer: "" };
+                    // empty form data
+                    document.querySelector("form").reset();
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -345,7 +397,10 @@
                     <button class="edit" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />
                     </button>
-                    <button class="remove" on:click={() => removeItem(item.id)}>
+                    <button
+                        class="remove"
+                        on:click={() => removeItem(item.answer)}
+                    >
                         <Fa icon={faSquareMinus} />
                     </button>
                 {/if}
@@ -371,6 +426,9 @@
                     placeholder="Enter an answer"
                 />
                 <button type="button" on:click={uploadData}>Add item</button>
+                <button class="warning" on:click={confirmDelete}
+                    >Delete Collection</button
+                >
             </form>
         {/if}
         {#if errorMessage}
@@ -489,5 +547,10 @@
     .container form input[type="file"] {
         background-color: #bbbbbb;
         height: 120px;
+    }
+
+    .container button.warning {
+        background-color: #bd1010;
+        color: #dedede;
     }
 </style>
