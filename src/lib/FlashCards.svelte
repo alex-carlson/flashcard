@@ -145,6 +145,14 @@
         const hasGrid = grid.classList.contains("grid");
     }
 
+    function scaleCards(event) {
+        const scaleValue = parseFloat(event.target.value); // Extract numeric value
+        const cards = document.querySelectorAll(".card");
+        cards.forEach((card) => {
+            card.style.width = `${300 * scaleValue}px`;
+        });
+    }
+
     onMount(() => {
         slug = slugify(author + "-" + collection);
         console.log("Slug:", slug);
@@ -208,21 +216,34 @@
 {/if}
 
 <div class="controls">
-    <!-- shuffle cards button -->
-    <button type="button" on:click={shuffleCards}
-        ><Fa icon={faShuffle} /></button
-    >
-    {#if areAnyCardsRevealed()}
-        <button type="button" on:click={toggleCards}
-            ><Fa icon={faEyeSlash} /></button
+    <div class="row">
+        <!-- shuffle cards button -->
+        <button type="button" on:click={shuffleCards}
+            ><Fa icon={faShuffle} /></button
         >
-    {:else}
-        <button type="button" on:click={toggleCards}><Fa icon={faEye} /></button
+        {#if areAnyCardsRevealed()}
+            <button type="button" on:click={toggleCards}
+                ><Fa icon={faEyeSlash} /></button
+            >
+        {:else}
+            <button type="button" on:click={toggleCards}
+                ><Fa icon={faEye} /></button
+            >
+        {/if}
+        <button type="button" on:click={toggleGrid}
+            ><Fa icon={faTableCells} /></button
         >
-    {/if}
-    <button type="button" on:click={toggleGrid}
-        ><Fa icon={faTableCells} /></button
-    >
+    </div>
+    <div class="row">
+        <input
+            on:change={scaleCards}
+            type="range"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+        />
+    </div>
 </div>
 
 <div class="flashcards grid" style="display: none;">
@@ -327,16 +348,30 @@
 
     .controls {
         position: fixed;
-        bottom: 4rem;
+        bottom: 2rem;
         left: 0px;
         width: 100%;
         display: flex;
+        flex-direction: column;
         justify-content: center;
-        gap: 10px;
+        gap: 30px;
+    }
+
+    .controls .row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        /* width: 100%; */
+        clear: both;
     }
 
     .controls button {
         border: solid 1px white;
+    }
+
+    .controls input {
+        /* width: 100%; */
+        width: 250px;
     }
 
     .image-wrapper {
