@@ -8,6 +8,7 @@
         faMagnifyingGlassMinus,
         faMagnifyingGlassPlus,
         faList,
+        faExpand,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
@@ -92,6 +93,28 @@
         const grid = document.querySelector(".flashcards");
         grid.classList.toggle("grid");
         isGrid = !isGrid;
+
+        if (!isGrid) {
+            const cards = document.querySelectorAll(".card");
+            const answers = document.querySelectorAll(".card span");
+            cards.forEach((card) => {
+                card.style.width = "auto";
+            });
+            answers.forEach((answer) => {
+                answer.style.fontSize = "32px";
+            });
+        }
+    }
+
+    function goFullscreen() {
+        const grid = document.querySelector(".flashcards");
+        if (grid.requestFullscreen) {
+            grid.requestFullscreen();
+        } else if (grid.webkitRequestFullscreen) {
+            grid.webkitRequestFullscreen();
+        } else if (grid.msRequestFullscreen) {
+            grid.msRequestFullscreen();
+        }
     }
 
     function scaleCards(event) {
@@ -100,10 +123,20 @@
         const cards = document.querySelectorAll(".card");
         const answers = document.querySelectorAll(".card span");
         cards.forEach((card) => {
-            card.style.width = `${300 * scaleValue}px`;
+            if (isGrid) {
+                card.style.width = `${300 * scaleValue}px`;
+            } else {
+                // set with auto
+                card.style.width = "auto";
+            }
         });
         answers.forEach((answer) => {
-            answer.style.fontSize = `${32 * scaleValue}px`;
+            if (isGrid) {
+                answer.style.fontSize = `${32 * scaleValue}px`;
+            } else {
+                // set with auto
+                answer.style.fontSize = "32px";
+            }
         });
         grid.style.setProperty("--card-size", `${300 * scaleValue}px`);
     }
@@ -115,18 +148,20 @@
 
 <div class="container">
     <div class="toolbar">
-        <div class="row">
-            <Fa icon={faMagnifyingGlassMinus} />
-            <input
-                on:input={scaleCards}
-                type="range"
-                min="0.1"
-                max="2"
-                step="0.025"
-                value="1"
-            />
-            <Fa icon={faMagnifyingGlassPlus} />
-        </div>
+        {#if isGrid}
+            <div class="row">
+                <Fa icon={faMagnifyingGlassMinus} />
+                <input
+                    on:input={scaleCards}
+                    type="range"
+                    min="0.1"
+                    max="2"
+                    step="0.025"
+                    value="1"
+                />
+                <Fa icon={faMagnifyingGlassPlus} />
+            </div>
+        {/if}
         <div class="row">
             <!-- shuffle cards button -->
             <button type="button" on:click={shuffleCards}
@@ -150,6 +185,9 @@
                     ><Fa icon={faList} /></button
                 >
             {/if}
+            <button type="button" on:click={goFullscreen}
+                ><Fa icon={faExpand} /></button
+            >
         </div>
     </div>
 
