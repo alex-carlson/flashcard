@@ -357,8 +357,8 @@
 
     .row button {
         border: solid 1px white;
-        width: 50px;
-        height: 50px;
+        width: 42px;
+        height: 42px;
         display: flex;
         justify-content: center;
         align-items: center;
