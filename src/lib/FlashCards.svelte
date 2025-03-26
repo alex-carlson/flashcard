@@ -455,13 +455,23 @@
         left: 0;
         right: 0;
         z-index: 100;
+        gap: 4px;
         border-radius: 0;
+        /* make children fit their container */
+        flex-direction: row;
+        justify-content: space-between;
         background: rgb(118, 0, 0);
         background: linear-gradient(
             0deg,
             rgba(118, 0, 0, 0) 0%,
             rgba(0, 0, 0, 1) 50%
         );
+    }
+
+    :fullscreen .toolbar button {
+        /* make buttons full width */
+        width: 100%;
+        max-width: 50px;
     }
 
     :fullscreen .headline {
