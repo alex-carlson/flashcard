@@ -7,6 +7,7 @@
         faTableCells,
         faMagnifyingGlassMinus,
         faMagnifyingGlassPlus,
+        faList,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
@@ -16,6 +17,7 @@
     export let author = "";
     export let collection = null;
     let cards = [];
+    let isGrid = false;
 
     // function to fetch collection from id
     async function fetchCollection() {
@@ -144,16 +146,21 @@
     function toggleGrid() {
         const grid = document.querySelector(".flashcards");
         grid.classList.toggle("grid");
-        const hasGrid = grid.classList.contains("grid");
+        isGrid = !isGrid;
     }
 
     function scaleCards(event) {
         const scaleValue = parseFloat(event.target.value); // Extract numeric value
+        const grid = document.querySelector(".flashcards");
         const cards = document.querySelectorAll(".card");
+        const answers = document.querySelectorAll(".card span");
         cards.forEach((card) => {
             card.style.width = `${300 * scaleValue}px`;
-            // card.style.transform = `scale(${scaleValue})`;
         });
+        answers.forEach((answer) => {
+            answer.style.fontSize = `${32 * scaleValue}px`;
+        });
+        grid.style.setProperty("--card-size", `${300 * scaleValue}px`);
     }
 
     onMount(() => {
@@ -193,9 +200,15 @@
                     ><Fa icon={faEye} /></button
                 >
             {/if}
-            <button type="button" on:click={toggleGrid}
-                ><Fa icon={faTableCells} /></button
-            >
+            {#if isGrid}
+                <button type="button" on:click={toggleGrid}
+                    ><Fa icon={faTableCells} /></button
+                >
+            {:else}
+                <button type="button" on:click={toggleGrid}
+                    ><Fa icon={faList} /></button
+                >
+            {/if}
         </div>
     </div>
 
@@ -209,146 +222,103 @@
 
         <div class="flashcards">
             {#each cards as item, i}
-                <button
-                    type="button"
+                <div
                     class="card"
+                    role="button"
+                    tabindex="0"
                     on:click={(e) => {
                         e.preventDefault();
                         toggleReveal(i);
                     }}
                     on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
                 >
-                    <div class="card-front">
-                        <div class="image-wrapper">
-                            <img
-                                class="flashcard-image"
-                                alt="flashcard"
-                                src={item.imageUrl}
-                                data-src={item.imageUrl}
-                                on:load={() => {
-                                    onCardLoad(i);
-                                }}
-                                on:error={() => {
-                                    console.error(
-                                        "Failed to load image for card:",
-                                        item.imageUrl,
-                                    );
-                                }}
-                            />
-                            {#if !item.loaded}
-                                <div class="loading-spinner"></div>
-                            {/if}
-                        </div>
-                    </div>
-                    {#if item.revealed}
-                        <div class="card-back">
-                            <span>
-                                {item.answer}
-                            </span>
-                        </div>
+                    <img
+                        class="flashcard-image"
+                        alt="flashcard"
+                        src={item.imageUrl}
+                        data-src={item.imageUrl}
+                        on:load={() => {
+                            onCardLoad(i);
+                        }}
+                        on:error={() => {
+                            console.error(
+                                "Failed to load image for card:",
+                                item.imageUrl,
+                            );
+                        }}
+                    />
+                    {#if !item.loaded}
+                        <div class="loading-spinner"></div>
                     {/if}
-                </button>
+                    <span style="opacity: {item.revealed ? 1 : 0}">
+                        {item.answer}
+                    </span>
+                </div>
             {/each}
         </div>
     {/if}
+</div>
 
-    <div class="controls"></div>
-
-    <div class="flashcards grid" style="display: none;">
-        <button class="card">
-            <div class="card-front">
-                <div class="image-wrapper">
-                    <img class="flashcard-image" alt="flashcard" />
-                </div>
-            </div>
-            <div class="card-back">Answer</div>
-        </button>
-    </div>
+<div class="flashcards grid" style="display: none;">
+    <div class="card"></div>
 </div>
 
 <style global>
-    .container {
-        background: transparent;
-        color: rgba(246, 233, 50, 0.87);
-        box-sizing: border-box;
-    }
-    .headline {
-        margin-bottom: 40px;
-        font-weight: 800;
-    }
-
-    .headline h1 {
-        font-size: 2.4em;
-        margin-bottom: 0;
-    }
     .flashcards {
-        display: flex;
-        flex-wrap: wrap;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .flashcards.grid {
-        flex-direction: row;
-        width: auto;
-        gap: 5px;
-        /* center horizontally on page */
-        margin: 0 auto;
-    }
-
-    .flashcards.grid .card {
-        width: 200px;
-        margin: 0;
-    }
-
-    .flashcards button {
-        margin: 10px;
-        border: none;
-        background: none;
-        padding: 0;
-        cursor: pointer;
-        transition: transform 0.2s;
-        overflow: hidden;
+        height: 90vh;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
     }
 
     .card {
-        width: 300px;
-        max-width: 100vw;
-        height: auto;
-        cursor: pointer;
+        width: 100%;
+        height: 90vh;
+        overflow: hidden;
         font-weight: 800;
         text-align: center;
-        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        scroll-snap-align: start;
+        background-color: #fff;
     }
 
-    .card-front {
-        font-size: 1.2em;
-        height: 100%;
-        width: 100%;
+    .grid {
+        /* render naturally, without flex */
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(var(--card-size, 300px), 1fr)
+        );
+        align-items: center;
+        justify-content: center; /* Centers the grid if there are fewer columns */
+        gap: 0px;
+        scroll-snap-type: none;
+        scroll-behavior: auto;
     }
 
-    .card-back {
-        margin-top: 10px;
-        padding: 10px;
+    .grid .card {
+        width: 100%; /* Makes sure the card fills the grid cell */
+        height: auto;
+        overflow: visible;
+    }
+
+    .card span {
+        padding: 0.4em;
         background: #000;
         color: white;
-        font-size: 1.2rem;
-        /* put answer on the bottom of the card */
-        position: absolute;
-        bottom: 0;
-        left: 0;
         width: 100%;
-        opacity: 0.75;
+        display: block;
+        box-sizing: border-box;
     }
 
     .flashcard-image {
         max-width: 100%;
         max-height: 100%;
-        object-fit: contain;
-        width: auto;
-        height: auto;
         user-select: none;
         pointer-events: none;
     }
@@ -367,15 +337,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    .image-wrapper {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
     }
 
     .loading-spinner {
