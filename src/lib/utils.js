@@ -18,6 +18,11 @@ function getDistance(touches) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+export function scrollZoom(img, event) {
+    const delta = event.deltaY;
+    img.scale += delta * -0.01; // Increase or decrease the scale
+}
+
 export function handleTouchStart(event, img) {
     if (event.touches.length === 2) {
         img.startDistance = getDistance(event.touches);

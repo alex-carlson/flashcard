@@ -12,7 +12,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import { handleTouchStart, handleTouchMove } from "./utils.js";
+    import { handleTouchStart, handleTouchMove, scrollZoom } from "./utils.js";
     import Pagination from "./Pagination.svelte";
     export let author = "";
     export let collection = null;
@@ -235,6 +235,10 @@
                             e.preventDefault();
                             handleTouchMove(e);
                         }}
+                        on:scroll={(e) => {
+                            e.preventDefault();
+                            scrollZoom(e);
+                        }}
                     />
                     {#if !item.loaded}
                         <div class="loading-spinner"></div>
@@ -309,8 +313,8 @@
     .flashcard-image {
         max-width: 100%;
         max-height: 100%;
-        user-select: none;
-        pointer-events: none;
+        /* user-select: none; */
+        /* pointer-events: none; */
     }
 
     .row {
