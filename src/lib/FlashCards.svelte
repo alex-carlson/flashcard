@@ -12,6 +12,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
+    import { handleTouchStart, handleTouchMove } from "./utils.js";
     import Pagination from "./Pagination.svelte";
     export let author = "";
     export let collection = null;
@@ -49,6 +50,7 @@
                 revealed: false,
                 loaded: false,
                 hidden: false,
+                scale: 1,
             }));
         } catch (error) {
             console.error("Error fetching collection:", error);
@@ -212,7 +214,7 @@
                     on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
                 >
                     <img
-                        class="flashcard-image"
+                        class="flashcard-image zoomable"
                         alt="flashcard"
                         src={item.imageUrl}
                         data-src={item.imageUrl}
@@ -224,6 +226,14 @@
                                 "Failed to load image for card:",
                                 item.imageUrl,
                             );
+                        }}
+                        on:touchstart={(e) => {
+                            e.preventDefault();
+                            handleTouchStart(e);
+                        }}
+                        on:touchmove={(e) => {
+                            e.preventDefault();
+                            handleTouchMove(e);
                         }}
                     />
                     {#if !item.loaded}
@@ -351,6 +361,10 @@
         width: auto;
         flex-direction: column;
         box-sizing: border-box;
+    }
+
+    .zoomable {
+        transition: transform 0.2s;
     }
 
     :fullscreen {
