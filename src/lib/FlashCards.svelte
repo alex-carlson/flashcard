@@ -263,7 +263,7 @@
 <style global>
     .flashcards {
         height: calc(100vh - 140px);
-        overflow-y: hidden;
+        overflow-y: auto;
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
         background: rgba(0, 0, 0, 0.1);
