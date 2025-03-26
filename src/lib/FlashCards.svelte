@@ -377,7 +377,7 @@
         display: block;
         box-sizing: border-box;
         height: 20vh;
-        font-size: 72px;
+        font-size: clamp(1rem, 10vw, 5rem);
         /* center text vertically */
         display: flex;
         align-items: center;
