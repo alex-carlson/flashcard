@@ -128,6 +128,7 @@
         if (isGrid) {
             toggleGrid();
         }
+        isFullscreen = true;
         const grid = document.querySelector(".container");
         if (grid.requestFullscreen) {
             grid.requestFullscreen();
@@ -136,10 +137,10 @@
         } else if (grid.msRequestFullscreen) {
             grid.msRequestFullscreen();
         }
-        isFullscreen = true;
     }
 
     function exitFullscreen() {
+        isFullscreen = false;
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
@@ -147,7 +148,6 @@
         } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
         }
-        isFullscreen = false;
     }
 
     function scaleCards(event) {
@@ -352,7 +352,6 @@
     .row {
         display: flex;
         justify-content: center;
-        gap: 20px;
         width: 100%;
     }
 
@@ -393,10 +392,11 @@
         border-radius: 15px;
         padding: 1em 0.4em;
         font-size: 25px;
-        gap: 20px;
+        gap: 4px;
         width: auto;
         flex-direction: column;
         box-sizing: border-box;
+        margin: 0 auto;
     }
 
     .zoomable {
@@ -455,17 +455,20 @@
         left: 0;
         right: 0;
         z-index: 100;
-        gap: 4px;
+        padding: 1em 0;
         border-radius: 0;
-        /* make children fit their container */
-        flex-direction: row;
-        justify-content: space-between;
         background: rgb(118, 0, 0);
         background: linear-gradient(
             0deg,
             rgba(118, 0, 0, 0) 0%,
             rgba(0, 0, 0, 1) 50%
         );
+    }
+
+    :fullscreen .toolbar .row {
+        gap: 4px;
+        /* flex items to fit content */
+        flex-wrap: wrap;
     }
 
     :fullscreen .toolbar button {
