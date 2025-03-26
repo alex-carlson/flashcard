@@ -245,7 +245,7 @@
 
 <style global>
     .flashcards {
-        height: 100vh;
+        height: calc(100vh - 140px);
         overflow-y: auto;
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
@@ -254,7 +254,7 @@
     }
 
     .card {
-        height: 100vh;
+        height: calc(100vh - 140px);
         overflow: hidden;
         font-weight: 800;
         text-align: center;
@@ -366,22 +366,30 @@
         align-items: center;
         justify-content: center;
         box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    :fullscreen .card img {
-        height: 50vh;
+        position: relative;
     }
 
     :fullscreen .card span {
         padding: 0.4em;
-        background: #000;
+        background: black;
         color: white;
         width: 100%;
         display: block;
         box-sizing: border-box;
         height: 20vh;
-        font-size: 5vw;
+        font-size: 72px;
+        /* center text vertically */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+
+    :fullscreen .card img {
+        height: 60vw;
     }
 
     ::backdrop {
