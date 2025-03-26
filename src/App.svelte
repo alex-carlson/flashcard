@@ -27,4 +27,4 @@
 <main>
   <Router {routes}></Router>
 </main>
-<Footer />
+<!-- <Footer /> -->

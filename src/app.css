@@ -63,7 +63,6 @@ h1 {
 
 main {
   min-height: 100vh;
-  padding: 1em;
 }
 
 button {
@@ -108,7 +107,7 @@ button:focus-visible {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 0;
+  padding: 2rem 0 0 0;
   box-sizing: border-box;
 }
 

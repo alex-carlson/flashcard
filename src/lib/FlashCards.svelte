@@ -11,9 +11,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import { slugify } from "./utils.js";
-
-    let slug;
+    import Pagination from "./Pagination.svelte";
     export let author = "";
     export let collection = null;
     let cards = [];
@@ -53,59 +51,6 @@
             }));
         } catch (error) {
             console.error("Error fetching collection:", error);
-        }
-    }
-
-    function lazyLoadImages() {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        const cardIndex = cards.findIndex(
-                            (card) => card.imageUrl === img.dataset.src,
-                        );
-
-                        if (cardIndex === -1) {
-                            return;
-                        }
-
-                        if (cards[cardIndex].loaded) {
-                            return;
-                        }
-
-                        if (!img.dataset.src) {
-                            return;
-                        }
-
-                        // set img.src to img data-src
-                        img.src = img.dataset.src;
-
-                        // remove dataset src
-                        img.removeAttribute("data-src");
-
-                        cards[cardIndex].loaded = true;
-
-                        observer.unobserve(img);
-                    }
-                });
-            },
-            {
-                root: null,
-                rootMargin: "0px 0px 50px 0px",
-                threshold: 0.1,
-            },
-        );
-
-        const images = document.querySelectorAll(".flashcard-image");
-        images.forEach((img) => {
-            observer.observe(img);
-        });
-    }
-
-    $: {
-        if (cards.length > 0) {
-            // lazyLoadImages();
         }
     }
 
@@ -164,11 +109,7 @@
     }
 
     onMount(() => {
-        slug = slugify(author + "-" + collection);
-        console.log("Slug:", slug);
-        fetchCollection().then(() => {
-            // lazyLoadImages();
-        });
+        fetchCollection();
     });
 </script>
 
@@ -262,18 +203,21 @@
 <div class="flashcards grid" style="display: none;">
     <div class="card"></div>
 </div>
+<Pagination {cards} />
 
 <style global>
     .flashcards {
-        height: 90vh;
+        height: calc(100vh - 140px);
         overflow-y: auto;
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
     }
 
     .card {
         width: 100%;
-        height: 90vh;
+        height: 80vh;
         overflow: hidden;
         font-weight: 800;
         text-align: center;
@@ -284,7 +228,6 @@
         align-items: center;
         justify-content: center;
         scroll-snap-align: start;
-        background-color: #fff;
     }
 
     .grid {
@@ -363,10 +306,10 @@
         justify-content: center;
         align-items: center;
         color: #fff;
-        background: #4e0000;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
         padding: 1em 0.4em;
         font-size: 25px;
-        border-radius: 15px;
         gap: 20px;
         width: auto;
         flex-direction: column;
