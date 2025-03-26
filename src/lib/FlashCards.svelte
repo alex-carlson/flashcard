@@ -123,6 +123,13 @@
         });
     }
 
+    function resetImageScale() {
+        cards = cards.map((card) => {
+            card.scale = 1;
+            return card;
+        });
+    }
+
     function goFullscreen() {
         // exit grid mode
         if (isGrid) {
@@ -141,6 +148,8 @@
 
     function exitFullscreen() {
         isFullscreen = false;
+        // set zoom to 1
+        resetImageScale();
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
