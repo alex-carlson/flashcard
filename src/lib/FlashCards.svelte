@@ -9,6 +9,9 @@
         faMagnifyingGlassPlus,
         faList,
         faExpand,
+        faCompress,
+        faPlus,
+        faMinus,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
@@ -18,6 +21,7 @@
     export let collection = null;
     let cards = [];
     let isGrid = false;
+    let isFullscreen = false;
 
     // function to fetch collection from id
     async function fetchCollection() {
@@ -108,8 +112,23 @@
         }
     }
 
+    function scaleImage(amount) {
+        cards = cards.map((card) => {
+            card.scale += amount;
+            // prevent scale from reaching 0
+            if (card.scale < 0.1) {
+                card.scale = 0.1;
+            }
+            return card;
+        });
+    }
+
     function goFullscreen() {
-        const grid = document.querySelector(".flashcards");
+        // exit grid mode
+        if (isGrid) {
+            toggleGrid();
+        }
+        const grid = document.querySelector(".container");
         if (grid.requestFullscreen) {
             grid.requestFullscreen();
         } else if (grid.webkitRequestFullscreen) {
@@ -117,6 +136,18 @@
         } else if (grid.msRequestFullscreen) {
             grid.msRequestFullscreen();
         }
+        isFullscreen = true;
+    }
+
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
     }
 
     function scaleCards(event) {
@@ -178,18 +209,30 @@
                     ><Fa icon={faEye} /></button
                 >
             {/if}
-            {#if isGrid}
-                <button type="button" on:click={toggleGrid}
-                    ><Fa icon={faTableCells} /></button
+            {#if isFullscreen}
+                <button type="button" on:click={scaleImage(-0.25)}
+                    ><Fa icon={faMinus} /></button
+                >
+                <button type="button" on:click={scaleImage(0.25)}
+                    ><Fa icon={faPlus} /></button
+                >
+                <button type="button" on:click={exitFullscreen}
+                    ><Fa icon={faCompress} /></button
                 >
             {:else}
-                <button type="button" on:click={toggleGrid}
-                    ><Fa icon={faList} /></button
+                {#if isGrid}
+                    <button type="button" on:click={toggleGrid}
+                        ><Fa icon={faTableCells} /></button
+                    >
+                {:else}
+                    <button type="button" on:click={toggleGrid}
+                        ><Fa icon={faList} /></button
+                    >
+                {/if}
+                <button type="button" on:click={goFullscreen}
+                    ><Fa icon={faExpand} /></button
                 >
             {/if}
-            <button type="button" on:click={goFullscreen}
-                ><Fa icon={faExpand} /></button
-            >
         </div>
     </div>
 
@@ -227,20 +270,6 @@
                                 "Failed to load image for card:",
                                 item.imageUrl,
                             );
-                        }}
-                        on:touchstart={(e) => {
-                            e.preventDefault();
-                            // handleTouchStart passing event and this image element
-                            handleTouchStart(e, item);
-                        }}
-                        on:touchmove={(e) => {
-                            e.preventDefault();
-                            handleTouchMove(e, item);
-                        }}
-                        on:scroll={(e) => {
-                            e.preventDefault();
-                            console.log("scrolling");
-                            scrollZoom(e, item);
                         }}
                     />
                     {#if !item.loaded}
@@ -371,8 +400,13 @@
     }
 
     .zoomable {
-        transition: transform 0.2s ease-out;
+        transition-timing-function: cubic-bezier(0.64, 0.57, 0.67, 1.53);
+        transition: transform 0.2s;
         touch-action: manipulation;
+    }
+
+    ::backdrop {
+        background-color: #760000;
     }
 
     :fullscreen {
@@ -414,7 +448,38 @@
         height: 60vw;
     }
 
-    ::backdrop {
-        background-color: #760000;
+    /* make it so the toolbar is fixed in full screen mode */
+    :fullscreen .toolbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        border-radius: 0;
+        background: rgb(118, 0, 0);
+        background: linear-gradient(
+            0deg,
+            rgba(118, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 1) 50%
+        );
+    }
+
+    :fullscreen .headline {
+        display: none;
+    }
+
+    :fullscreen .flashcards {
+        height: 100vh;
+        background: rgb(118, 0, 0);
+        background: linear-gradient(
+            180deg,
+            rgba(118, 0, 0, 0) 0%,
+            rgba(118, 0, 0, 0) 80%,
+            rgba(0, 0, 0, 1) 100%
+        );
+    }
+
+    :fullscreen.container {
+        overflow-y: hidden;
     }
 </style>
