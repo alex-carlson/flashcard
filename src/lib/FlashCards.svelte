@@ -218,6 +218,7 @@
                         alt="flashcard"
                         src={item.imageUrl}
                         data-src={item.imageUrl}
+                        style={`transform: scale(${item.scale})`}
                         on:load={() => {
                             onCardLoad(i);
                         }}
@@ -229,15 +230,17 @@
                         }}
                         on:touchstart={(e) => {
                             e.preventDefault();
-                            handleTouchStart(e);
+                            // handleTouchStart passing event and this image element
+                            handleTouchStart(e, item);
                         }}
                         on:touchmove={(e) => {
                             e.preventDefault();
-                            handleTouchMove(e);
+                            handleTouchMove(e, item);
                         }}
                         on:scroll={(e) => {
                             e.preventDefault();
-                            scrollZoom(e);
+                            console.log("scrolling");
+                            scrollZoom(e, item);
                         }}
                     />
                     {#if !item.loaded}
@@ -260,7 +263,7 @@
 <style global>
     .flashcards {
         height: calc(100vh - 140px);
-        overflow-y: auto;
+        overflow-y: hidden;
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
         background: rgba(0, 0, 0, 0.1);
@@ -368,7 +371,8 @@
     }
 
     .zoomable {
-        transition: transform 0.2s;
+        transition: transform 0.2s ease-out;
+        touch-action: manipulation;
     }
 
     :fullscreen {
