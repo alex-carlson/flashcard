@@ -2,6 +2,7 @@
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { onMount } from "svelte";
+    import { v4 as uuidv4 } from "uuid";
     import Fa from "svelte-fa";
     import {
         faPenToSquare,
@@ -12,6 +13,7 @@
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username");
     let category = "";
+    let tempCategory = "";
     let items = [];
     let errorMessage,
         successMessage = "";
@@ -24,7 +26,7 @@
     async function fetchCollections() {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/${username}/all-collections`,
+                `${import.meta.env.VITE_API_URL}/collections/${username}/collections`,
                 {
                     method: "GET",
                     headers: {
@@ -104,13 +106,14 @@
     async function renameCollection() {
         isRenaming = false;
         //rename collection on server
-        let url = import.meta.env.VITE_API_URL + "/renameCollection";
+        let url =
+            import.meta.env.VITE_API_URL + "/collections/renameCollection";
 
         console.log("Renaming to: ", category);
 
         const data = {
-            category,
-            author: username,
+            oldCategory: category,
+            newCategory: tempCategory,
         };
 
         try {
@@ -127,7 +130,8 @@
                 throw new Error("Failed to rename collection");
             }
 
-            console.log("Collection renamed successfully");
+            console.log("Collection renamed successfully: ", data);
+            category = tempCategory;
         } catch (error) {
             console.error("Error renaming collection:", error);
             errorMessage = "Rename failed. Please try again.";
@@ -212,6 +216,7 @@
     }
 
     function onEditClick(itemId) {
+        console.log("Editing item:", itemId);
         editableItemId = itemId;
         //move the data to the localItem and scroll down to form
         localItem = { ...items.find((item) => item.id === itemId) };
@@ -298,12 +303,15 @@
     }
 
     async function uploadData() {
+        // generate a uuid4
+        const uuid = uuidv4();
         const data = {
             category,
             author: username,
             item: {
                 name: localItem.answer,
                 image: null,
+                id: uuid,
             },
             base64Image: localItem.file,
             folder: `${username}/${category}`,
@@ -329,21 +337,10 @@
 
                     successMessage = "Upload successful!";
 
-                    //append the new item to the items array
-                    items = [
-                        ...items,
-                        {
-                            id: items.length + 1,
-                            answer: localItem.answer,
-                            image: localItem.file,
-                        },
-                    ];
-
-                    items = [...items];
-                    // clear file and answer
-                    localItem = { id: 1, file: null, answer: "" };
-                    // empty form data
-                    document.querySelector("form").reset();
+                    const val = response.json().then((val) => {
+                        console.log(val[0].items);
+                        items = [...items, val];
+                    });
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -351,6 +348,32 @@
         } catch (error) {
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";
+        }
+    }
+
+    async function setVisible(event) {
+        const data = {
+            category,
+            author: username,
+            visible: event.target.checked,
+        };
+
+        console.log("Setting visibility to:", data.visible);
+
+        let url = import.meta.env.VITE_API_URL + "/collections/setVisible";
+
+        try {
+            const respone = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+        } catch (error) {
+            console.error("Error setting visibility:", error);
+            errorMessage = "Visibility change failed. Please try again.";
         }
     }
 </script>
@@ -368,10 +391,11 @@
         {#if isRenaming}
             <input
                 type="text"
-                bind:value={category}
+                bind:value={tempCategory}
                 placeholder="Enter a category"
             />
-            <button on:click={createCollection}>Save</button>
+            <button on:click={renameCollection}>Save</button>
+            <button on:click={toggleRenaming}>Cancel</button>
         {:else}
             <h2>{category}</h2>
             <button on:click={toggleRenaming}>Rename</button>
@@ -395,13 +419,10 @@
                 {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
-                    <!-- <button class="edit" on:click={() => onEditClick(item.id)}>
+                    <button class="edit" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />
-                    </button> -->
-                    <button
-                        class="remove"
-                        on:click={() => removeItem(item.answer)}
-                    >
+                    </button>
+                    <button class="remove" on:click={() => removeItem(item.id)}>
                         <Fa icon={faSquareMinus} />
                     </button>
                 {/if}
@@ -427,6 +448,13 @@
                     placeholder="Enter an answer"
                 />
                 <button type="button" on:click={uploadData}>Add item</button>
+                <div class="row">
+                    <label class="switch">
+                        <input type="checkbox" on:change={setVisible} />
+                        <span class="slider round"></span>
+                    </label>
+                    Public
+                </div>
                 <button class="warning" on:click={confirmDelete}
                     >Delete Collection</button
                 >
@@ -553,5 +581,65 @@
     .container button.warning {
         background-color: #bd1010;
         color: #dedede;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+    }
+
+    input:checked + .slider {
+        background-color: #2196f3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+    .slider.round:before {
+        border-radius: 50%;
     }
 </style>
