@@ -316,8 +316,8 @@
     .flashcard-image {
         max-width: 100%;
         max-height: 100%;
-        /* user-select: none; */
-        /* pointer-events: none; */
+        user-select: none;
+        pointer-events: none;
     }
 
     .row {
