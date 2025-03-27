@@ -34,8 +34,8 @@
             <ul>
                 <li><a href="#/" use:link>Home</a></li>
                 {#if isLoggedIn}
-                    <li><a href="#/upload" use:link>Upload</a></li>
-                    <li><a href="#/profile" use:link>Profile</a></li>
+                    <li><a href="#/upload" use:link>Manage</a></li>
+                    <!-- <li><a href="#/profile" use:link>Profile</a></li> -->
                     <li><button on:click={logout}>Log Out</button></li>
                 {:else}
                     <li><a href="#/login" use:link>Login</a></li>

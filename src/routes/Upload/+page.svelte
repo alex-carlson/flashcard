@@ -17,16 +17,17 @@
     let items = [];
     let errorMessage,
         successMessage = "";
+    let isPublic = false;
     let collections = [];
     let editableItemId = null;
     let localItem = { id: 1, file: null, answer: "" };
-    let isRenaming = true;
+    let isRenaming = false;
 
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/${username}/collections`,
+                `${import.meta.env.VITE_API_URL}/collections/user/${username}`,
                 {
                     method: "GET",
                     headers: {
@@ -45,13 +46,13 @@
         }
     }
 
-    async function fetchCollectionData(detail) {
+    async function fetchCollectionData(id) {
         isRenaming = false;
-        const [username, collection] = detail.split("/");
-        const url = `${import.meta.env.VITE_API_URL}/collections/${username}/${collection}`;
+        const url = `${import.meta.env.VITE_API_URL}/collections/id/${id}`;
         console.log("Fetching collection data from:", url);
         try {
             const response = await fetch(url, {
+                method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -64,8 +65,6 @@
 
             const collectionData = await response.json();
 
-            console.log("Collection data:", collectionData);
-
             category = collectionData.category;
 
             if (!collectionData.items || !Array.isArray(collectionData.items)) {
@@ -75,6 +74,10 @@
             }
 
             items = collectionData.items;
+
+            console.log("Collection data is private:", collectionData.private);
+
+            isPublic = collectionData.private  ? false : true;
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
@@ -84,8 +87,8 @@
         let url =
             import.meta.env.VITE_API_URL + "/collections/createCollection";
         const data = {
-            category,
-            author: username,
+            category: tempCategory,
+            username,
         };
 
         try {
@@ -97,6 +100,13 @@
                 },
                 body: JSON.stringify(data),
             });
+
+            const val = response.json().then((val) => {
+                console.log(val);
+                collections = [...collections, val];
+                category = tempCategory;
+            });
+
         } catch (error) {
             console.error("Error creating collection:", error);
             errorMessage = "Create failed. Please try again.";
@@ -130,7 +140,6 @@
                 throw new Error("Failed to rename collection");
             }
 
-            console.log("Collection renamed successfully: ", data);
             category = tempCategory;
         } catch (error) {
             console.error("Error renaming collection:", error);
@@ -147,11 +156,12 @@
     });
 
     // remove item on server based on item id
-    async function removeItem(itemAnswer) {
+    async function removeItem(itemId) {
+        console.log("Removing item:", itemId);
         let url = import.meta.env.VITE_API_URL + "/items/remove";
         const data = {
             category,
-            itemAnswer,
+            itemId,
         };
 
         try {
@@ -171,7 +181,7 @@
                     }
 
                     // remove the item from the items array
-                    items = items.filter((item) => item.answer !== itemAnswer);
+                    items = items.filter((item) => item.id !== itemId);
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -243,6 +253,11 @@
 
     function toggleRenaming() {
         isRenaming = !isRenaming;
+        // set category input to current category
+        // get #categoryName input element
+        const input = document.getElementById("categoryName");
+        input.value = category;
+        input.focus();
     }
 
     // on resizeImage event, set the localItem.file to the resized image
@@ -292,6 +307,8 @@
                     collections = collections.filter(
                         (collection) => collection.category !== category,
                     );
+
+                    document.location.reload();
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -337,9 +354,9 @@
 
                     successMessage = "Upload successful!";
 
-                    const val = response.json().then((val) => {
-                        console.log(val[0].items);
-                        items = [...items, val];
+                    response.json().then((val) => {
+                        category = val[0].category;
+                        items = val[0].items;
                     });
                 })
                 .catch((error) => {
@@ -357,8 +374,6 @@
             author: username,
             visible: event.target.checked,
         };
-
-        console.log("Setting visibility to:", data.visible);
 
         let url = import.meta.env.VITE_API_URL + "/collections/setVisible";
 
@@ -388,17 +403,27 @@
                 on:selectCollection={handleCollectionSelection}
             />
         {/if}
-        {#if isRenaming}
+        {#if category === ""}
             <input
                 type="text"
                 bind:value={tempCategory}
                 placeholder="Enter a category"
             />
-            <button on:click={renameCollection}>Save</button>
-            <button on:click={toggleRenaming}>Cancel</button>
+            <button on:click={createCollection}>Create</button>
         {:else}
-            <h2>{category}</h2>
-            <button on:click={toggleRenaming}>Rename</button>
+            {#if isRenaming}
+                <input
+                    type="text"
+                    id="categoryName"
+                    bind:value={tempCategory}
+                    placeholder="Enter a category"
+                />
+                <button on:click={renameCollection}>Save</button>
+                <button on:click={toggleRenaming}>Cancel</button>
+            {:else}
+                <h2>{category}</h2>
+                <button on:click={toggleRenaming}>Rename</button>
+            {/if}
         {/if}
 
         {#each items as item, index}
@@ -433,7 +458,7 @@
             <hr />
 
             <!-- on submit form, call UploadFile -->
-            <form on:submit|preventDefault={uploadData}>
+            <form>
                 <FileUpload on:resizeImage={handleFileChange} />
                 {#if localItem.file}
                     <img
@@ -450,7 +475,11 @@
                 <button type="button" on:click={uploadData}>Add item</button>
                 <div class="row">
                     <label class="switch">
-                        <input type="checkbox" on:change={setVisible} />
+                        <input 
+                            type="checkbox" 
+                            bind:checked={isPublic}
+                            on:change={setVisible}
+                        />
                         <span class="slider round"></span>
                     </label>
                     Public

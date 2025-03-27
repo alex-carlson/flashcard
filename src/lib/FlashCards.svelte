@@ -15,20 +15,20 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import { handleTouchStart, handleTouchMove, scrollZoom } from "./utils.js";
     import Pagination from "./Pagination.svelte";
-    export let author = "";
-    export let collection = null;
+    export let collection;
+    export let author;
+    let collectionData = {};
     let cards = [];
     let isGrid = false;
     let isFullscreen = false;
 
     // function to fetch collection from id
     async function fetchCollection() {
-        console.log("Fetching collection:", collection + " by " + author);
+        console.log("Fetching collection with:", collection);
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/${author}/${collection}`,
+                `${import.meta.env.VITE_API_URL}/collections/user/${author}/${collection}`,
                 {
                     method: "GET",
                 },
@@ -39,9 +39,6 @@
             }
 
             const data = await response.json();
-
-            collection = data.category;
-            author = data.author;
 
             // if items length is 0, or is undefined, return
             if (!data.items || data.items.length === 0) {

@@ -1,43 +1,9 @@
 <script>
     import { onMount, createEventDispatcher } from "svelte";
-    let collections = [];
+    export let collections = [];
     let selectedCollection = "";
 
     const dispatch = createEventDispatcher();
-
-    // Fetch collections when the component mounts
-    onMount(async () => {
-        const username = localStorage.getItem("username");
-        try {
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/${username}/all-collections`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                },
-            );
-
-            const contentType = res.headers.get("Content-Type");
-
-            if (
-                res.ok &&
-                contentType &&
-                contentType.includes("application/json")
-            ) {
-                collections = await res.json();
-            } else {
-                const responseText = await res.text(); // Get raw text if it's not JSON
-                console.error(
-                    "Failed to fetch collections. Response is not JSON.",
-                    responseText,
-                );
-            }
-        } catch (error) {
-            console.error("Error fetching collections:", error);
-        }
-    });
 
     function selectCollection(collectionId) {
         // Dispatch collection ID to parent
@@ -51,10 +17,7 @@
         <option value="">Select a collection</option>
         {#each collections as collection}
             <option
-                value={collection.author + "/" + collection.category}
-                on:click={selectCollection(
-                    collection.author + "/" + collection.category,
-                )}>{collection.category}</option
+                value={collection.id}>{collection.category}</option
             >
         {/each}
     </select>

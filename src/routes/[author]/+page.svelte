@@ -8,7 +8,7 @@
     function fetchCollections(author) {
         // Fetch collections from the server
         fetch(
-            `${import.meta.env.VITE_API_URL}/collections/${author}/all-collections`,
+            `${import.meta.env.VITE_API_URL}/collections/user/${author}/all`,
         )
             .then((response) => {
                 if (!response.ok) {
