@@ -16,6 +16,7 @@
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
     import Pagination from "./Pagination.svelte";
+    import { on } from "svelte/events";
     export let collection;
     export let author;
     let collectionData = {};
@@ -68,6 +69,7 @@
     }
 
     function toggleReveal(index) {
+        console.log("Toggling reveal for card:", index);
         cards[index].revealed = !cards[index].revealed;
     }
 
@@ -93,20 +95,7 @@
     }
 
     function toggleGrid() {
-        const grid = document.querySelector(".flashcards");
-        grid.classList.toggle("grid");
         isGrid = !isGrid;
-
-        if (!isGrid) {
-            const cards = document.querySelectorAll(".card");
-            const answers = document.querySelectorAll(".card span");
-            cards.forEach((card) => {
-                card.style.width = "auto";
-            });
-            answers.forEach((answer) => {
-                answer.style.fontSize = "32px";
-            });
-        }
     }
 
     function scaleImage(amount) {
@@ -185,113 +174,87 @@
     });
 </script>
 
-<div class="container">
-    <div class="toolbar">
-        {#if isGrid}
-            <div class="row">
-                <Fa icon={faMagnifyingGlassMinus} />
-                <input
-                    on:input={scaleCards}
-                    type="range"
-                    min="0.1"
-                    max="2"
-                    step="0.025"
-                    value="1"
-                />
-                <Fa icon={faMagnifyingGlassPlus} />
-            </div>
-        {/if}
-        <div class="row">
-            <!-- shuffle cards button -->
-            <button type="button" on:click={shuffleCards}
-                ><Fa icon={faShuffle} /></button
-            >
-            {#if areAnyCardsRevealed()}
-                <button type="button" on:click={toggleCards}
-                    ><Fa icon={faEyeSlash} /></button
-                >
-            {:else}
-                <button type="button" on:click={toggleCards}
-                    ><Fa icon={faEye} /></button
-                >
-            {/if}
+<div class="container p-4">
+    <div
+        class="d-flex flex-column align-items-center bg-light p-4 rounded toolbar"
+    >
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" on:click={shuffleCards}>
+                <Fa icon={faShuffle} />
+            </button>
+            <button class="btn btn-primary" on:click={toggleCards}>
+                <Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
+            </button>
             {#if isFullscreen}
-                <button type="button" on:click={scaleImage(-0.25)}
-                    ><Fa icon={faMinus} /></button
+                <button
+                    class="btn btn-primary"
+                    on:click={() => scaleImage(-0.25)}
                 >
-                <button type="button" on:click={scaleImage(0.25)}
-                    ><Fa icon={faPlus} /></button
+                    <Fa icon={faMinus} />
+                </button>
+                <button
+                    class="btn btn-primary"
+                    on:click={() => scaleImage(0.25)}
                 >
-                <button type="button" on:click={exitFullscreen}
-                    ><Fa icon={faCompress} /></button
-                >
+                    <Fa icon={faPlus} />
+                </button>
             {:else}
-                {#if isGrid}
-                    <button type="button" on:click={toggleGrid}
-                        ><Fa icon={faTableCells} /></button
-                    >
-                {:else}
-                    <button type="button" on:click={toggleGrid}
-                        ><Fa icon={faList} /></button
-                    >
-                {/if}
-                <button type="button" on:click={goFullscreen}
-                    ><Fa icon={faExpand} /></button
-                >
+                <button class="btn btn-primary" on:click={toggleGrid}>
+                    <Fa icon={isGrid ? faList : faTableCells} />
+                </button>
             {/if}
+            <button
+                class="btn btn-primary"
+                on:click={isFullscreen ? exitFullscreen : goFullscreen}
+            >
+                <Fa icon={isFullscreen ? faCompress : faExpand} />
+            </button>
         </div>
     </div>
 
     {#if cards.length > 0}
         <div class="headline">
-            <h1>
-                {collection}
-            </h1>
-            <p>by: <a href={`#/${author}`}>{author}</a></p>
+            <h1 class="h2 font-weight-bold text-center mt-4">{collection}</h1>
+            <p class="text-center text-muted">
+                by <a href={`#/${author}`} class="text-primary">{author}</a>
+            </p>
         </div>
 
-        <div class="flashcards">
+        <div
+            class={"flashcards mt-4 " +
+                (isGrid
+                    ? "row row-cols-1 row-cols-md-4"
+                    : "d-flex flex-row align-items-center")}
+        >
             {#each cards as item, i}
                 <div
-                    class="card"
+                    class="position-relative p-4 cursor-pointer card"
                     role="button"
                     tabindex="0"
-                    on:click={(e) => {
-                        e.preventDefault();
-                        toggleReveal(i);
-                    }}
+                    on:click={() => toggleReveal(i)}
                     on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
                 >
                     <img
-                        class="flashcard-image zoomable"
-                        alt="flashcard"
                         src={item.imageUrl}
-                        data-src={item.imageUrl}
+                        alt="flashcard"
                         style={`transform: scale(${item.scale})`}
-                        on:load={() => {
-                            onCardLoad(i);
-                        }}
+                        on:load={() => onCardLoad(i)}
                         on:error={() => {
-                            console.error(
-                                "Failed to load image for card:",
-                                item.imageUrl,
-                            );
+                            item.hidden = true;
+                            updateCards();
                         }}
+                        class="img-fluid select-none position-relative zoomable"
                     />
-                    {#if !item.loaded}
-                        <div class="loading-spinner"></div>
-                    {/if}
-                    <span style="opacity: {item.revealed ? 1 : 0}">
+                    <span
+                        class={"position-absolute bottom-0 start-0 w-100 bg-dark text-white p-3 transition-opacity " +
+                            (item.revealed ? "opacity-100" : "opacity-0")}
+                    >
                         {item.answer}
                     </span>
                 </div>
             {/each}
         </div>
     {/if}
-</div>
-
-<div class="flashcards grid" style="display: none;">
-    <div class="card"></div>
 </div>
 <Pagination {cards} />
 
@@ -306,11 +269,9 @@
     }
 
     .card {
-        height: calc(100vh - 140px);
         overflow: hidden;
         font-weight: 800;
         text-align: center;
-        cursor: pointer;
         transition: transform 0.2s;
         display: flex;
         flex-direction: column;
@@ -319,90 +280,30 @@
         scroll-snap-align: start;
     }
 
-    .grid {
-        /* render naturally, without flex */
-        display: grid;
-        grid-template-columns: repeat(
-            auto-fit,
-            minmax(var(--card-size, 300px), 1fr)
-        );
-        align-items: center;
-        justify-content: center; /* Centers the grid if there are fewer columns */
-        gap: 0px;
-        scroll-snap-type: none;
-        scroll-behavior: auto;
-    }
-
-    .grid .card {
-        width: 100%; /* Makes sure the card fills the grid cell */
-        height: auto;
-        overflow: visible;
-    }
-
     .card span {
         padding: 0.4em;
-        background: #000;
+        background: black;
         color: white;
         width: 100%;
         display: block;
         box-sizing: border-box;
+        font-size: clamp(1rem, 10vw, 2rem);
+        /* center text vertically */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .flashcard-image {
+    .card img {
         max-width: 100%;
-        max-height: 100%;
-        user-select: none;
-        pointer-events: none;
     }
 
-    .row {
-        display: flex;
-        justify-content: center;
-        width: 100%;
+    .row-cols-4 .card {
+        height: auto;
     }
 
-    .row button {
-        border: solid 1px white;
-        width: 42px;
-        height: 42px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid rgba(0, 0, 0, 0.2);
-        border-top: 4px solid black;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        position: absolute;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    .toolbar {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #fff;
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 15px;
-        padding: 1em 0.4em;
-        font-size: 25px;
-        gap: 4px;
-        width: auto;
-        flex-direction: column;
-        box-sizing: border-box;
-        margin: 0 auto;
+    .d-flex .card {
+        height: calc(100vh - 140px);
     }
 
     .zoomable {
@@ -411,12 +312,21 @@
         touch-action: manipulation;
     }
 
-    ::backdrop {
-        background-color: #760000;
+    .opacity-0 {
+        opacity: 0;
+    }
+
+    .opacity-100 {
+        opacity: 1;
     }
 
     :fullscreen {
         overflow-x: hidden;
+    }
+
+    :fullscreen.container {
+        padding: 0;
+        margin: 0;
     }
 
     /* styles for .card when in fullscreen */
@@ -462,13 +372,6 @@
         right: 0;
         z-index: 100;
         padding: 1em 0;
-        border-radius: 0;
-        background: rgb(118, 0, 0);
-        background: linear-gradient(
-            0deg,
-            rgba(118, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 1) 50%
-        );
     }
 
     :fullscreen .toolbar .row {
@@ -500,5 +403,9 @@
 
     :fullscreen.container {
         overflow-y: hidden;
+    }
+    .btn {
+        padding: 0.5rem;
+        border-radius: 0.25rem;
     }
 </style>

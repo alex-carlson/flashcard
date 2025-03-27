@@ -12,13 +12,10 @@
 </script>
 
 <div>
-    <label for="collections">Choose a collection:</label>
     <select on:change={(e) => selectCollection(e.target.value)}>
         <option value="">Select a collection</option>
         {#each collections as collection}
-            <option
-                value={collection.id}>{collection.category}</option
-            >
+            <option value={collection.id}>{collection.category}</option>
         {/each}
     </select>
 </div>

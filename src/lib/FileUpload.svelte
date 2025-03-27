@@ -16,6 +16,9 @@
         reader.readAsDataURL(image);
         reader.onload = (e) => {
             myImg = e.target.result;
+            // get image preview and set src
+            let preview = document.querySelector(".preview");
+            preview.src = myImg;
         };
 
         //wait for resize image and then return the image
@@ -112,38 +115,42 @@
 <div class="drop-zone">
     <div
         class="drop-zone__prompt"
+        role="button"
+        tabindex="0"
         on:drop={(e) => handleDrop(e)}
         on:dragover={(e) => handleDragOver(e)}
+        on:click={() => myFile.click()}
     >
-        <p>Drop your image here</p>
+        <p>Drop your image or click here</p>
+        <img class="preview" src="" alt="" />
     </div>
 </div>
-
-<div class="half">
-    <input
-        type="file"
-        on:change={(e) => convertFileToImage(e)}
-        bind:this={myFile}
-    />
-    <button on:click={handlePaste} class="paste"
-        ><Fa icon={faClipboard} /></button
-    >
-</div>
+<input
+    style="display: none"
+    type="file"
+    on:change={(e) => convertFileToImage(e)}
+    bind:this={myFile}
+/>
 
 <style>
-    .half {
+    .drop-zone {
+        min-height: 200px;
+        border: 4px dashed #797979;
         display: flex;
         justify-content: center;
         align-items: center;
+        border-radius: 10px;
+        font-size: 2em;
+        position: relative;
+        cursor: pointer;
     }
-    .half .paste {
-        height: 2em;
-        width: 2em;
-        margin-left: 1em;
-        /* center the text */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 26px;
+
+    .drop-zone img {
+        max-width: 100%;
+        max-height: 100%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 </style>

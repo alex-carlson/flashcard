@@ -77,7 +77,7 @@
 
             console.log("Collection data is private:", collectionData.private);
 
-            isPublic = collectionData.private  ? false : true;
+            isPublic = collectionData.private ? false : true;
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
@@ -106,7 +106,6 @@
                 collections = [...collections, val];
                 category = tempCategory;
             });
-
         } catch (error) {
             console.error("Error creating collection:", error);
             errorMessage = "Create failed. Please try again.";
@@ -353,6 +352,8 @@
                     }
 
                     successMessage = "Upload successful!";
+                    const preview = document.querySelector(".preview");
+                    preview.src = null;
 
                     response.json().then((val) => {
                         category = val[0].category;
@@ -410,20 +411,29 @@
                 placeholder="Enter a category"
             />
             <button on:click={createCollection}>Create</button>
+        {:else if isRenaming}
+            <input
+                type="text"
+                id="categoryName"
+                bind:value={tempCategory}
+                placeholder="Enter a category"
+            />
+            <button on:click={renameCollection}>Save</button>
+            <button on:click={toggleRenaming}>Cancel</button>
         {:else}
-            {#if isRenaming}
-                <input
-                    type="text"
-                    id="categoryName"
-                    bind:value={tempCategory}
-                    placeholder="Enter a category"
-                />
-                <button on:click={renameCollection}>Save</button>
-                <button on:click={toggleRenaming}>Cancel</button>
-            {:else}
+            <div class="row">
                 <h2>{category}</h2>
-                <button on:click={toggleRenaming}>Rename</button>
-            {/if}
+                <label class="switch">
+                    <input
+                        type="checkbox"
+                        bind:checked={isPublic}
+                        on:change={setVisible}
+                    />
+                    <span class="slider round"></span>
+                    Public
+                </label>
+            </div>
+            <button on:click={toggleRenaming}>Rename</button>
         {/if}
 
         {#each items as item, index}
@@ -464,7 +474,7 @@
                     <img
                         src={localItem.file}
                         alt="Preview"
-                        style="max-width: 100px; max-height: 100px; margin-top: 10px;"
+                        style="display: none;"
                     />
                 {/if}
                 <input
@@ -473,17 +483,6 @@
                     placeholder="Enter an answer"
                 />
                 <button type="button" on:click={uploadData}>Add item</button>
-                <div class="row">
-                    <label class="switch">
-                        <input 
-                            type="checkbox" 
-                            bind:checked={isPublic}
-                            on:change={setVisible}
-                        />
-                        <span class="slider round"></span>
-                    </label>
-                    Public
-                </div>
                 <button class="warning" on:click={confirmDelete}
                     >Delete Collection</button
                 >
@@ -506,32 +505,6 @@
 </div>
 
 <style>
-    .container {
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        /* vertical align elements inside of container */
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-        background-color: #f9f9f9;
-        border-radius: 5px;
-        margin-top: 40px;
-        color: #303030;
-        padding: 2rem;
-    }
-
-    .container input,
-    .container button {
-        padding: 0.5rem;
-        font-size: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: #dedede;
-        color: #373737;
-        height: 40px;
-    }
     .container .item {
         width: 100%;
         display: flex;
@@ -571,20 +544,15 @@
     }
 
     .container .item .remove {
-        /* transparent background */
-        background-color: transparent;
-        color: #b73232;
-        font-size: 2.5rem;
+        background-color: #bd1010;
+        color: #dedede;
     }
 
     .container .item button {
-        border: none;
-        border-radius: 5px;
         padding: 0.5rem;
         cursor: pointer;
-        width: 40px;
-        height: 40px;
-        font-size: 1.5rem;
+        width: 42px;
+        height: 42px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -600,11 +568,6 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-    }
-
-    .container form input[type="file"] {
-        background-color: #bbbbbb;
-        height: 120px;
     }
 
     .container button.warning {

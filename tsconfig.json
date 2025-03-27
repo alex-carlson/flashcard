@@ -1,18 +1,14 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ],
   "compilerOptions": {
-    "strict": false,
-    "noEmit": true,
-    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
-  }
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "module": "esnext",
+    "strict": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*",
+    "src/vite-env.d.ts"
+  ]
 }

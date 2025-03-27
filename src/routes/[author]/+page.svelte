@@ -7,9 +7,7 @@
 
     function fetchCollections(author) {
         // Fetch collections from the server
-        fetch(
-            `${import.meta.env.VITE_API_URL}/collections/user/${author}/all`,
-        )
+        fetch(`${import.meta.env.VITE_API_URL}/collections/user/${author}/all`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error("Failed to fetch collections");
@@ -33,7 +31,7 @@
     }
 </script>
 
-<div>
+<div class="container">
     {#if author}
         <h1>Collections for {author}</h1>
         <ul>
@@ -55,9 +53,7 @@
     ul {
         list-style-type: none;
         padding: 0;
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
+        margin: 0;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
@@ -66,7 +62,22 @@
 
     li {
         margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    ul li a {
+        display: block;
         position: relative;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    ul li a img {
+        width: 100%;
+        height: auto;
+        display: block;
     }
 
     li span {
@@ -74,7 +85,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.8);
         color: white;
         padding: 0.5rem;
         text-align: center;

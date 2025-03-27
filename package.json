@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json && tsc -p tsconfig.node.json"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^5.0.0",
@@ -22,8 +22,10 @@
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "bootstrap": "^5.3.3",
     "jwt-decode": "^4.0.0",
     "react-image-file-resizer": "^0.4.8",
+    "sass": "^1.86.0",
     "sortablejs": "^1.15.6",
     "svelte-fa": "^4.0.3",
     "svelte-gestures": "^5.1.3",
