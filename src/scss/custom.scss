@@ -1,26 +1,29 @@
 :root {
-    --bg-color: #7a1212;
-    --text-color: #f2bc0c;
-    --button-color: #f2bc0c;
-    --button-hover-color: #f2bc0c;
-    --button-text-color: #7a1212;
-    --button-text-hover-color: #7a1212;
+    --bg-color: #6F1D1B;
+    --text-color: #FCE343;
+    --button-color: #FCE343;
+    --button-hover-color: #f2f19a;
+    --button-text-color: #6F1D1B;
+    --button-text-hover-color: #6F1D1B;
     --form-bg-color: #dcdcdc;
     --form-text-color: #383838;
-    --link-color: #ad8500;
+    --link-color: #FCE343;
     --link-hover-color: #eef3b1;
+    --primary-color: #FCE343;
+    --secondary-color: #B6802F;
+    --tertiary-color: #6F1D1B;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: var(--tertiary-color);
+    color: var(--primary-color);
 }
 
 button {
-    background-color: var(--button-color);
-    color: var(--button-text-color);
+    background-color: var(--primary-color);
+    color: var(--tertiary-color);
     padding: 1em;
-    border: solid 2px var(--button-text-color);
+    border: solid 2px var(--tertiary-color);
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.2em;
@@ -33,11 +36,11 @@ button:hover {
 }
 
 select {
-    background-color: var(--button-color);
-    color: var(--button-text-color);
+    background-color: var(--primary-color);
+    color: var(--tertiary-color);
     padding: 1em;
     height: 60px;
-    border: solid 2px var(--button-text-color);
+    border: solid 2px var(--tertiary-color);
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.2em;
@@ -63,7 +66,7 @@ input {
     padding: 1em;
     border: none;
     border-radius: 5px;
-    border: solid 2px #7a1212;
+    border: solid 2px var(--tertiary-color);
     font-size: 1.2em;
     font-weight: bold;
     text-align: center;
@@ -103,4 +106,37 @@ a {
 
 a:hover {
     color: var(--link-hover-color);
+}
+
+html,
+body {
+    margin: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--primary-color);
+    color: var(--tertiary-color);
+    width: 100%;
+}
+
+header a,
+header button {
+    color: var(--tertiary-color);
+    text-decoration: none;
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 1em;
+    border: none;
+    font-family: "Josefin Sans", sans-serif;
+}
+
+header a:hover,
+header button:hover {
+    background-color: var(--button-hover-color);
+    color: var(--tertiary-color);
+    border-radius: 10px;
 }
