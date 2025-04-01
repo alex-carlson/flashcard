@@ -69,7 +69,6 @@
         display: block;
         position: relative;
         overflow: hidden;
-        border-radius: 0.5rem;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s;
     }

@@ -199,9 +199,9 @@
                     <Fa icon={faPlus} />
                 </button>
             {:else}
-                <button class="btn btn-primary" on:click={toggleGrid}>
+                <!-- <button class="btn btn-primary" on:click={toggleGrid}>
                     <Fa icon={isGrid ? faList : faTableCells} />
-                </button>
+                </button> -->
             {/if}
             <button
                 class="btn btn-primary"
@@ -256,7 +256,8 @@
         </div>
     {/if}
 </div>
-<Pagination {cards} />
+
+<!-- <Pagination {cards} /> -->
 
 <style global>
     .flashcards {
@@ -265,7 +266,7 @@
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
         background: rgba(0, 0, 0, 0.1);
-        border-radius: 15px;
+        border-radius: 0;
     }
 
     .card {
@@ -392,13 +393,7 @@
 
     :fullscreen .flashcards {
         height: 100vh;
-        background: rgb(118, 0, 0);
-        background: linear-gradient(
-            180deg,
-            rgba(118, 0, 0, 0) 0%,
-            rgba(118, 0, 0, 0) 80%,
-            rgba(0, 0, 0, 1) 100%
-        );
+        background: black;
     }
 
     :fullscreen.container {
@@ -406,6 +401,9 @@
     }
     .btn {
         padding: 0.5rem;
-        border-radius: 0.25rem;
+    }
+
+    :not(:root):fullscreen::backdrop {
+        background: black;
     }
 </style>
