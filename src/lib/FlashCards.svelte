@@ -96,6 +96,7 @@
 
     function toggleGrid() {
         isGrid = !isGrid;
+        console.log("Toggling grid mode:", isGrid);
     }
 
     function scaleImage(amount) {
@@ -199,9 +200,9 @@
                     <Fa icon={faPlus} />
                 </button>
             {:else}
-                <!-- <button class="btn btn-primary" on:click={toggleGrid}>
+                <button class="btn btn-primary" on:click={toggleGrid}>
                     <Fa icon={isGrid ? faList : faTableCells} />
-                </button> -->
+                </button>
             {/if}
             <button
                 class="btn btn-primary"
@@ -221,14 +222,14 @@
         </div>
 
         <div
-            class={"flashcards mt-4 " +
+            class={"flashcards " +
                 (isGrid
-                    ? "row row-cols-1 row-cols-md-4"
-                    : "d-flex flex-row align-items-center")}
+                    ? "grid" //grid with 3 columns
+                    : "d-flex flex-row align-items-center vertical")}
         >
             {#each cards as item, i}
                 <div
-                    class="position-relative p-4 cursor-pointer card"
+                    class="card"
                     role="button"
                     tabindex="0"
                     on:click={() => toggleReveal(i)}
@@ -263,10 +264,19 @@
     .flashcards {
         height: calc(100vh - 140px);
         overflow-y: auto;
-        scroll-snap-type: y mandatory;
-        scroll-behavior: smooth;
         background: rgba(0, 0, 0, 0.1);
         border-radius: 0;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(
+            3,
+            1fr
+        ); /* Create 3 columns of equal width */
+        gap: 0px; /* Space between cards */
     }
 
     .card {
@@ -279,6 +289,8 @@
         align-items: center;
         justify-content: center;
         scroll-snap-align: start;
+        position: relative;
+        cursor: pointer;
     }
 
     .card span {
@@ -299,11 +311,15 @@
         max-width: 100%;
     }
 
-    .row-cols-4 .card {
+    .grid .card {
         height: auto;
     }
 
-    .d-flex .card {
+    .grid .card span {
+        font-size: 12px;
+    }
+
+    .vertical .card {
         height: calc(100vh - 140px);
     }
 
