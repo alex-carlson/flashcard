@@ -525,6 +525,7 @@
         /* fill extra space */
         flex-grow: 1;
         font-size: 1.5rem;
+        width: 100%;
     }
 
     .container .item img {
@@ -536,6 +537,7 @@
         /* fill extra space */
         flex-grow: 1;
         font-size: 1.5rem;
+        width: 100%;
     }
 
     .container .item .remove {
