@@ -273,7 +273,7 @@
     .grid {
         display: grid;
         grid-template-columns: repeat(
-            3,
+            4,
             1fr
         ); /* Create 3 columns of equal width */
         gap: 0px; /* Space between cards */
@@ -312,7 +312,9 @@
     }
 
     .grid .card {
-        height: auto;
+        /* height: auto; */
+        height: 100%;
+        display: inline-table;
     }
 
     .grid .card span {
