@@ -1,10 +1,6 @@
 <script>
     import Resizer from "react-image-file-resizer";
     import { createEventDispatcher } from "svelte";
-    import Fa from "svelte-fa";
-    import { faClipboard } from "@fortawesome/free-solid-svg-icons";
-    // We'll call this function later to resize images
-    const resize = Resizer.imageFileResizer;
     const dispatch = createEventDispatcher();
     // The uncompressed version of the uploaded images, they are bound to the form input element below
     let myFile;
@@ -21,26 +17,21 @@
             preview.src = myImg;
         };
 
-        //wait for resize image and then return the image
-        resizeImage(image).then((resizedImage) => {
-            dispatch("resizeImage", { resizedImage });
-        });
-    };
-
-    let resizeImage = (file) => {
-        // convert file to
-        return new Promise((resolve, reject) => {
-            resize(
-                file,
-                600,
-                600,
-                "JPEG",
-                60,
-                0,
-                (uri) => resolve(uri),
-                "blob",
-            );
-        });
+        // make sure file type is either jpeg, png, gif, svg, or webp
+        if (
+            ![
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/svg+xml",
+                "image/webp",
+            ].includes(image.type)
+        ) {
+            alert("Only images are allowed (jpeg, png, gif, svg, webp)");
+            return;
+        } else {
+            dispatch("uploadImage", e.target.files[0]);
+        }
     };
 
     const handlePaste = async (e) => {
@@ -58,23 +49,7 @@
                         myImg = e.target.result;
                     };
 
-                    // Wait for resized image and then return the image
-                    resizeImage(file).then((resizedImage) => {
-                        dispatch("resizeImage", { resizedImage });
-                    });
-                }
-            }
-        }
-    };
-
-    const getClipboard = async () => {
-        const clipboardItems = await navigator.clipboard.read();
-        for (const clipboardItem of clipboardItems) {
-            for (const type of clipboardItem.types) {
-                if (type === "image/png") {
-                    const blob = await clipboardItem.getType(type);
-                    const file = new File([blob], "image.png", { type });
-                    handleImage(file);
+                    dispatch("uploadImage", { file });
                 }
             }
         }
@@ -120,6 +95,11 @@
         on:drop={(e) => handleDrop(e)}
         on:dragover={(e) => handleDragOver(e)}
         on:click={() => myFile.click()}
+        on:keydown={(e) => {
+            if (e.key === "Enter") {
+                myFile.click();
+            }
+        }}
     >
         <p>Drop your image or click here</p>
         <img class="preview" src="" alt="" />
@@ -128,6 +108,7 @@
 <input
     style="display: none"
     type="file"
+    accept="image/*"
     on:change={(e) => convertFileToImage(e)}
     bind:this={myFile}
 />

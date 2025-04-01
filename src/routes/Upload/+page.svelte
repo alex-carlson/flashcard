@@ -259,14 +259,9 @@
         input.focus();
     }
 
-    // on resizeImage event, set the localItem.file to the resized image
     function handleFileChange(event) {
-        // convert image blob to base64
-        const reader = new FileReader();
-        reader.readAsDataURL(event.detail.resizedImage);
-        reader.onload = () => {
-            localItem.file = reader.result;
-        };
+        console.log("File changed:", event.detail);
+        localItem.file = event.detail;
     }
 
     function confirmDelete() {
@@ -319,19 +314,13 @@
     }
 
     async function uploadData() {
-        // generate a uuid4
-        const uuid = uuidv4();
-        const data = {
-            category,
-            author: username,
-            item: {
-                name: localItem.answer,
-                image: null,
-                id: uuid,
-            },
-            base64Image: localItem.file,
-            folder: `${username}/${category}`,
-        };
+        const formData = new FormData();
+        formData.append("uuid", uuidv4());
+        formData.append("file", localItem.file);
+        formData.append("folder", `${username}/${category}`);
+        formData.append("answer", localItem.answer);
+        formData.append("category", category);
+        formData.append("author", username);
 
         let url = import.meta.env.VITE_API_URL + "/items/upload";
 
@@ -340,33 +329,28 @@
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify(data),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Upload failed: ${response.statusText}`,
-                        );
-                    }
+                body: formData,
+            });
 
-                    successMessage = "Upload successful!";
-                    const preview = document.querySelector(".preview");
-                    preview.src = null;
-                    // clear answer field
-                    localItem.answer = "";
-                    const answerInput = document.getElementById("answer");
-                    answerInput.value = "";
+            if (!response.ok) {
+                throw new Error(
+                    `Upload failed: ${response.status} ${response.statusText}`,
+                );
+            }
 
-                    response.json().then((val) => {
-                        category = val[0].category;
-                        items = val[0].items;
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                });
+            successMessage = "Upload successful!";
+            const preview = document.querySelector(".preview");
+            preview.src = null;
+            // clear answer field
+            localItem.answer = "";
+            const answerInput = document.getElementById("answer");
+            answerInput.value = "";
+
+            // get image from response
+            const data = await response.json();
+            const returnedItems = data[0].items;
+            items = returnedItems;
         } catch (error) {
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";
@@ -458,10 +442,16 @@
                 {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
-                    <button class="edit secondary" on:click={() => onEditClick(item.id)}>
+                    <button
+                        class="edit secondary"
+                        on:click={() => onEditClick(item.id)}
+                    >
                         <Fa icon={faPenToSquare} />
                     </button>
-                    <button class="remove warning" on:click={() => removeItem(item.id)}>
+                    <button
+                        class="remove warning"
+                        on:click={() => removeItem(item.id)}
+                    >
                         <Fa icon={faSquareMinus} />
                     </button>
                 {/if}
@@ -473,7 +463,7 @@
 
             <!-- on submit form, call UploadFile -->
             <form>
-                <FileUpload on:resizeImage={handleFileChange} />
+                <FileUpload on:uploadImage={handleFileChange} />
                 {#if localItem.file}
                     <img
                         src={localItem.file}
