@@ -53,6 +53,7 @@
         max-height: 150px;
         /* grayscale filter */
         filter: grayscale(100%);
+        width: 100%;
     }
 
     nav ul {
@@ -77,8 +78,6 @@
     }
 
     nav ul li a, nav ul li button {
-        padding: 0.6em 1.2em;
-        margin: 0;
         color: black;
         font-weight: 500;
     }
