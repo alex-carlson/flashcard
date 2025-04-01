@@ -12,9 +12,6 @@
         reader.readAsDataURL(image);
         reader.onload = (e) => {
             myImg = e.target.result;
-            // get image preview and set src
-            let preview = document.querySelector(".preview");
-            preview.src = myImg;
         };
 
         // make sure file type is either jpeg, png, gif, svg, or webp
@@ -40,16 +37,16 @@
         for (let i = 0; i < clipboardItems.length; i++) {
             const item = clipboardItems[i];
             if (item.type.startsWith("image")) {
-                const file = item.getAsFile();
-                if (file) {
+                const fileObject = item.getAsFile();
+                if (fileObject) {
                     // Handle the image file from the clipboard
                     let reader = new FileReader();
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(fileObject);
                     reader.onload = (e) => {
                         myImg = e.target.result;
                     };
 
-                    dispatch("uploadImage", { file });
+                    dispatch("uploadImage", fileObject);
                 }
             }
         }
@@ -102,7 +99,7 @@
         }}
     >
         <p>Drop your image or click here</p>
-        <img class="preview" src="" alt="" />
+        <img class="preview" src={myImg} alt="" />
     </div>
 </div>
 <input
