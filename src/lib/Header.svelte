@@ -1,10 +1,12 @@
 <script>
     // import Search from "./Search.svelte";
-    import { link } from "svelte-spa-router";
+    import { link, location } from "svelte-spa-router";
     import { onMount } from "svelte";
     import { jwtDecode } from "jwt-decode"; // Use named import
     let token = localStorage.getItem("token");
     let isLoggedIn = !!token;
+
+    const isActive = (path) => ($location === path ? "active" : "");
 
     onMount(() => {
         if (token) {
@@ -29,17 +31,29 @@
 
 <header>
     <div class="header">
-        <img src="/logo.png" alt="Logo">
+        <img src="/logo.png" alt="Logo" />
         <nav>
             <ul>
-                <li><a href="#/" use:link>Home</a></li>
+                <li><a href="#/" use:link class={isActive("/")}>Home</a></li>
                 {#if isLoggedIn}
-                    <li><a href="#/upload" use:link>Manage</a></li>
+                    <li>
+                        <a href="#/upload" use:link class={isActive("/upload")}
+                            >Manage</a
+                        >
+                    </li>
                     <!-- <li><a href="#/profile" use:link>Profile</a></li> -->
-                    <li><button on:click={logout}>Log Out</button></li>
+                    <li><a on:click={logout}>Log Out</a></li>
                 {:else}
-                    <li><a href="#/login" use:link>Login</a></li>
-                    <li><a href="#/signup" use:link>Sign Up</a></li>
+                    <li>
+                        <a href="#/login" use:link class={isActive("/login")}
+                            >Login</a
+                        >
+                    </li>
+                    <li>
+                        <a href="#/signup" use:link class={isActive("/signup")}
+                            >Sign Up</a
+                        >
+                    </li>
                 {/if}
             </ul>
         </nav>
@@ -47,7 +61,6 @@
 </header>
 
 <style>
-
     header img {
         margin-top: 40px;
         max-height: 150px;
@@ -65,21 +78,37 @@
         margin-bottom: 5px;
     }
 
+    nav ul li {
+        height: 60px;
+    }
+
     nav ul li a {
         text-decoration: none;
+        border-radius: 0;
+    }
+
+    nav ul li a.active,
+    nav ul li a.active:hover {
+        background: #d7c117;
+        border-bottom: solid 5px #d7c117;
     }
 
     nav ul li a:hover {
-        text-decoration: underline;
+        /* text-decoration: underline; */
+        background: transparent;
+        border-bottom: solid 5px #d7c117;
     }
 
     nav ul li a:visited {
         color: black;
     }
 
-    nav ul li a, nav ul li button {
+    nav ul li a,
+    nav ul li button {
         color: black;
         font-weight: 500;
+        height: 50px;
+        box-sizing: border-box;
     }
 
     nav ul li button {

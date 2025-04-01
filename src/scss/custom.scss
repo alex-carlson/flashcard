@@ -60,7 +60,7 @@ input {
 .container {
     background-color: var(--form-bg-color);
     color: var(--form-text-color);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 15px;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
@@ -99,7 +99,7 @@ button {
 }
 
 button.primary {
-    background-color:rgb(46, 46, 46);
+    background-color: rgb(46, 46, 46);
     border-color: rgb(46, 46, 46);
 }
 
@@ -126,6 +126,7 @@ header {
     background-color: var(--primary-color);
     color: var(--tertiary-color);
     width: 100%;
+    box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 15px;
 }
 
 header a,
@@ -145,6 +146,8 @@ header button:hover {
     border-radius: 10px;
 }
 
-select, button, input {
+select,
+button,
+input {
     font-family: "DM Serif Text", serif;
 }
