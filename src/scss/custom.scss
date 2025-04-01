@@ -20,27 +20,16 @@ body {
 }
 
 button {
-    background-color: var(--primary-color);
-    color: var(--tertiary-color);
     padding: 1em;
-    border: solid 2px var(--tertiary-color);
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.2em;
     font-weight: bold;
 }
 
-button:hover {
-    background-color: var(--button-hover-color);
-    color: var(--button-text-hover-color);
-}
-
 select {
-    background-color: var(--primary-color);
-    color: var(--tertiary-color);
     padding: 1em;
     height: 60px;
-    border: solid 2px var(--tertiary-color);
     border-radius: 5px;
     cursor: pointer;
     font-size: 1.2em;
@@ -52,7 +41,6 @@ select {
 select:after {
     font-size: 2em;
     padding: 1em;
-    content: '\25BC';
 }
 
 // set the text in the dropdown to also be centered
@@ -61,12 +49,9 @@ select option {
 }
 
 input {
-    background-color: var(--button-color);
-    color: var(--button-text-color);
     padding: 1em;
     border: none;
     border-radius: 5px;
-    border: solid 2px var(--tertiary-color);
     font-size: 1.2em;
     font-weight: bold;
     text-align: center;
@@ -77,7 +62,7 @@ input {
     color: var(--form-text-color);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 600px;
+    max-width: 1200px;
     margin: 0 auto;
     /* vertical align elements inside of container */
     display: flex;
@@ -101,11 +86,31 @@ input {
 }
 
 a {
-    color: var(--link-color);
+    color: var(--button-text-color);
 }
 
 a:hover {
-    color: var(--link-hover-color);
+    color: var(--button-text-color);
+    text-decoration: underline;
+}
+
+button {
+    border: solid 2px rgb(46, 46, 46);
+}
+
+button.primary {
+    background-color:rgb(46, 46, 46);
+    border-color: rgb(46, 46, 46);
+}
+
+button.secondary {
+    background-color: rgb(116, 116, 116);
+    border-color: rgb(116, 116, 116);
+}
+
+button.warning {
+    background-color: rgb(224, 36, 36);
+    border-color: rgb(224, 36, 36);
 }
 
 html,
@@ -131,7 +136,6 @@ header button {
     font-weight: bold;
     padding: 1em;
     border: none;
-    font-family: "Josefin Sans", sans-serif;
 }
 
 header a:hover,
@@ -139,4 +143,8 @@ header button:hover {
     background-color: var(--button-hover-color);
     color: var(--tertiary-color);
     border-radius: 10px;
+}
+
+select, button, input {
+    font-family: "DM Serif Text", serif;
 }

@@ -29,7 +29,7 @@
 
 <header>
     <div class="header">
-        <h1>Prost Free 🍺 Generator</h1>
+        <img src="/logo.png" alt="Logo">
         <nav>
             <ul>
                 <li><a href="#/" use:link>Home</a></li>
@@ -48,9 +48,11 @@
 
 <style>
 
-    header h1 {
-        /* margin: 0; */
-        margin-bottom: 5px;
+    header img {
+        margin-top: 40px;
+        max-height: 150px;
+        /* grayscale filter */
+        filter: grayscale(100%);
     }
 
     nav ul {

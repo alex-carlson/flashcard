@@ -51,22 +51,4 @@
         font-size: 1rem;
         width: 100%;
     }
-
-    ul {
-        list-style-type: none;
-        padding: 0;
-    }
-
-    li {
-        margin: 5px;
-    }
-
-    a {
-        text-decoration: none;
-        color: blue;
-    }
-
-    a:hover {
-        text-decoration: underline;
-    }
 </style>

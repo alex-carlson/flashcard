@@ -354,6 +354,10 @@
                     successMessage = "Upload successful!";
                     const preview = document.querySelector(".preview");
                     preview.src = null;
+                    // clear answer field
+                    localItem.answer = "";
+                    const answerInput = document.getElementById("answer");
+                    answerInput.value = "";
 
                     response.json().then((val) => {
                         category = val[0].category;
@@ -408,7 +412,7 @@
             <input
                 type="text"
                 bind:value={tempCategory}
-                placeholder="Enter a category"
+                placeholder="Category Name"
             />
             <button on:click={createCollection}>Create</button>
         {:else if isRenaming}
@@ -418,8 +422,8 @@
                 bind:value={tempCategory}
                 placeholder="Enter a category"
             />
-            <button on:click={renameCollection}>Save</button>
-            <button on:click={toggleRenaming}>Cancel</button>
+            <button class="secondary" on:click={renameCollection}>Save</button>
+            <button class="warning" on:click={toggleRenaming}>Cancel</button>
         {:else}
             <div class="row">
                 <h2>{category}</h2>
@@ -433,7 +437,7 @@
                     Public
                 </label>
             </div>
-            <button on:click={toggleRenaming}>Rename</button>
+            <button class="secondary" on:click={toggleRenaming}>Rename</button>
         {/if}
 
         {#each items as item, index}
@@ -448,16 +452,16 @@
                     <button on:click={saveEdit}
                         ><Fa icon={faFloppyDisk} /></button
                     >
-                    <button class="cancel" on:click={cancelEdit}
+                    <button class="cancel warning" on:click={cancelEdit}
                         ><Fa icon={faBan} /></button
                     >
                 {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
-                    <button class="edit" on:click={() => onEditClick(item.id)}>
+                    <button class="edit secondary" on:click={() => onEditClick(item.id)}>
                         <Fa icon={faPenToSquare} />
                     </button>
-                    <button class="remove" on:click={() => removeItem(item.id)}>
+                    <button class="remove warning" on:click={() => removeItem(item.id)}>
                         <Fa icon={faSquareMinus} />
                     </button>
                 {/if}
@@ -478,6 +482,7 @@
                     />
                 {/if}
                 <input
+                    id="answer"
                     type="text"
                     bind:value={localItem.answer}
                     placeholder="Enter an answer"
@@ -556,11 +561,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    .container .item button.cancel {
-        background-color: #373737;
-        color: #dedede;
     }
 
     .container form {
