@@ -25,6 +25,9 @@
     $: if ($params) {
         author = $params.author;
 
+        // set page title to <author>'s collections
+        document.title = `${author}'s Collections`;
+
         if (author) {
             fetchCollections(author);
         }

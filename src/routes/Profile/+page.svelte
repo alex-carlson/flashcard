@@ -1,22 +1,25 @@
 <script>
-    import { onMount } from 'svelte';
+    import { onMount } from "svelte";
 
     let username = null;
     let email = null;
     let userData = null;
 
-    async function fetchUserData(){
-        const tokenUsername = JSON.parse(atob(localStorage.getItem("token").split(".")[1])).username;
+    async function fetchUserData() {
+        const tokenUsername = JSON.parse(
+            atob(localStorage.getItem("token").split(".")[1]),
+        ).username;
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/user`,
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/user`,
                 {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
-                }
+                },
             );
-            
+
             if (!response.ok) {
                 throw new Error("Failed to fetch user data");
             }
@@ -27,19 +30,20 @@
         }
     }
 
-    async function changeUsername(){
+    async function changeUsername() {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/changeUsername`,
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/changeUsername`,
                 {
                     method: "PUT",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({username, email: userData.email}),
-                }
+                    body: JSON.stringify({ username, email: userData.email }),
+                },
             );
-            
+
             if (!response.ok) {
                 throw new Error("Failed to update username");
             }
@@ -51,19 +55,20 @@
         }
     }
 
-    async function changePassword(){
+    async function changePassword() {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/changePassword`,
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/changePassword`,
                 {
                     method: "PUT",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({password, email: userData.email}),
-                }
+                    body: JSON.stringify({ password, email: userData.email }),
+                },
             );
-            
+
             if (!response.ok) {
                 throw new Error("Failed to update password");
             }
@@ -75,17 +80,18 @@
         }
     }
 
-    async function deleteAccount(){
+    async function deleteAccount() {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/deleteAccount`,
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/deleteAccount`,
                 {
                     method: "DELETE",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
-                }
+                },
             );
-            
+
             if (!response.ok) {
                 throw new Error("Failed to delete account");
             }
@@ -97,13 +103,15 @@
     }
 
     onMount(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (token) {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const payload = JSON.parse(atob(token.split(".")[1]));
             fetchUserData();
         }
+        document.title = "Profile";
     });
 </script>
+
 <div class="container">
     {#if userData}
         <h1>Account details for {userData.username}</h1>

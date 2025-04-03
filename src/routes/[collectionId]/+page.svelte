@@ -8,6 +8,9 @@
     $: if ($params) {
         author = $params.author;
         category = $params.category;
+
+        // set page title to <category> by <author>
+        document.title = `${category} by ${author}`;
     }
 </script>
 

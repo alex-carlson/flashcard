@@ -2,6 +2,8 @@
     import Search from "../../lib/Search.svelte";
     let token = localStorage.getItem("token");
     let isLoggedIn = !!token;
+
+    document.title = "Home";
 </script>
 
 <div class="container">

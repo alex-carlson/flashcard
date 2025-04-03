@@ -39,6 +39,7 @@
             successMessage = "";
         }
     };
+    document.title = "Create Account";
 </script>
 
 <div class="container">

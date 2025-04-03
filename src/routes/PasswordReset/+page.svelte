@@ -39,6 +39,7 @@
             errorMessage = "Failed to reset password";
         }
     };
+    document.title = "Reset Password";
 </script>
 
 <div class="container">

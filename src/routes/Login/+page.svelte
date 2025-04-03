@@ -63,6 +63,7 @@
             errorMessage = "Invalid credentials";
         }
     };
+    document.title = "Login";
 </script>
 
 <div class="container">

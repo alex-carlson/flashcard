@@ -380,6 +380,7 @@
             errorMessage = "Visibility change failed. Please try again.";
         }
     }
+    document.title = "Upload Data";
 </script>
 
 <div class="container">
