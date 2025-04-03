@@ -58,9 +58,6 @@ input {
 }
 
 .container {
-    background-color: var(--form-bg-color);
-    color: var(--form-text-color);
-    box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 15px;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
@@ -71,7 +68,6 @@ input {
     text-align: center;
     border-radius: 5px;
     margin-top: 40px;
-    padding: 2rem;
     width: 100%;
     box-sizing: border-box;
 }
@@ -86,11 +82,11 @@ input {
 }
 
 a {
-    color: var(--button-text-color);
+    color: var(--link-color);
 }
 
 a:hover {
-    color: var(--button-text-color);
+    color: var(--link-hover-color);
     text-decoration: underline;
 }
 
@@ -150,4 +146,24 @@ select,
 button,
 input {
     font-family: "DM Serif Text", serif;
+}
+
+.form {
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+    border-radius: 0;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"] {
+    background-color: #fff;
+    color: var(--form-text-color);
+    border-radius: 0;
+    border: solid 3px #505050;
+    padding: 1em;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
 }

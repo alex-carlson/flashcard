@@ -262,12 +262,8 @@
 
 <style global>
     .flashcards {
-        height: calc(100vh - 140px);
-        overflow-y: auto;
         background: rgba(0, 0, 0, 0.1);
         border-radius: 0;
-        scroll-snap-type: y mandatory;
-        scroll-behavior: smooth;
     }
 
     .grid {
@@ -412,6 +408,9 @@
     :fullscreen .flashcards {
         height: 100vh;
         background: black;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        overflow-y: auto;
     }
 
     :fullscreen.container {

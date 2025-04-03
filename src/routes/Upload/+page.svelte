@@ -225,7 +225,6 @@
     }
 
     function onEditClick(itemId) {
-        console.log("Editing item:", itemId);
         editableItemId = itemId;
         //move the data to the localItem and scroll down to form
         localItem = { ...items.find((item) => item.id === itemId) };
@@ -243,20 +242,16 @@
             console.error("Error saving item:", error);
             errorMessage = "Save failed. Please try again.";
         }
+        localItem = null; // Reset local item
     }
 
     function cancelEdit() {
         editableItemId = null;
-        localItem = null;
+        localItem.answer = "";
     }
 
     function toggleRenaming() {
         isRenaming = !isRenaming;
-        // set category input to current category
-        // get #categoryName input element
-        const input = document.getElementById("categoryName");
-        input.value = category;
-        input.focus();
     }
 
     function handleFileChange(event) {
@@ -383,47 +378,53 @@
     document.title = "Upload Data";
 </script>
 
-<div class="container">
+<div class="container form">
     {#if !token}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
-        {#if collections.length > 0}
-            <Collections
-                {collections}
-                on:selectCollection={handleCollectionSelection}
-            />
-        {/if}
-        {#if category === ""}
-            <input
-                type="text"
-                bind:value={tempCategory}
-                placeholder="Category Name"
-            />
-            <button on:click={createCollection}>Create</button>
-        {:else if isRenaming}
-            <input
-                type="text"
-                id="categoryName"
-                bind:value={tempCategory}
-                placeholder="Enter a category"
-            />
-            <button class="secondary" on:click={renameCollection}>Save</button>
-            <button class="warning" on:click={toggleRenaming}>Cancel</button>
-        {:else}
-            <div class="row">
-                <h2>{category}</h2>
-                <label class="switch">
-                    <input
-                        type="checkbox"
-                        bind:checked={isPublic}
-                        on:change={setVisible}
-                    />
-                    <span class="slider round"></span>
-                    Public
-                </label>
-            </div>
-            <button class="secondary" on:click={toggleRenaming}>Rename</button>
-        {/if}
+        <div class="container">
+            {#if collections.length > 0}
+                <Collections
+                    {collections}
+                    on:selectCollection={handleCollectionSelection}
+                />
+            {/if}
+            {#if category === ""}
+                <input
+                    type="text"
+                    bind:value={tempCategory}
+                    placeholder="Category Name"
+                />
+                <button on:click={createCollection}>Create</button>
+            {:else if isRenaming}
+                <input
+                    type="text"
+                    id="categoryName"
+                    bind:value={tempCategory}
+                    placeholder="Enter a category"
+                />
+                <button class="secondary" on:click={renameCollection}
+                    >Save</button
+                >
+                <button class="warning" on:click={toggleRenaming}>Cancel</button
+                >
+            {:else}
+                <div class="row">
+                    <h2>{isPublic ? "Public" : "Private"}</h2>
+                    <label class="switch">
+                        <input
+                            type="checkbox"
+                            bind:checked={isPublic}
+                            on:change={setVisible}
+                        />
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button class="secondary" on:click={toggleRenaming}
+                    >Rename</button
+                >
+            {/if}
+        </div>
 
         {#each items as item, index}
             <div class="item">
@@ -437,7 +438,7 @@
                     <button on:click={saveEdit}
                         ><Fa icon={faFloppyDisk} /></button
                     >
-                    <button class="cancel warning" on:click={cancelEdit}
+                    <button class="cancel" on:click={cancelEdit}
                         ><Fa icon={faBan} /></button
                     >
                 {:else}
@@ -477,8 +478,11 @@
                     type="text"
                     bind:value={localItem.answer}
                     placeholder="Enter an answer"
+                    class="answer"
                 />
-                <button type="button" on:click={uploadData}>Add item</button>
+                <button type="button" class="" on:click={uploadData}
+                    >Add item</button
+                >
                 <button class="warning" on:click={confirmDelete}
                     >Delete Collection</button
                 >
@@ -501,6 +505,10 @@
 </div>
 
 <style>
+    .container .container {
+        padding: 0 1rem;
+    }
+
     .container .item {
         width: 100%;
         display: flex;
@@ -537,8 +545,11 @@
     .container .item input[type="text"] {
         /* fill extra space */
         flex-grow: 1;
-        font-size: 1.5rem;
+        font-size: 0.7rem;
         width: 100%;
+        box-sizing: border-box;
+        height: 42px;
+        padding: 0;
     }
 
     .container .item .remove {
@@ -560,7 +571,8 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 14px;
+        padding: 2rem;
     }
 
     .container button.warning {

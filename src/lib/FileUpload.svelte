@@ -1,10 +1,10 @@
 <script>
-    import Resizer from "react-image-file-resizer";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     // The uncompressed version of the uploaded images, they are bound to the form input element below
     let myFile;
     let myImg;
+    let imgElement;
 
     let convertFileToImage = (e) => {
         let image = e.target.files[0];
@@ -98,8 +98,11 @@
             }
         }}
     >
-        <p>Drop your image or click here</p>
-        <img class="preview" src={myImg} alt="" />
+        <!-- if myImg is empty, set class -->
+        <p class={"text " + (myImg ? "filled" : "empty")}>
+            Drop your image or click here
+        </p>
+        <img bind:this={imgElement} class="preview" src={myImg} alt="" />
     </div>
 </div>
 <input
@@ -121,6 +124,7 @@
         font-size: 2em;
         position: relative;
         cursor: pointer;
+        margin: 5px 0px 20px 0px;
     }
 
     .drop-zone img {
@@ -130,5 +134,13 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+    }
+
+    .drop-zone .filled {
+        display: none;
+    }
+
+    .drop-zone .empty {
+        display: block;
     }
 </style>
