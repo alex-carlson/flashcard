@@ -461,8 +461,6 @@
         {/each}
 
         {#if category}
-            <hr />
-
             <!-- on submit form, call UploadFile -->
             <form>
                 <FileUpload on:uploadImage={handleFileChange} />
@@ -522,12 +520,6 @@
     /* make every other item gray */
     .container .item:nth-child(even) {
         background-color: #f0f0f0;
-    }
-
-    .container hr {
-        border: none;
-        border-top: 1px solid #ccc;
-        margin: 1rem 0;
     }
 
     .container .item span {

@@ -44,18 +44,19 @@
     }
 </script>
 
+{#if isMobile}
+    <button
+        on:click={toggleMenu}
+        class={"hamburger " + (isMenuOpen ? "open" : "closed")}
+        aria-label="Menu"
+    >
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </button>
+{/if}
 <div class="navContainer">
     {#if isMobile}
-        <!-- hamburger toggle -->
-        <button
-            on:click={toggleMenu}
-            class={"hamburger " + (isMenuOpen ? "open" : "closed")}
-            aria-label="Menu"
-        >
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-        </button>
         {#if isMenuOpen}
             <nav class="mobileNav">
                 <ul>
@@ -129,8 +130,68 @@
 </div>
 
 <style>
+    .mobileNav {
+        position: relative; /* Change from absolute to relative */
+        width: 100%;
+        height: auto; /* Let it expand based on content */
+        background-color: #d7c117;
+        z-index: 1000;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        box-shadow: 0 8px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .mobileNav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .mobileNav ul li {
+        margin: 15px 0; /* Add spacing between menu items */
+    }
+
+    .mobileNav ul li a {
+        text-decoration: none;
+        font-size: 1.5rem; /* Larger font size for mobile */
+        color: #000000;
+        font-weight: bold;
+        padding: 10px 20px;
+        display: inline-block;
+        width: 100%; /* Make links span the full width */
+        text-align: center;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .mobileNav ul li a:hover {
+        background-color: #f0f0f0; /* Add hover effect */
+    }
+
+    .mobileNav ul li a.active {
+        background-color: #d7c117; /* Highlight active link */
+        color: #6f1d1b;
+    }
+
+    .navContainer {
+        position: absolute;
+        top: 88px;
+        left: 0;
+        width: 100%;
+        z-index: 1100;
+    }
+
     .hamburger {
         background: transparent;
+        position: absolute;
+        top: 18px;
+        right: 5px;
+        z-index: 1100;
     }
 
     .hamburger .bar {
@@ -139,7 +200,7 @@
         height: 3px;
         margin: 5px auto;
         transition: all 0.3s ease-in-out;
-        background-color: #000000;
+        background-color: #6f1d1b;
         transition: 0.25s ease;
     }
 
@@ -186,18 +247,10 @@
         color: black;
     }
 
-    nav ul li a,
-    nav ul li button {
+    nav ul li a {
         color: black;
         font-weight: 500;
         height: 50px;
         box-sizing: border-box;
-    }
-
-    nav ul li button {
-        background-color: #d7c117;
-        color: black;
-        border: none;
-        cursor: pointer;
     }
 </style>
