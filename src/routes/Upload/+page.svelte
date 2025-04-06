@@ -346,6 +346,8 @@
             const data = await response.json();
             const returnedItems = data[0].items;
             items = returnedItems;
+            localItem.file = null; // Reset local item file
+            localItem.answer = ""; // Reset local item answer
         } catch (error) {
             console.error("Error uploading data:", error);
             errorMessage = "Upload failed. Please try again.";

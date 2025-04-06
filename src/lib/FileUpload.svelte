@@ -39,6 +39,7 @@
             if (item.type.startsWith("image")) {
                 const fileObject = item.getAsFile();
                 if (fileObject) {
+                    myFile = fileObject;
                     // Handle the image file from the clipboard
                     let reader = new FileReader();
                     reader.readAsDataURL(fileObject);
@@ -99,7 +100,7 @@
         }}
     >
         <!-- if myImg is empty, set class -->
-        <p class={"text " + (myImg ? "filled" : "empty")}>
+        <p class={"text " + (myFile ? "filled" : "empty")}>
             Drop your image or click here
         </p>
         <img bind:this={imgElement} class="preview" src={myImg} alt="" />
