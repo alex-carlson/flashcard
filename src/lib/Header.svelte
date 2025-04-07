@@ -19,6 +19,7 @@
         align-items: center;
         flex-direction: column;
         padding: 15px;
+        box-sizing: border-box;
     }
     header > * {
         width: 100%;
