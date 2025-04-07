@@ -37,4 +37,23 @@
         justify-content: center;
         align-items: center;
     }
+
+    /* custom styles for if window width > 800 */
+    @media (min-width: 800px) {
+        header {
+            flex-direction: row;
+        }
+        header > * {
+            width: 100%;
+            display: inline-block;
+        }
+        header a {
+            margin: 0 auto;
+        }
+        header a img {
+            width: 100%;
+            margin: 0;
+            max-width: 500px;
+        }
+    }
 </style>

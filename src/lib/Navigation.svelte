@@ -253,4 +253,20 @@
         height: 50px;
         box-sizing: border-box;
     }
+
+    /* if window width > 800px */
+    @media (min-width: 800px) {
+        .navContainer {
+            position: static;
+            margin: 10px auto;
+
+            ul li {
+                height: auto;
+
+                a {
+                    padding: 15px;
+                }
+            }
+        }
+    }
 </style>
