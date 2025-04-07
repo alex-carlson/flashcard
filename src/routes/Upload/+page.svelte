@@ -9,6 +9,7 @@
         faSquareMinus,
         faFloppyDisk,
         faBan,
+        faGripLines,
     } from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username");
@@ -155,6 +156,39 @@
         fetchCollections();
     });
 
+    let draggedIndex = -1; // Track the index of the dragged item
+
+    function handleDragStart(event, index) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", index); // Store the index of the dragged item
+
+        const emptyImage = new Image();
+        emptyImage.src = ""; // Use an empty image
+        event.dataTransfer.setDragImage(emptyImage, 0, 0);
+    }
+
+    function handleDragOver(event) {
+        event.preventDefault(); // Allow dropping
+        event.dataTransfer.dropEffect = "move";
+    }
+
+    function handleDrop(event, dropIndex) {
+        event.preventDefault();
+        const dragIndex = parseInt(
+            event.dataTransfer.getData("text/plain"),
+            10,
+        );
+
+        if (dragIndex === dropIndex) return; // No-op if dropped on same item
+
+        const draggedItem = items[dragIndex];
+
+        items.splice(dragIndex, 1); // Remove dragged
+        items.splice(dropIndex, 0, draggedItem); // Insert at new index
+
+        items = [...items]; // Trigger reactivity
+    }
+
     // remove item on server based on item id
     async function removeItem(itemId) {
         console.log("Removing item:", itemId);
@@ -229,15 +263,33 @@
 
     async function reorderItems() {
         let url = import.meta.env.VITE_API_URL + "/items/reorder";
-        const data = {
-            category,
-            items,
-        };
+        // get all item answers
+        const itemAnswers = items.map((item) => item.answer);
         try {
+            // post to url with data
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ category, itemAnswers }),
+            });
+
+            // log the response
+
+            if (!response.ok) {
+                throw new Error(
+                    `Reorder failed: ${response.status} ${response.statusText}`,
+                );
+            }
+
+            const data = await response.json();
         } catch {
             console.error("Error reordering items:", error);
             errorMessage = "Reorder failed. Please try again.";
         }
+        isReordering = false;
     }
 
     function onEditClick(itemId) {
@@ -441,11 +493,27 @@
                 <button class="secondary" on:click={toggleRenaming}
                     >Rename</button
                 >
+                {#if !isReordering}
+                    <button
+                        class="secondary"
+                        on:click={() => (isReordering = true)}>Reorder</button
+                    >
+                {:else}
+                    <button class="secondary" on:click={reorderItems}
+                        >Done</button
+                    >
+                {/if}
             {/if}
         </div>
 
         {#each items as item, index}
-            <div class="item">
+            <div
+                class={isReordering ? "item reorder" : "item"}
+                draggable={isReordering}
+                on:dragstart={(e) => handleDragStart(e, index)}
+                on:dragover={handleDragOver}
+                on:drop={(e) => handleDrop(e, index)}
+            >
                 {#if editableItemId === item.id}
                     <img src={localItem.image} alt="Preview" />
                     <input
@@ -462,18 +530,22 @@
                 {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
-                    <button
-                        class="edit secondary"
-                        on:click={() => onEditClick(item.id)}
-                    >
-                        <Fa icon={faPenToSquare} />
-                    </button>
-                    <button
-                        class="remove warning"
-                        on:click={() => removeItem(item.id)}
-                    >
-                        <Fa icon={faSquareMinus} />
-                    </button>
+                    {#if isReordering}
+                        <Fa icon={faGripLines} />
+                    {:else}
+                        <button
+                            class="edit secondary"
+                            on:click={() => onEditClick(item.id)}
+                        >
+                            <Fa icon={faPenToSquare} />
+                        </button>
+                        <button
+                            class="remove warning"
+                            on:click={() => removeItem(item.id)}
+                        >
+                            <Fa icon={faSquareMinus} />
+                        </button>
+                    {/if}
                 {/if}
             </div>
         {/each}
@@ -533,6 +605,19 @@
         gap: 1rem;
         padding: 1rem;
         box-sizing: border-box;
+    }
+
+    .container .item.reorder {
+        cursor: grab;
+        border: solid 1px #ccc;
+    }
+
+    .container .item.reorder:active {
+        cursor: grabbing;
+    }
+
+    .container .item.dragging {
+        opacity: 0.5;
     }
 
     /* make every other item gray */
