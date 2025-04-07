@@ -193,7 +193,6 @@
 
     function SetMode(mode) {
         currentMode = mode;
-        console.log("mode has been set to:", currentMode);
 
         // force update cards
         cards = cards.map((card) => {
@@ -258,9 +257,13 @@
             <p class="text-center text-muted">
                 by <a href={`#/${author}`} class="text-primary">{author}</a>
             </p>
-            <select name="mode" id="mode">
+            <select
+                name="mode"
+                id="mode"
+                on:change={() => SetMode(event.target.value)}
+            >
                 {#each Object.keys(Modes) as mode}
-                    <option value={mode} on:click={() => SetMode(mode)}>
+                    <option value={mode}>
                         {Modes[mode]}
                     </option>
                 {/each}
