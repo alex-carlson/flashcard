@@ -22,6 +22,7 @@
     let editableItemId = null;
     let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = false;
+    let isReordering = false;
 
     // Fetch collections from the server on load
     async function fetchCollections() {
@@ -221,6 +222,21 @@
         } catch (error) {
             console.error("Error editing item:", error);
             errorMessage = "Edit failed. Please try again.";
+        }
+    }
+
+    // reorder items and call items/upload on the server with the new collection
+
+    async function reorderItems() {
+        let url = import.meta.env.VITE_API_URL + "/items/reorder";
+        const data = {
+            category,
+            items,
+        };
+        try {
+        } catch {
+            console.error("Error reordering items:", error);
+            errorMessage = "Reorder failed. Please try again.";
         }
     }
 

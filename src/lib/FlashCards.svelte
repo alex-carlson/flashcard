@@ -5,24 +5,33 @@
         faEyeSlash,
         faEye,
         faTableCells,
-        faMagnifyingGlassMinus,
-        faMagnifyingGlassPlus,
         faList,
         faExpand,
         faCompress,
         faPlus,
         faMinus,
+        faEllipsisVertical,
+        faRotateBack,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import Pagination from "./Pagination.svelte";
-    import { on } from "svelte/events";
+    import Options from "./Options.svelte";
     export let collection;
     export let author;
-    let collectionData = {};
     let cards = [];
     let isGrid = false;
     let isFullscreen = false;
+    let canReset = false;
+    let shuffleTrigger = 0;
+
+    // create enum modes for default, true/false, and multiple choice
+    const Modes = {
+        DEFAULT: "Flash Cards",
+        TRUE_FALSE: "True / False",
+        MULTIPLE_CHOICE: "Multiple Choice",
+    };
+
+    let currentMode = Modes.DEFAULT;
 
     // function to fetch collection from id
     async function fetchCollection() {
@@ -61,6 +70,8 @@
 
     function updateCards() {
         cards = [...cards];
+        // can reset if either any card has a scale of something other than 1, or if any card has been hidden
+        canReset = cards.some((card) => card.scale !== 1 || card.hidden);
     }
 
     function onCardLoad(index) {
@@ -76,7 +87,8 @@
     function shuffleCards() {
         // shuffle cards array
         cards = cards.sort(() => Math.random() - 0.5);
-        updateCards();
+        cards = [...cards];
+        shuffleTrigger += 1; // trigger shuffle
     }
 
     function toggleCards() {
@@ -146,6 +158,15 @@
         }
     }
 
+    function resetCards() {
+        // loop through cards and reset visibility and scale
+        cards = cards.map((card) => {
+            card.hidden = false;
+            card.scale = 1;
+            return card;
+        });
+    }
+
     function scaleCards(event) {
         const scaleValue = parseFloat(event.target.value); // Extract numeric value
         const grid = document.querySelector(".flashcards");
@@ -170,6 +191,19 @@
         grid.style.setProperty("--card-size", `${300 * scaleValue}px`);
     }
 
+    function SetMode(mode) {
+        currentMode = mode;
+        console.log("mode has been set to:", currentMode);
+
+        // force update cards
+        cards = cards.map((card) => {
+            card.revealed = false;
+            return card;
+        });
+
+        cards = [...cards];
+    }
+
     onMount(() => {
         fetchCollection();
     });
@@ -186,6 +220,11 @@
             <button class="btn btn-primary" on:click={toggleCards}>
                 <Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
             </button>
+            {#if canReset}
+                <button class="btn btn-primary" on:click={resetCards}>
+                    <Fa icon={faRotateBack} />
+                </button>
+            {/if}
             {#if isFullscreen}
                 <button
                     class="btn btn-primary"
@@ -219,6 +258,13 @@
             <p class="text-center text-muted">
                 by <a href={`#/${author}`} class="text-primary">{author}</a>
             </p>
+            <select name="mode" id="mode">
+                {#each Object.keys(Modes) as mode}
+                    <option value={mode} on:click={() => SetMode(mode)}>
+                        {Modes[mode]}
+                    </option>
+                {/each}
+            </select>
         </div>
 
         <div
@@ -228,31 +274,75 @@
                     : "d-flex flex-row align-items-center vertical")}
         >
             {#each cards as item, i}
-                <div
-                    class="card"
-                    role="button"
-                    tabindex="0"
-                    on:click={() => toggleReveal(i)}
-                    on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-                >
-                    <img
-                        src={item.imageUrl}
-                        alt="flashcard"
-                        style={`transform: scale(${item.scale})`}
-                        on:load={() => onCardLoad(i)}
-                        on:error={() => {
-                            item.hidden = true;
-                            updateCards();
-                        }}
-                        class="img-fluid select-none position-relative zoomable"
-                    />
-                    <span
-                        class={"position-absolute bottom-0 start-0 w-100 bg-dark text-white p-3 transition-opacity " +
-                            (item.revealed ? "opacity-100" : "opacity-0")}
+                {#if !item.hidden}
+                    <div
+                        class="card"
+                        role="button"
+                        tabindex="0"
+                        on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
+                        on:click={() => toggleReveal(i)}
                     >
-                        {item.answer}
-                    </span>
-                </div>
+                        <img
+                            src={item.imageUrl}
+                            alt="flashcard"
+                            style={`transform: scale(${item.scale})`}
+                            on:load={() => onCardLoad(i)}
+                            on:error={() => {
+                                item.hidden = true;
+                                updateCards();
+                            }}
+                            class={"img-fluid select-none position-relative zoomable"}
+                        />
+                        {#if currentMode === "TRUE_FALSE"}
+                            <Options
+                                {cards}
+                                currentCardIndex={i}
+                                numberOfOptions="2"
+                                {shuffleTrigger}
+                            />
+                        {:else if currentMode === "MULTIPLE_CHOICE"}
+                            <Options
+                                {cards}
+                                currentCardIndex={i}
+                                numberOfOptions="4"
+                                {shuffleTrigger}
+                            />
+                        {:else}
+                            <!-- render span with opacity-0 or opacity-100 depending on if revealed or not -->
+                            <span
+                                class={"opacity-" +
+                                    (item.revealed ? "100" : "0") +
+                                    " text-center"}
+                                style="transform: scale(1);">{item.answer}</span
+                            >
+                        {/if}
+
+                        <!-- add a ... button with select dropdown options -->
+                        <div class="card-options">
+                            <select name="card-options" id="cardOptions">
+                                <option value="...">...</option>
+                                <option
+                                    value="hide"
+                                    on:click={() => {
+                                        item.hidden = !item.hidden;
+                                        updateCards();
+                                    }}
+                                >
+                                    Hide
+                                </option>
+                                <option
+                                    value="reset"
+                                    on:click={() => {
+                                        item.scale = 1;
+                                        updateCards();
+                                    }}
+                                >
+                                    Reset Scale
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                {/if}
             {/each}
         </div>
     {/if}
@@ -287,6 +377,8 @@
         scroll-snap-align: start;
         position: relative;
         cursor: pointer;
+        background-color: rgba(0, 0, 0, 0.1);
+        margin-top: 10px;
     }
 
     .card span {
@@ -307,6 +399,35 @@
         max-width: 100%;
     }
 
+    .card .card-options {
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        select {
+            background: transparent;
+            border: 0;
+            padding: 5px;
+            box-sizing: border-box;
+            width: 45px;
+            height: 45px;
+
+            /* hide down arrow */
+
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            /* add text shadow */
+            text-shadow:
+                0 0 0.5px black,
+                0 0 0.5px black;
+
+            option {
+                background: black;
+            }
+        }
+    }
+
     .grid .card {
         /* height: auto; */
         height: 100%;
@@ -315,10 +436,6 @@
 
     .grid .card span {
         font-size: 12px;
-    }
-
-    .vertical .card {
-        height: calc(100vh - 140px);
     }
 
     .zoomable {
