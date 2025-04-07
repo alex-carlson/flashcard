@@ -330,12 +330,20 @@
                                         item.hidden = !item.hidden;
                                         updateCards();
                                     }}
+                                    on:select={() => {
+                                        item.hidden = !item.hidden;
+                                        updateCards();
+                                    }}
                                 >
                                     Hide
                                 </option>
                                 <option
                                     value="..."
                                     on:click={() => {
+                                        item.scale = 1;
+                                        updateCards();
+                                    }}
+                                    on:select={() => {
                                         item.scale = 1;
                                         updateCards();
                                     }}
