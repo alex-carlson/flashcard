@@ -191,6 +191,19 @@
         grid.style.setProperty("--card-size", `${300 * scaleValue}px`);
     }
 
+    function selectOption(e, item) {
+        const value = e.target.value; // Get the selected value
+        console.log("Selected option:", value);
+
+        if (value === "Hide") {
+            item.hidden = !item.hidden; // Toggle the hidden state
+        } else if (value === "Reset") {
+            item.scale = 1; // Reset the scale
+        }
+
+        updateCards(); // Trigger reactivity to update the UI
+    }
+
     function SetMode(mode) {
         currentMode = mode;
 
@@ -322,34 +335,14 @@
 
                         <!-- add a ... button with select dropdown options -->
                         <div class="card-options">
-                            <select name="card-options" id="cardOptions">
+                            <select
+                                name="card-options"
+                                id="cardOptions"
+                                on:change={(e) => selectOption(e, item)}
+                            >
                                 <option value="...">...</option>
-                                <option
-                                    value="..."
-                                    on:click={() => {
-                                        item.hidden = !item.hidden;
-                                        updateCards();
-                                    }}
-                                    on:select={() => {
-                                        item.hidden = !item.hidden;
-                                        updateCards();
-                                    }}
-                                >
-                                    Hide
-                                </option>
-                                <option
-                                    value="..."
-                                    on:click={() => {
-                                        item.scale = 1;
-                                        updateCards();
-                                    }}
-                                    on:select={() => {
-                                        item.scale = 1;
-                                        updateCards();
-                                    }}
-                                >
-                                    Reset Scale
-                                </option>
+                                <option value="Hide"> Hide </option>
+                                <option value="Reset">Reset Scale</option>
                             </select>
                         </div>
                     </div>
