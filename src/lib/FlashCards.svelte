@@ -325,7 +325,7 @@
                             <select name="card-options" id="cardOptions">
                                 <option value="...">...</option>
                                 <option
-                                    value="hide"
+                                    value="..."
                                     on:click={() => {
                                         item.hidden = !item.hidden;
                                         updateCards();
@@ -334,7 +334,7 @@
                                     Hide
                                 </option>
                                 <option
-                                    value="reset"
+                                    value="..."
                                     on:click={() => {
                                         item.scale = 1;
                                         updateCards();
@@ -414,16 +414,13 @@
             box-sizing: border-box;
             width: 45px;
             height: 45px;
+            color: #858585;
 
             /* hide down arrow */
 
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            /* add text shadow */
-            text-shadow:
-                0 0 0.5px black,
-                0 0 0.5px black;
 
             option {
                 background: black;
