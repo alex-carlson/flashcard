@@ -9,7 +9,7 @@
 
 <div class="container white">
     <h1>
-        Pick a category or
+        Search for a Quizzem or
 
         {#if isLoggedIn}
             <a href="#/upload">create a new one</a>
@@ -20,6 +20,6 @@
     <Search />
 
     <h2>Latest Quizzems</h2>
-    <p>Check out the latest quizzems created by our community!</p>
+    <p>Check out the latest Quizzems created by our community!</p>
     <Latest />
 </div>

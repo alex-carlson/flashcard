@@ -50,7 +50,7 @@
 
 <div class="container white">
     <h1>Explore</h1>
-    <p>Explore the latest quizzems created by our community!</p>
+    <p>A comprehensive list of all Quizzems</p>
 
     <!-- list collection items paginated -->
     <div class="paginatedList">
@@ -89,21 +89,28 @@
 
 <style global>
     .paginatedList {
-        display: flex;
-        flex-wrap: wrap;
-        /* center items */
-        justify-content: center;
-        align-items: center;
+        /* display a uniform list of items */
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 1rem;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 2fr));
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
     }
 
     .collectionItem {
-        padding: 1rem;
-        box-sizing: border-box;
-        margin: 0;
-        border: solid 2px #ccc;
-        border-radius: 8px;
+        /* lay out content horizontally */
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid #ccc;
+    }
+
+    /* no border on the first */
+    .collectionItem:first-child {
+        border-top: none;
     }
 
     .collectionItem a {
@@ -114,7 +121,8 @@
     .collectionItem img {
         border-radius: 8px;
         margin-top: 0.5rem;
-        max-width: 200px;
+        max-height: 80px;
+        width: auto;
     }
 
     .paginationControls {
