@@ -10,6 +10,8 @@
         faFloppyDisk,
         faBan,
         faGripLines,
+        faChevronUp,
+        faChevronDown,
     } from "@fortawesome/free-solid-svg-icons";
     let token = localStorage.getItem("token");
     let username = localStorage.getItem("username");
@@ -156,8 +158,6 @@
         fetchCollections();
     });
 
-    let draggedIndex = -1; // Track the index of the dragged item
-
     function handleDragStart(event, index) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", index); // Store the index of the dragged item
@@ -165,19 +165,7 @@
         event.target.setAttribute("aria-grabbed", "true");
     }
 
-    function handleTouchStart(event, index){
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", index); // Store the index of the dragged item
-        // set aria grabbed to true
-        event.target.setAttribute("aria-grabbed", "true");
-    }
-
     function handleDragOver(event) {
-        event.preventDefault(); // Allow dropping
-        event.dataTransfer.dropEffect = "move";
-    }
-
-    function handleTouchMove(event) {
         event.preventDefault(); // Allow dropping
         event.dataTransfer.dropEffect = "move";
     }
@@ -202,24 +190,20 @@
         items = [...items]; // Trigger reactivity
     }
 
-    function handleTouchEnd(event, dropIndex) {
-        event.preventDefault();
-        const dragIndex = parseInt(
-            event.dataTransfer.getData("text/plain"),
-            10,
-        );
+    function MoveUp(index){
+        if (index > 0) {
+            const temp = items[index];
+            items[index] = items[index - 1];
+            items[index - 1] = temp;
+        }
+    }
 
-        if (dragIndex === dropIndex) return; // No-op if dropped on same item
-
-        const draggedItem = items[dragIndex];
-
-        items.splice(dragIndex, 1); // Remove dragged
-        items.splice(dropIndex, 0, draggedItem); // Insert at new index
-
-        // set aria-grabbed to false
-        event.target.setAttribute("aria-grabbed", "false");
-
-        items = [...items]; // Trigger reactivity
+    function MoveDown(index){
+        if (index < items.length - 1) {
+            const temp = items[index];
+            items[index] = items[index + 1];
+            items[index + 1] = temp;
+        }
     }
 
     // remove item on server based on item id
@@ -544,7 +528,9 @@
                 class={isReordering ? "item reorder" : "item"}
                 draggable={isReordering}
                 aria-grabbed="false"
-                
+                on:dragstart={(e) => handleDragStart(e, index)}
+                on:dragover={handleDragOver}
+                on:drop={(e) => handleDrop(e, index)}
             >
                 {#if editableItemId === item.id}
                     <img src={localItem.image} alt="Preview" />
@@ -563,16 +549,16 @@
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
                     {#if isReordering}
-                        <button
-                            on:dragstart={(e) => handleDragStart(e, index)}
-                            on:dragover={handleDragOver}
-                            on:drop={(e) => handleDrop(e, index)}
-                            on:touchstart={(e) => handleTouchStart(e, index)}
-                            on:touchmove={handleTouchMove}
-                            on:touchend={(e) => handleTouchEnd(e, index)}
-                        >
-                            <Fa icon={faGripLines} />
-                        </button>
+                    <div class="reorder">
+                        <!-- up arrow -->
+                         <button on:click={() => MoveUp(index)}>
+                            <Fa icon={faChevronUp} />
+                         </button>
+                        <!-- <Fa icon={faGripLines} /> -->
+                        <button on:click={() => MoveDown(index)}>
+                            <Fa icon={faChevronDown} />
+                         </button>
+                    </div>
                     {:else}
                         <button
                             class="edit secondary"
@@ -714,6 +700,13 @@
     .container button.warning {
         background-color: #bd1010;
         color: #dedede;
+    }
+
+    .container .item .reorder{
+        /* vertical layout with a gap of 5 px */
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
     }
 
     .switch {
