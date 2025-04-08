@@ -127,6 +127,19 @@
     .searchInputContainer button:hover {
         background-color: #0056b3;
     }
+
+    /* Media query for screens narrower than 300px */
+    @media (max-width: 335px) {
+        .searchInputContainer {
+            flex-direction: column; /* Stack input and button vertically */
+            gap: 0.25rem; /* Reduce spacing between input and button */
+        }
+
+        .searchInputContainer input,
+        .searchInputContainer button {
+            width: 100%; /* Make both input and button take up the full width */
+        }
+    }
     .searchForm {
         display: flex;
         flex-direction: column;
