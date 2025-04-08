@@ -61,41 +61,67 @@
             <nav class="mobileNav">
                 <ul>
                     <li>
-                        <a href="#/" use:link class={isActive("/")}>Home</a>
+                        <a
+                            href="#/"
+                            use:link
+                            class={isActive("/")}
+                            on:click={toggleMenu}
+                        >
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="#/explore"
+                            use:link
+                            class={isActive("/explore")}
+                            on:click={toggleMenu}
+                        >
+                            Explore
+                        </a>
                     </li>
                     {#if isLoggedIn}
                         <li>
                             <a
                                 href="#/upload"
                                 use:link
-                                class={isActive("/upload")}>Manage</a
+                                class={isActive("/upload")}
+                                on:click={toggleMenu}
                             >
+                                Manage
+                            </a>
                         </li>
                         <li>
                             <a
-                                on:click={logout}
-                                on:keydown={(e) =>
-                                    e.key === "Enter" && logout()}
+                                on:click={() => {
+                                    logout();
+                                    toggleMenu();
+                                }}
                                 class={isActive("/logout")}
-                                tabindex="0"
-                                href="#/logout"
-                                role="button">Log Out</a
                             >
+                                Log Out
+                            </a>
                         </li>
                     {:else}
                         <li>
                             <a
                                 href="#/login"
                                 use:link
-                                class={isActive("/login")}>Login</a
+                                class={isActive("/login")}
+                                on:click={toggleMenu}
                             >
+                                Login
+                            </a>
                         </li>
                         <li>
                             <a
                                 href="#/signup"
                                 use:link
-                                class={isActive("/signup")}>Sign Up</a
+                                class={isActive("/signup")}
+                                on:click={toggleMenu}
                             >
+                                Sign Up
+                            </a>
                         </li>
                     {/if}
                 </ul>
@@ -105,6 +131,11 @@
         <nav>
             <ul>
                 <li><a href="#/" use:link class={isActive("/")}>Home</a></li>
+                <li>
+                    <a href="#/explore" use:link class={isActive("/explore")}
+                        >Explore</a
+                    >
+                </li>
                 {#if isLoggedIn}
                     <li>
                         <a href="#/upload" use:link class={isActive("/upload")}
@@ -131,16 +162,16 @@
 
 <style>
     .mobileNav {
-        position: relative; /* Change from absolute to relative */
+        position: relative; /* Ensure it adjusts based on content */
         width: 100%;
-        height: auto; /* Let it expand based on content */
+        height: auto; /* Let the height adjust based on content */
         background-color: #d7c117;
         z-index: 1000;
         display: flex;
-        flex-direction: row;
+        flex-direction: column; /* Stack items vertically */
         align-items: center;
-        justify-content: center;
-        padding: 0;
+        justify-content: flex-start; /* Align items at the top */
+        padding: 10px 0; /* Add padding for spacing */
         box-shadow: 0 8px 10px rgba(0, 0, 0, 0.4);
     }
 
@@ -148,17 +179,21 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        width: 100%;
+        width: 100%; /* Ensure the list spans the full width */
         text-align: center;
     }
 
     .mobileNav ul li {
-        margin: 15px 0; /* Add spacing between menu items */
+        margin: 10px 0; /* Add spacing between menu items */
     }
 
     .mobileNav ul li a {
         text-decoration: none;
-        font-size: 1.5rem; /* Larger font size for mobile */
+        font-size: clamp(
+            1rem,
+            2.5vw,
+            1.5rem
+        ); /* Dynamically adjust font size */
         color: #000000;
         font-weight: bold;
         padding: 10px 20px;
@@ -167,6 +202,10 @@
         text-align: center;
         border-radius: 5px;
         transition: background-color 0.3s ease;
+
+        white-space: nowrap; /* Prevent text wrapping */
+        overflow: hidden; /* Hide overflowing text */
+        text-overflow: ellipsis; /* Add ellipsis for overflowing text */
     }
 
     .mobileNav ul li a:hover {

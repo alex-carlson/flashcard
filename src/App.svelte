@@ -10,6 +10,7 @@
   import NotFound from "./routes/NotFound/+page.svelte";
   import Profile from "./routes/Profile/+page.svelte";
   import PasswordReset from "./routes/PasswordReset/+page.svelte";
+  import Explore from "./routes/Explore/+page.svelte";
 
   const routes = {
     "/": Home,
@@ -18,6 +19,7 @@
     "/upload": UploadForm,
     "/profile": Profile,
     "/reset-password": PasswordReset,
+    "/explore": Explore,
     "/:author/:category": FlashCards,
     "/:author": Author,
     "*": NotFound,
