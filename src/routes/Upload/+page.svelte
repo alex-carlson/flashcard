@@ -161,10 +161,8 @@
     function handleDragStart(event, index) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", index); // Store the index of the dragged item
-
-        const emptyImage = new Image();
-        emptyImage.src = ""; // Use an empty image
-        event.dataTransfer.setDragImage(emptyImage, 0, 0);
+        // set aria grabbed to true
+        event.target.setAttribute("aria-grabbed", "true");
     }
 
     function handleDragOver(event) {
@@ -185,6 +183,9 @@
 
         items.splice(dragIndex, 1); // Remove dragged
         items.splice(dropIndex, 0, draggedItem); // Insert at new index
+
+        // set aria-grabbed to false
+        event.target.setAttribute("aria-grabbed", "false");
 
         items = [...items]; // Trigger reactivity
     }
@@ -510,9 +511,13 @@
             <div
                 class={isReordering ? "item reorder" : "item"}
                 draggable={isReordering}
+                aria-grabbed="false"
                 on:dragstart={(e) => handleDragStart(e, index)}
                 on:dragover={handleDragOver}
                 on:drop={(e) => handleDrop(e, index)}
+                on:touchstart={(e) => handleDragStart(e, index)}
+                on:touchmove={handleDragOver}
+                on:touchend={(e) => handleDrop(e, index)}
             >
                 {#if editableItemId === item.id}
                     <img src={localItem.image} alt="Preview" />
