@@ -1,20 +1,14 @@
 <script>
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
-    // The uncompressed version of the uploaded images, they are bound to the form input element below
-    let myFile;
+
+    let fileInput; // This will be the DOM element <input type="file">
     let myImg;
     let imgElement;
 
-    let convertFileToImage = (e) => {
+    const convertFileToImage = (e) => {
         let image = e.target.files[0];
-        let reader = new FileReader();
-        reader.readAsDataURL(image);
-        reader.onload = (e) => {
-            myImg = e.target.result;
-        };
 
-        // make sure file type is either jpeg, png, gif, svg, or webp
         if (
             ![
                 "image/jpeg",
@@ -26,21 +20,24 @@
         ) {
             alert("Only images are allowed (jpeg, png, gif, svg, webp)");
             return;
-        } else {
-            dispatch("uploadImage", e.target.files[0]);
         }
+
+        let reader = new FileReader();
+        reader.readAsDataURL(image);
+        reader.onload = (e) => {
+            myImg = e.target.result;
+        };
+
+        dispatch("uploadImage", image);
     };
 
     const handlePaste = async (e) => {
-        // Check if clipboard data contains an image
         const clipboardItems = e.clipboardData.items;
         for (let i = 0; i < clipboardItems.length; i++) {
             const item = clipboardItems[i];
             if (item.type.startsWith("image")) {
                 const fileObject = item.getAsFile();
                 if (fileObject) {
-                    myFile = fileObject;
-                    // Handle the image file from the clipboard
                     let reader = new FileReader();
                     reader.readAsDataURL(fileObject);
                     reader.onload = (e) => {
@@ -54,35 +51,19 @@
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); // Prevent default action (e.g., opening the file)
-
-        // Make sure the dropped content is actually a file
+        e.preventDefault();
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            const file = files[0]; // Use the first file (if multiple files are dropped)
-            handleImage(file);
-        } else {
-            // If no files are detected, check for image content in the drop
-            const items = e.dataTransfer.items;
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                if (item.kind === "file" && item.type.startsWith("image")) {
-                    const file = item.getAsFile();
-                    handleImage(file);
-                    break;
-                }
-            }
+            const file = files[0];
+            convertFileToImage({ target: { files: [file] } });
         }
     };
 
     const handleDragOver = (e) => {
-        e.preventDefault(); // Allow dropping
+        e.preventDefault();
     };
 
-    // Listen for the paste event to support Ctrl+P pasting
     window.addEventListener("paste", handlePaste);
-
-    // https://levelup.gitconnected.com/resize-your-images-client-side-with-svelte-js-1d33044b945a
 </script>
 
 <div class="drop-zone">
@@ -90,28 +71,29 @@
         class="drop-zone__prompt"
         role="button"
         tabindex="0"
-        on:drop={(e) => handleDrop(e)}
-        on:dragover={(e) => handleDragOver(e)}
-        on:click={() => myFile.click()}
+        on:click={() => fileInput?.click()}
         on:keydown={(e) => {
             if (e.key === "Enter") {
-                myFile.click();
+                fileInput?.click();
             }
         }}
+        on:drop={handleDrop}
+        on:dragover={handleDragOver}
     >
-        <!-- if myImg is empty, set class -->
-        <p class={"text " + (myFile ? "filled" : "empty")}>
+        <p class={"text " + (myImg ? "filled" : "empty")}>
             Drop your image or click here
         </p>
         <img bind:this={imgElement} class="preview" src={myImg} alt="" />
     </div>
 </div>
+
+<!-- This is the actual file input element to trigger -->
 <input
     style="display: none"
     type="file"
     accept="image/*"
-    on:change={(e) => convertFileToImage(e)}
-    bind:this={myFile}
+    bind:this={fileInput}
+    on:change={convertFileToImage}
 />
 
 <style>
