@@ -190,7 +190,7 @@
         items = [...items]; // Trigger reactivity
     }
 
-    function MoveUp(index){
+    function MoveUp(index) {
         if (index > 0) {
             const temp = items[index];
             items[index] = items[index - 1];
@@ -198,7 +198,7 @@
         }
     }
 
-    function MoveDown(index){
+    function MoveDown(index) {
         if (index < items.length - 1) {
             const temp = items[index];
             items[index] = items[index + 1];
@@ -419,7 +419,7 @@
                 );
             }
 
-            successMessage = "Upload successful!";
+            showSuccessMessage("Upload successful!");
             const preview = document.querySelector(".preview");
             preview.src = null;
             // clear answer field
@@ -435,7 +435,7 @@
             localItem.answer = ""; // Reset local item answer
         } catch (error) {
             console.error("Error uploading data:", error);
-            errorMessage = "Upload failed. Please try again.";
+            showErrorMessage("Upload failed. Please try again.");
         }
     }
 
@@ -462,6 +462,21 @@
             errorMessage = "Visibility change failed. Please try again.";
         }
     }
+
+    function showSuccessMessage(message) {
+        successMessage = message;
+        setTimeout(() => {
+            successMessage = ""; // Clear the success message after 10 seconds
+        }, 10000);
+    }
+
+    function showErrorMessage(message) {
+        errorMessage = message;
+        setTimeout(() => {
+            errorMessage = ""; // Clear the error message after 10 seconds
+        }, 10000);
+    }
+
     document.title = "Upload Data";
 </script>
 
@@ -549,16 +564,16 @@
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
                     {#if isReordering}
-                    <div class="reorder">
-                        <!-- up arrow -->
-                         <button on:click={() => MoveUp(index)}>
-                            <Fa icon={faChevronUp} />
-                         </button>
-                        <!-- <Fa icon={faGripLines} /> -->
-                        <button on:click={() => MoveDown(index)}>
-                            <Fa icon={faChevronDown} />
-                         </button>
-                    </div>
+                        <div class="reorder">
+                            <!-- up arrow -->
+                            <button on:click={() => MoveUp(index)}>
+                                <Fa icon={faChevronUp} />
+                            </button>
+                            <!-- <Fa icon={faGripLines} /> -->
+                            <button on:click={() => MoveDown(index)}>
+                                <Fa icon={faChevronDown} />
+                            </button>
+                        </div>
                     {:else}
                         <button
                             class="edit secondary"
@@ -576,6 +591,13 @@
                 {/if}
             </div>
         {/each}
+
+        {#if errorMessage}
+            <p style="color: red">{errorMessage}</p>
+        {/if}
+        {#if successMessage}
+            <p style="color: green">{successMessage}</p>
+        {/if}
 
         {#if category}
             <!-- on submit form, call UploadFile -->
@@ -602,12 +624,6 @@
                     >Delete Collection</button
                 >
             </form>
-        {/if}
-        {#if errorMessage}
-            <p style="color: red">{errorMessage}</p>
-        {/if}
-        {#if successMessage}
-            <p style="color: green">{successMessage}</p>
         {/if}
     {/if}
     <div class="container" style="display: none;">
@@ -702,7 +718,7 @@
         color: #dedede;
     }
 
-    .container .item .reorder{
+    .container .item .reorder {
         /* vertical layout with a gap of 5 px */
         display: flex;
         flex-direction: column;

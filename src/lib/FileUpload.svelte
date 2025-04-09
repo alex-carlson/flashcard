@@ -2,12 +2,12 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
-    let fileInput; // This will be the DOM element <input type="file">
+    let fileInput; // Reference to the <input type="file"> element
     let myImg;
-    let imgElement;
+    let imgElement = null; // Reference to the <img> element
 
     const convertFileToImage = (e) => {
-        let image = e.target.files[0];
+        const image = e.target.files[0];
 
         if (
             ![
@@ -16,19 +16,20 @@
                 "image/gif",
                 "image/svg+xml",
                 "image/webp",
-            ].includes(image.type)
+            ].includes(image?.type)
         ) {
             alert("Only images are allowed (jpeg, png, gif, svg, webp)");
             return;
         }
 
-        let reader = new FileReader();
+        const reader = new FileReader();
         reader.readAsDataURL(image);
+
         reader.onload = (e) => {
             myImg = e.target.result;
+            dispatch("uploadImage", image); // Only dispatch after image is loaded
+            fileInput.value = ""; // Reset input inside the onload
         };
-
-        dispatch("uploadImage", image);
     };
 
     const handlePaste = async (e) => {
@@ -38,13 +39,12 @@
             if (item.type.startsWith("image")) {
                 const fileObject = item.getAsFile();
                 if (fileObject) {
-                    let reader = new FileReader();
+                    const reader = new FileReader();
                     reader.readAsDataURL(fileObject);
                     reader.onload = (e) => {
                         myImg = e.target.result;
+                        dispatch("uploadImage", fileObject);
                     };
-
-                    dispatch("uploadImage", fileObject);
                 }
             }
         }
@@ -52,6 +52,8 @@
 
     const handleDrop = (e) => {
         e.preventDefault();
+        //prevent open image as file in new tab
+        e.stopPropagation();
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             const file = files[0];
@@ -61,29 +63,36 @@
 
     const handleDragOver = (e) => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = "copy"; // Show copy cursor
     };
 
     window.addEventListener("paste", handlePaste);
 </script>
 
-<div class="drop-zone">
-    <div
-        class="drop-zone__prompt"
-        role="button"
-        tabindex="0"
-        on:click={() => fileInput?.click()}
-        on:keydown={(e) => {
-            if (e.key === "Enter") {
-                fileInput?.click();
-            }
-        }}
-        on:drop={handleDrop}
-        on:dragover={handleDragOver}
-    >
+<div
+    class="drop-zone"
+    role="button"
+    tabindex="0"
+    on:click={() => fileInput?.click()}
+    on:keydown={(e) => {
+        if (e.key === "Enter") {
+            fileInput?.click();
+        }
+    }}
+    on:drop={handleDrop}
+    on:dragover={handleDragOver}
+>
+    <div class="drop-zone__prompt">
         <p class={"text " + (myImg ? "filled" : "empty")}>
             Drop your image or click here
         </p>
-        <img bind:this={imgElement} class="preview" src={myImg} alt="" />
+        <img
+            bind:this={imgElement}
+            class="preview"
+            src={myImg}
+            alt=""
+            key={myImg}
+        />
     </div>
 </div>
 
