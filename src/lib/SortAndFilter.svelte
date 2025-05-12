@@ -83,6 +83,7 @@
         align-items: center;
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
+        flex-direction: column;
     }
 
     label {
@@ -106,6 +107,7 @@
         .filter-options {
             flex: 0 1 auto;
             margin-bottom: 0;
+            flex-direction: row;
         }
 
         select,

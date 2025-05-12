@@ -137,6 +137,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-direction: row;
     }
 
     .paginatedList {
@@ -204,6 +205,11 @@
         .sort-and-filter {
             flex-direction: column;
             gap: 1rem;
+        }
+
+        .itemsPerPageSelector {
+            width: 100%;
+            flex-direction: column;
         }
     }
 </style>
