@@ -45,6 +45,10 @@
             }
 
             collections = await response.json();
+            // sort collections by created_at date (timestamp timezone)
+            collections.sort((a, b) => {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
         } catch (error) {
             console.error("Error fetching collections:", error);
         }
@@ -433,6 +437,7 @@
             items = returnedItems;
             localItem.file = null; // Reset local item file
             localItem.answer = ""; // Reset local item answer
+            preview.scrollIntoView({ behavior: "smooth" });
         } catch (error) {
             console.error("Error uploading data:", error);
             showErrorMessage("Upload failed. Please try again.");

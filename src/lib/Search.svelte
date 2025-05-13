@@ -1,32 +1,8 @@
 <script>
-    import { onMount, createEventDispatcher } from "svelte";
-
     let searchTerm = "";
     let searchResults = [];
 
-    onMount(async () => {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections`,
-                {
-                    method: "GET",
-                },
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch collections");
-            }
-
-            const data = await response.json();
-            collections = data;
-        } catch (error) {
-            console.error("Error fetching collections:", error);
-        }
-    });
-
     async function search(event) {
-        console.log("Searching with term:", event.detail.query);
-
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collections/search?searchTerm=${event.detail.query}`,
@@ -41,10 +17,9 @@
 
             const data = await response.json();
 
-            console.log("Search results:", data);
-
             // save data to collections
             searchResults = data;
+            console.log("Search Results:", searchResults);
         } catch (error) {
             console.error("Error fetching search results:", error);
         }
@@ -60,7 +35,6 @@
             on:input={(event) => {
                 searchTerm = event.target.value;
                 if (event.key === "Enter") {
-                    console.log("Searching with term:", searchTerm);
                     search({ detail: { query: searchTerm } });
                 }
             }}
@@ -88,6 +62,11 @@
                 {#each searchResults as result}
                     <li>
                         <a href="#/{result.author}/{result.category}">
+                            <img
+                                src={result.items[0].image}
+                                alt={result.category}
+                                style="max-width: 50px; max-height: 50px; margin-right: 10px;"
+                            />
                             {result.category} by: {result.author}
                         </a>
                     </li>

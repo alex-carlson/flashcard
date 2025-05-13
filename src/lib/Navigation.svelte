@@ -93,13 +93,12 @@
                         </li>
                         <li>
                             <a
-                                on:click={() => {
-                                    logout();
-                                    toggleMenu();
-                                }}
-                                class={isActive("/logout")}
+                                href="#/account"
+                                use:link
+                                class={isActive("/account")}
+                                on:click={toggleMenu}
                             >
-                                Log Out
+                                Account
                             </a>
                         </li>
                     {:else}
@@ -142,7 +141,16 @@
                             >Manage</a
                         >
                     </li>
-                    <li><a on:click={logout}>Log Out</a></li>
+                    <li>
+                        <a
+                            href="#/account"
+                            use:link
+                            class={isActive("/account")}
+                            on:click={toggleMenu}
+                        >
+                            Account
+                        </a>
+                    </li>
                 {:else}
                     <li>
                         <a href="#/login" use:link class={isActive("/login")}
@@ -171,7 +179,6 @@
         flex-direction: column; /* Stack items vertically */
         align-items: center;
         justify-content: flex-start; /* Align items at the top */
-        padding: 10px 0; /* Add padding for spacing */
         box-shadow: 0 8px 10px rgba(0, 0, 0, 0.4);
     }
 
@@ -184,7 +191,9 @@
     }
 
     .mobileNav ul li {
-        margin: 10px 0; /* Add spacing between menu items */
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
     }
 
     .mobileNav ul li a {
@@ -202,6 +211,7 @@
         text-align: center;
         border-radius: 5px;
         transition: background-color 0.3s ease;
+        box-sizing: border-box;
 
         white-space: nowrap; /* Prevent text wrapping */
         overflow: hidden; /* Hide overflowing text */
@@ -219,7 +229,7 @@
 
     .navContainer {
         position: absolute;
-        top: 88px;
+        top: 103px;
         left: 0;
         width: 100%;
         z-index: 1100;
@@ -228,7 +238,7 @@
     .hamburger {
         background: transparent;
         position: absolute;
-        top: 18px;
+        top: 15px;
         right: 5px;
         z-index: 1100;
     }
@@ -268,22 +278,6 @@
     nav ul li a {
         text-decoration: none;
         border-radius: 0;
-    }
-
-    nav ul li a.active,
-    nav ul li a.active:hover {
-        background: #d7c117;
-        border-bottom: solid 5px #d7c117;
-    }
-
-    nav ul li a:hover {
-        /* text-decoration: underline; */
-        background: transparent;
-        border-bottom: solid 5px #d7c117;
-    }
-
-    nav ul li a:visited {
-        color: black;
     }
 
     nav ul li a {

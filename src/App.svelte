@@ -1,6 +1,7 @@
 <script>
   import Router from "svelte-spa-router";
   import Header from "./lib/Header.svelte";
+  import Footer from "./lib/Footer.svelte";
   import Home from "./routes/Home/+page.svelte";
   import Login from "./routes/Login/+page.svelte";
   import Signup from "./routes/Signup/+page.svelte";
@@ -8,7 +9,7 @@
   import FlashCards from "./routes/[collectionId]/+page.svelte";
   import Author from "./routes/[author]/+page.svelte";
   import NotFound from "./routes/NotFound/+page.svelte";
-  import Profile from "./routes/Profile/+page.svelte";
+  import Account from "./routes/Account/+page.svelte";
   import PasswordReset from "./routes/PasswordReset/+page.svelte";
   import Explore from "./routes/Explore/+page.svelte";
 
@@ -17,7 +18,7 @@
     "/login": Login,
     "/signup": Signup,
     "/upload": UploadForm,
-    "/profile": Profile,
+    "/account": Account,
     "/reset-password": PasswordReset,
     "/explore": Explore,
     "/:author/:category": FlashCards,
@@ -30,3 +31,4 @@
 <main>
   <Router {routes}></Router>
 </main>
+<Footer></Footer>
