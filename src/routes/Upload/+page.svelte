@@ -1,6 +1,5 @@
 <script>
     import { user } from '$stores/user';
-    import { supabase } from '../../lib/supabaseClient';
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { onMount } from "svelte";

@@ -1,7 +1,8 @@
 <script>
-  import { supabase } from '../../lib/supabaseClient';
   import { user } from '../../stores/user';
   import { push } from 'svelte-spa-router';
+  import { signInWithEmail } from '$lib/auth/login';
+  import { signUpWithEmail } from '$lib/auth/signup';
 
   let email = '';
   let password = '';
@@ -15,7 +16,6 @@
   $: if ($user) {
     push('/dashboard');
   }
-
   async function handleSubmit() {
     errorMsg = '';
 
@@ -26,25 +26,25 @@
 
     let response;
 
-    console.log('isLogin:', isLogin);
-    console.log('email:', email);
-
-
     if (isLogin) {
-      response = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      try {
+        const { session, user: loggedInUser } = await signInWithEmail(email, password);
+        user.set(loggedInUser); // optional if you're managing your own store
+      } catch (error) {
+        errorMsg = error.message;
+      }
+
     } else {
-      response = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: displayName
-          }
-        }
-      });
+      const { data, error } = await signUpWithEmail(email, password, displayName);
+      if (error) {
+        errorMsg = error.message;
+        return;
+      }
+      response = data;
+      if (response) {
+        const { user: newUser } = response;
+        user.set(newUser); // optional if you're managing your own store
+      }
     }
 
     const { error } = response;

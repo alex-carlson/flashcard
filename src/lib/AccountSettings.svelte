@@ -1,6 +1,6 @@
 <script>
   import { user } from '$stores/user';
-  import { supabase } from '$lib/supabaseClient';
+  import { logOut } from '$lib/auth/login';
 
   let displayName = '';
   let newEmail = '';
@@ -45,11 +45,6 @@
       }
     }
   };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    user.set(null);
-  };
 </script>
 
 <div class="accountSettings">
@@ -62,7 +57,7 @@
     </label>
     <button on:click={updateDisplayName}>Update Name</button>
     <p>{message}</p>
-    <button on:click={logout}>Logout</button>
+    <button on:click={logOut}>Log Out</button>
 </div>
 
 <style>
