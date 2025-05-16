@@ -1,6 +1,7 @@
 <script>
     import Collections from './Collections.svelte';
     import { user } from '../stores/user';
+    import { getSession } from './supabaseClient';
 
     let collections = [];
     let loading = false;
@@ -14,14 +15,13 @@
         collections = [];
 
         try {
-            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            const { data: sessionData, error: sessionError } = await getSession();
             if (sessionError || !sessionData.session) {
                 throw new Error('User session not found');
             }
 
             const token = sessionData.session.access_token;
             const url = `${import.meta.env.VITE_API_URL}/collections/user/${userId}`;
-            console.log('Fetching collections from:', url);
 
             const res = await fetch(url, {
                 method: 'GET',

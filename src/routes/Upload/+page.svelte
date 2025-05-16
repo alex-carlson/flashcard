@@ -1,5 +1,6 @@
 <script>
     import { user } from '$stores/user';
+    import { getSession } from '../../lib/supabaseClient';
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { onMount } from "svelte";
@@ -28,7 +29,7 @@
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {
-            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            const { data: sessionData, error: sessionError } = await getSession();
             if (sessionError || !sessionData.session) {
                 throw new Error('User session not found');
             }
@@ -57,7 +58,7 @@
     }
 
     async function fetchCollectionData(id) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await getSession();
         if (sessionError || !sessionData.session) {
             throw new Error('User session not found');
         }
@@ -107,7 +108,7 @@
         };
 
         try {
-            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            const { data: sessionData, error: sessionError } = await getSession();
             if (sessionError || !sessionData.session) {
                 throw new Error('User session not found');
             }
@@ -146,7 +147,7 @@
         };
 
         try {
-            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            const { data: sessionData, error: sessionError } = await getSession();
             if (sessionError || !sessionData.session) {
                 throw new Error('User session not found');
             }
