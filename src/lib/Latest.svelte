@@ -35,12 +35,12 @@
         {#if data.length > 0}
             <ul>
                 {#each data as collection}
-                    <li
-                        style="background-image: url({collection.items[0]
-                            .image}); background-size: cover; background-position: center;"
-                    >
-                        <a href="#/{collection.author}/{collection.category}">
-                            {collection.category} by: {collection.author}
+                    <li>
+                        <a href="#/{collection.author_id}/{collection.category}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-decoration: none;">
+                            <img src="{collection.items[0].image}" alt="{collection.category}" style="width: 100%; height: auto; object-fit: cover; aspect-ratio: 4 / 3;" />
+                            <span style="background-color: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 4px; margin-top: -2.5rem; position: relative; z-index: 1;">
+                                {collection.category}
+                            </span>
                         </a>
                     </li>
                 {/each}

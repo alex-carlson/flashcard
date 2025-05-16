@@ -21,11 +21,12 @@
     {#if !isCollapsed}
         <ul>
             {#each collections as collection}
-                <li
-                    on:click={() => selectCollection(collection.id)}
-                    style="background-image: url({collection.items[0]
-                        .image}); background-size: cover; background-position: center;"
-                >
+                <li on:click={() => selectCollection(collection.id)}>
+                    <img
+                        src={collection.items[0].image}
+                        alt={collection.category}
+                        style="width: 100%; height: auto; object-fit: cover; aspect-ratio: 4 / 3;"
+                    />
                     <span>
                         {collection.category}
                     </span>

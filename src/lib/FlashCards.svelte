@@ -16,8 +16,9 @@
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
     import Options from "./Options.svelte";
-    export let collection;
-    export let author;
+    export let collection = null;
+    export let author_id = null;
+    let author = null;
     let cards = [];
     let isGrid = false;
     let isFullscreen = false;
@@ -38,7 +39,7 @@
         console.log("Fetching collection with:", collection);
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/user/${author}/${collection}`,
+                `${import.meta.env.VITE_API_URL}/collections/user/${author_id}/${collection}`,
                 {
                     method: "GET",
                 },
@@ -50,10 +51,14 @@
 
             const data = await response.json();
 
+            author = data.author;
+
             // if items length is 0, or is undefined, return
             if (!data.items || data.items.length === 0) {
                 return;
             }
+
+            console.log(data);
 
             cards = data.items.map((card) => ({
                 ...card,
@@ -371,7 +376,6 @@
 
     .card {
         overflow: hidden;
-        font-weight: 800;
         text-align: center;
         transition: transform 0.2s;
         display: flex;

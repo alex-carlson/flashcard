@@ -1,8 +1,9 @@
 <script>
     import Search from "../../lib/Search.svelte";
     import Latest from "../../lib/Latest.svelte";
-    let token = localStorage.getItem("token");
-    let isLoggedIn = !!token;
+    import { user } from '$stores/user';
+
+    let isLoggedIn = $user;
 
     document.title = "Home";
 </script>

@@ -2,23 +2,26 @@
     import { params } from "svelte-spa-router";
     import FlashCards from "../../lib/FlashCards.svelte";
 
-    let author, category;
+    // Declare variables to avoid reference errors
+    let author_id = null;
+    let category = null;
 
-    // Extract author and collectionName from the route params
+    // Extract author_id and collectionName from the route params
     $: if ($params) {
-        author = $params.author;
+        console.log($params);
+        author_id = $params.author_id;
         category = $params.category;
 
-        // set page title to <category> by <author>
-        document.title = `${category} by ${author}`;
+        // set page title to <category> by <author_id>
+        document.title = `${category} by ${author_id}`;
     }
 </script>
 
 <div>
     <!-- if collectionId is null, show loading instead -->
-    {#if author == null || category == null}
+    {#if author_id == null || category == null}
         <p>Loading...</p>
     {:else}
-        <FlashCards {author} collection={category} />
+        <FlashCards author_id={author_id} collection={category} />
     {/if}
 </div>

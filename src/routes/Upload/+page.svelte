@@ -1,4 +1,6 @@
 <script>
+    import { user } from '$stores/user';
+    import { supabase } from '../../lib/supabaseClient';
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
     import { onMount } from "svelte";
@@ -9,12 +11,9 @@
         faSquareMinus,
         faFloppyDisk,
         faBan,
-        faGripLines,
         faChevronUp,
         faChevronDown,
     } from "@fortawesome/free-solid-svg-icons";
-    let token = localStorage.getItem("token");
-    let username = localStorage.getItem("username");
     let category = "";
     let tempCategory = "";
     let items = [];
@@ -30,9 +29,13 @@
     // Fetch collections from the server on load
     async function fetchCollections() {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/user/${username}`,
-                {
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
+            const url = `${import.meta.env.VITE_API_URL}/collections/user/${$user.id}`;
+            const response = await fetch(url, {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -55,6 +58,11 @@
     }
 
     async function fetchCollectionData(id) {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session) {
+            throw new Error('User session not found');
+        }
+        const token = sessionData.session.access_token;
         isRenaming = false;
         const url = `${import.meta.env.VITE_API_URL}/collections/id/${id}`;
         console.log("Fetching collection data from:", url);
@@ -100,6 +108,11 @@
         };
 
         try {
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -134,6 +147,11 @@
         };
 
         try {
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -486,7 +504,7 @@
 </script>
 
 <div class="container form">
-    {#if !token}
+    {#if !user}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
         <div class="container">

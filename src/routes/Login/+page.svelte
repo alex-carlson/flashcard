@@ -1,78 +1,92 @@
 <script>
-    let username = "";
-    let email = "";
-    let password = "";
-    let errorMessage = "";
+  import { supabase } from '../../lib/supabaseClient';
+  import { user } from '../../stores/user';
+  import { push } from 'svelte-spa-router';
 
-    const forgotPassword = async () => {
-        // if username is an email, use it as email
-        if (username.includes("@")) {
-            email = username;
+  let email = '';
+  let password = '';
+  let displayName = '';
+  let errorMsg = '';
+  let isLogin = false;
+
+  document.title = 'Login';
+
+  // Redirect if already logged in
+  $: if ($user) {
+    push('/dashboard');
+  }
+
+  async function handleSubmit() {
+    errorMsg = '';
+
+    if (!email || !password || (!isLogin && !displayName)) {
+      errorMsg = 'Please fill out all required fields.';
+      return;
+    }
+
+    let response;
+
+    console.log('isLogin:', isLogin);
+    console.log('email:', email);
+
+
+    if (isLogin) {
+      response = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+    } else {
+      response = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName
+          }
         }
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/users/forgot-password`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ email }),
-                },
-            );
+      });
+    }
 
-            if (!response.ok) {
-                throw new Error("Failed to send email");
-            }
-
-            const data = await response.json();
-            console.log("Email sent:", data);
-            errorMessage = "";
-        } catch (error) {
-            errorMessage = "Failed to send email";
-        }
-    };
-
-    const login = async () => {
-        // if username is an email, use it as email
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/users/login`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ username, email, password }),
-                },
-            );
-
-            if (!response.ok) {
-                throw new Error("Login failed");
-            }
-
-            const data = await response.json();
-            console.log("Login successful:", data);
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("username", data.user);
-            // navigate to home page
-            console.log(localStorage.getItem("username"));
-            window.location.href = "/";
-            errorMessage = "";
-        } catch (error) {
-            errorMessage = "Invalid credentials";
-        }
-    };
-    document.title = "Login";
+    const { error } = response;
+    if (error) {
+      errorMsg = error.message;
+    }
+  }
 </script>
 
-<div class="container">
-    <h2>Login</h2>
-    <input type="text" bind:value={username} placeholder="Username/Email" />
-    <input type="password" bind:value={password} placeholder="Password" />
-    <button on:click={login}>Login</button>
-    <button on:click={forgotPassword}>Forgot Password?</button>
-    {#if errorMessage}
-        <p style="color: red">{errorMessage}</p>
-    {/if}
+<style>
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 400px;
+    margin: auto;
+  }
+</style>
+
+<div class="container white">
+  {#if !$user}
+    <h1>{isLogin ? 'Log In' : 'Sign Up'}</h1>
+    <form on:submit|preventDefault={handleSubmit}>
+      <input type="email" placeholder="Email" bind:value={email} required />
+      <input type="password" placeholder="Password" bind:value={password} required />
+
+      {#if !isLogin}
+        <input type="text" placeholder="Display Name" bind:value={displayName} required />
+      {/if}
+
+      <button type="submit">{isLogin ? 'Log In' : 'Sign Up'}</button>
+
+      <p style="color: red">{errorMsg}</p>
+
+      <p>
+        {isLogin
+          ? "Don't have an account? "
+          : 'Already have an account? '}
+        <a href="javascript:void(0)" on:click|preventDefault={() => (isLogin = !isLogin)}>
+          {isLogin ? 'Sign up' : 'Log in'}
+        </a>
+      </p>
+    </form>
+  {/if}
 </div>

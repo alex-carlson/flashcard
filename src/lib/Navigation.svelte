@@ -1,37 +1,19 @@
 <script>
     import { onMount, onDestroy } from "svelte";
     import { link, location } from "svelte-spa-router";
-    let token = localStorage.getItem("token");
-    let isLoggedIn = !!token;
+    import { user } from '$stores/user';
     let isMenuOpen = false;
     let isMobile = window.innerWidth < 600;
 
     const isActive = (path) => ($location === path ? "active" : "");
 
     onMount(() => {
-        if (token) {
-            try {
-                isLoggedIn = true;
-            } catch (error) {
-                console.error("Invalid token:", error);
-                localStorage.removeItem("token");
-                isLoggedIn = false;
-            }
-        }
-
         window.addEventListener("resize", updateIsMobile);
     });
 
     onDestroy(() => {
         window.removeEventListener("resize", updateIsMobile);
     });
-
-    function logout() {
-        localStorage.removeItem("token");
-        isLoggedIn = false;
-        // go to home page
-        window.location.href = "#/";
-    }
 
     // toggle menu
     function toggleMenu() {
@@ -80,25 +62,15 @@
                             Explore
                         </a>
                     </li>
-                    {#if isLoggedIn}
+                    {#if $user}
                         <li>
                             <a
-                                href="#/upload"
+                                href="#/dashboard"
                                 use:link
-                                class={isActive("/upload")}
+                                class={isActive("/dashboard")}
                                 on:click={toggleMenu}
                             >
-                                Manage
-                            </a>
-                        </li>
-                        <li>
-                            <a
-                                href="#/account"
-                                use:link
-                                class={isActive("/account")}
-                                on:click={toggleMenu}
-                            >
-                                Account
+                                Dashboard
                             </a>
                         </li>
                     {:else}
@@ -110,16 +82,6 @@
                                 on:click={toggleMenu}
                             >
                                 Login
-                            </a>
-                        </li>
-                        <li>
-                            <a
-                                href="#/signup"
-                                use:link
-                                class={isActive("/signup")}
-                                on:click={toggleMenu}
-                            >
-                                Sign Up
                             </a>
                         </li>
                     {/if}
@@ -135,31 +97,21 @@
                         >Explore</a
                     >
                 </li>
-                {#if isLoggedIn}
-                    <li>
-                        <a href="#/upload" use:link class={isActive("/upload")}
-                            >Manage</a
-                        >
-                    </li>
+                {#if $user}
                     <li>
                         <a
-                            href="#/account"
+                            href="#/dashboard"
                             use:link
-                            class={isActive("/account")}
+                            class={isActive("/dashboard")}
                             on:click={toggleMenu}
                         >
-                            Account
+                            Dashboard
                         </a>
                     </li>
                 {:else}
                     <li>
                         <a href="#/login" use:link class={isActive("/login")}
                             >Login</a
-                        >
-                    </li>
-                    <li>
-                        <a href="#/signup" use:link class={isActive("/signup")}
-                            >Sign Up</a
                         >
                     </li>
                 {/if}
@@ -170,7 +122,7 @@
 
 <style>
     .mobileNav {
-        position: relative; /* Ensure it adjusts based on content */
+        postion: relative; /* Ensure it adjusts based on content */
         width: 100%;
         height: auto; /* Let the height adjust based on content */
         background-color: #d7c117;
@@ -204,7 +156,6 @@
             1.5rem
         ); /* Dynamically adjust font size */
         color: #000000;
-        font-weight: bold;
         padding: 10px 20px;
         display: inline-block;
         width: 100%; /* Make links span the full width */
@@ -282,7 +233,6 @@
 
     nav ul li a {
         color: black;
-        font-weight: 500;
         height: 50px;
         box-sizing: border-box;
     }

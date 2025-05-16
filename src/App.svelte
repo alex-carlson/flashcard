@@ -4,25 +4,23 @@
   import Footer from "./lib/Footer.svelte";
   import Home from "./routes/Home/+page.svelte";
   import Login from "./routes/Login/+page.svelte";
-  import Signup from "./routes/Signup/+page.svelte";
+  import Dashboard from "./routes/Dashboard/+page.svelte";
   import UploadForm from "./routes/Upload/+page.svelte";
   import FlashCards from "./routes/[collectionId]/+page.svelte";
-  import Author from "./routes/[author]/+page.svelte";
+  import Author from "./routes/[author_id]/+page.svelte";
   import NotFound from "./routes/NotFound/+page.svelte";
   import Account from "./routes/Account/+page.svelte";
-  import PasswordReset from "./routes/PasswordReset/+page.svelte";
   import Explore from "./routes/Explore/+page.svelte";
 
   const routes = {
     "/": Home,
     "/login": Login,
-    "/signup": Signup,
     "/upload": UploadForm,
     "/account": Account,
-    "/reset-password": PasswordReset,
+    "/dashboard": Dashboard,
     "/explore": Explore,
-    "/:author/:category": FlashCards,
-    "/:author": Author,
+    "/:author_id/:category": FlashCards,
+    "/:author_id": Author,
     "*": NotFound,
   };
 </script>
