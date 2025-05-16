@@ -78,39 +78,3 @@
         <p>Loading cards...</p>
     {/if}
 </div>
-
-<style global>
-    .options {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, 50%);
-        margin: 0 auto;
-        gap: 10px;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-
-    button {
-        width: 100%;
-        font-size: 20px;
-        border-radius: 10px;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        box-sizing: border-box;
-        white-space: normal;
-        overflow-wrap: break-word;
-        word-break: break-word;
-        hyphens: auto;
-    }
-
-    .green {
-        background-color: green;
-        color: white;
-    }
-
-    .red {
-        background-color: red;
-        color: white;
-    }
-</style>

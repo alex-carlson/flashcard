@@ -54,16 +54,6 @@
   }
 </script>
 
-<style>
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-width: 400px;
-    margin: auto;
-  }
-</style>
-
 <div class="container white">
   {#if !$user}
     <h1>{isLogin ? 'Log In' : 'Sign Up'}</h1>

@@ -1,0 +1,192 @@
+.flashcards {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 0;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(
+            4,
+            1fr
+        ); /* Create 3 columns of equal width */
+        gap: 0px; /* Space between cards */
+    }
+
+    .card {
+        overflow: hidden;
+        text-align: center;
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        scroll-snap-align: start;
+        position: relative;
+        cursor: pointer;
+        background-color: rgba(0, 0, 0, 0.1);
+        
+        img {
+            max-width: 100%;
+        }
+
+        span {
+            padding: 0.4em;
+            background: black;
+            color: white;
+            width: 100%;
+            display: block;
+            box-sizing: border-box;
+            font-size: clamp(1rem, 10vw, 2rem);
+            /* center text vertically */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &.revealed {
+                opacity: 1;
+            }
+
+            &.hidden {
+                opacity: 0;
+            }
+        }
+
+        .card-options {
+            position: absolute;
+            top: 0;
+            right: 0;
+
+            select {
+                background: transparent;
+                border: 0;
+                padding: 5px;
+                box-sizing: border-box;
+                width: 45px;
+                height: 45px;
+                color: #858585;
+
+                /* hide down arrow */
+
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+
+                option {
+                    background: black;
+                }
+            }
+        }
+    }
+
+    .grid .card {
+        /* height: auto; */
+        height: 100%;
+        display: inline-table;
+    }
+
+    .grid .card span {
+        font-size: 12px;
+    }
+
+    .zoomable {
+        transition-timing-function: cubic-bezier(0.64, 0.57, 0.67, 1.53);
+        transition: transform 0.2s;
+        touch-action: manipulation;
+    }
+
+    .opacity-0 {
+        opacity: 0;
+    }
+
+    .opacity-100 {
+        opacity: 1;
+    }
+
+    :fullscreen {
+        overflow-x: hidden;
+    }
+
+    :fullscreen.container {
+        padding: 0;
+        margin: 0;
+    }
+
+    /* styles for .card when in fullscreen */
+    :fullscreen .card {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    :fullscreen .card span {
+        padding: 0.4em;
+        background: black;
+        color: white;
+        width: 100%;
+        display: block;
+        box-sizing: border-box;
+        height: 20vh;
+        font-size: clamp(1rem, 10vw, 5rem);
+        /* center text vertically */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+
+    :fullscreen .card img {
+        height: 60vw;
+    }
+
+    /* make it so the toolbar is fixed in full screen mode */
+    :fullscreen .toolbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 1em 0;
+    }
+
+    :fullscreen .toolbar .row {
+        gap: 4px;
+        /* flex items to fit content */
+        flex-wrap: wrap;
+    }
+
+    :fullscreen .toolbar button {
+        /* make buttons full width */
+        width: 100%;
+        max-width: 50px;
+    }
+
+    :fullscreen .headline {
+        display: none;
+    }
+
+    :fullscreen .flashcards {
+        height: 100vh;
+        background: black;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        overflow-y: auto;
+    }
+
+    :fullscreen.container {
+        overflow-y: hidden;
+    }
+    .btn {
+        padding: 0.5rem;
+    }
+
+    :not(:root):fullscreen::backdrop {
+        background: black;
+    }

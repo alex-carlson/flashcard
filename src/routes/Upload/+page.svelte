@@ -100,11 +100,11 @@
     }
 
     async function createCollection() {
-        let url =
-            import.meta.env.VITE_API_URL + "/collections/createCollection";
+        let url = import.meta.env.VITE_API_URL + "/collections/createCollection";
         const data = {
             category: tempCategory,
-            username,
+            author_id: $user.id,
+            author: $user.user_metadata.display_name,
         };
 
         try {
@@ -274,6 +274,11 @@
         };
 
         try {
+            const { data: sessionData, error: sessionError } = await getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -416,6 +421,7 @@
     }
 
     async function uploadData() {
+        const username = $user.user_metadata.display_name;
         const formData = new FormData();
         formData.append("uuid", uuidv4());
         formData.append("file", localItem.file);
@@ -427,6 +433,11 @@
         let url = import.meta.env.VITE_API_URL + "/items/upload";
 
         try {
+            const { data: sessionData, error: sessionError } = await getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -463,15 +474,21 @@
     }
 
     async function setVisible(event) {
+        const username = $user.user_metadata.display_name;
         const data = {
             category,
             author: username,
             visible: event.target.checked,
         };
-
+        
         let url = import.meta.env.VITE_API_URL + "/collections/setVisible";
-
+        
         try {
+            const { data: sessionData, error: sessionError } = await getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error('User session not found');
+            }
+            const token = sessionData.session.access_token;
             const respone = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -503,117 +520,118 @@
     document.title = "Upload Data";
 </script>
 
-<div class="container form">
+<div class="container form padding">
     {#if !user}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
-        <div class="container">
-            {#if collections.length > 0}
-                <Collections
-                    {collections}
-                    on:selectCollection={handleCollectionSelection}
-                />
-            {/if}
-            {#if category === ""}
-                <input
-                    type="text"
-                    bind:value={tempCategory}
-                    placeholder="Category Name"
-                />
-                <button on:click={createCollection}>Create</button>
-            {:else if isRenaming}
-                <input
-                    type="text"
-                    id="categoryName"
-                    bind:value={tempCategory}
-                    placeholder="Enter a category"
-                />
-                <button class="secondary" on:click={renameCollection}
-                    >Save</button
-                >
-                <button class="warning" on:click={toggleRenaming}>Cancel</button
+        {#if collections.length > 0}
+            <Collections
+                {collections}
+                on:selectCollection={handleCollectionSelection}
+            />
+        {/if}
+        {#if category === ""}
+            <input
+                type="text"
+                bind:value={tempCategory}
+                placeholder="Category Name"
+            />
+            <button on:click={createCollection}>Create</button>
+        {:else if isRenaming}
+            <input
+                type="text"
+                id="categoryName"
+                bind:value={tempCategory}
+                placeholder="Enter a category"
+            />
+            <button class="secondary" on:click={renameCollection}
+                >Save</button
+            >
+            <button class="warning" on:click={toggleRenaming}>Cancel</button
+            >
+        {:else}
+            <h2>{category}</h2>
+            <div class="row">
+                <h2>{isPublic ? "Public" : "Private"}</h2>
+                <label class="switch">
+                    <input
+                        type="checkbox"
+                        bind:checked={isPublic}
+                        on:change={setVisible}
+                    />
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <button class="secondary" on:click={toggleRenaming}
+                >Rename</button
+            >
+            {#if !isReordering}
+                <button
+                    class="secondary"
+                    on:click={() => (isReordering = true)}>Reorder</button
                 >
             {:else}
-                <div class="row">
-                    <h2>{isPublic ? "Public" : "Private"}</h2>
-                    <label class="switch">
-                        <input
-                            type="checkbox"
-                            bind:checked={isPublic}
-                            on:change={setVisible}
-                        />
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                <button class="secondary" on:click={toggleRenaming}
-                    >Rename</button
+                <button class="secondary" on:click={reorderItems}
+                    >Done</button
                 >
-                {#if !isReordering}
-                    <button
-                        class="secondary"
-                        on:click={() => (isReordering = true)}>Reorder</button
-                    >
-                {:else}
-                    <button class="secondary" on:click={reorderItems}
-                        >Done</button
-                    >
-                {/if}
             {/if}
-        </div>
-
-        {#each items as item, index}
-            <div
-                class={isReordering ? "item reorder" : "item"}
-                draggable={isReordering}
-                aria-grabbed="false"
-                on:dragstart={(e) => handleDragStart(e, index)}
-                on:dragover={handleDragOver}
-                on:drop={(e) => handleDrop(e, index)}
-            >
-                {#if editableItemId === item.id}
+        {/if}
+        <div class="list uploads">
+            <ul class="items-list">
+                {#each items as item, index}
+                <li
+                    class={isReordering ? "item reorder" : "item"}
+                    draggable={isReordering}
+                    aria-grabbed="false"
+                    on:dragstart={(e) => handleDragStart(e, index)}
+                    on:dragover={handleDragOver}
+                    on:drop={(e) => handleDrop(e, index)}
+                >
+                    {#if editableItemId === item.id}
                     <img src={localItem.image} alt="Preview" />
                     <input
                         type="text"
                         bind:value={localItem.answer}
                         placeholder="Enter an answer"
                     />
-                    <button on:click={saveEdit}
+                    <button class="success" on:click={saveEdit}
                         ><Fa icon={faFloppyDisk} /></button
                     >
-                    <button class="cancel" on:click={cancelEdit}
+                    <button on:click={cancelEdit}
                         ><Fa icon={faBan} /></button
                     >
-                {:else}
+                    {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
                     {#if isReordering}
                         <div class="reorder">
-                            <!-- up arrow -->
-                            <button on:click={() => MoveUp(index)}>
-                                <Fa icon={faChevronUp} />
-                            </button>
-                            <!-- <Fa icon={faGripLines} /> -->
-                            <button on:click={() => MoveDown(index)}>
-                                <Fa icon={faChevronDown} />
-                            </button>
+                        <button on:click={() => MoveUp(index)}>
+                            <Fa icon={faChevronUp} />
+                        </button>
+                        <button on:click={() => MoveDown(index)}>
+                            <Fa icon={faChevronDown} />
+                        </button>
                         </div>
                     {:else}
                         <button
-                            class="edit secondary"
-                            on:click={() => onEditClick(item.id)}
+                        class="edit secondary"
+                        on:click={() => onEditClick(item.id)}
                         >
-                            <Fa icon={faPenToSquare} />
+                        <Fa icon={faPenToSquare} />
                         </button>
                         <button
-                            class="remove warning"
-                            on:click={() => removeItem(item.id)}
+                        class="remove danger"
+                        on:click={() => removeItem(item.id)}
                         >
-                            <Fa icon={faSquareMinus} />
+                        <Fa icon={faSquareMinus} />
                         </button>
                     {/if}
-                {/if}
-            </div>
-        {/each}
+                    {/if}
+                </li>
+                {/each}
+            </ul>
+        </div>
+
 
         {#if errorMessage}
             <p style="color: red">{errorMessage}</p>
@@ -624,7 +642,7 @@
 
         {#if category}
             <!-- on submit form, call UploadFile -->
-            <form>
+            <form class="form">
                 <FileUpload on:uploadImage={handleFileChange} />
                 {#if localItem.file}
                     <img
@@ -643,7 +661,7 @@
                 <button type="button" class="" on:click={uploadData}
                     >Add item</button
                 >
-                <button class="warning" on:click={confirmDelete}
+                <button class="danger" on:click={confirmDelete}
                     >Delete Collection</button
                 >
             </form>
@@ -657,154 +675,3 @@
         </form>
     </div>
 </div>
-
-<style>
-    .container .container {
-        padding: 0 1rem;
-    }
-
-    .container .item {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        box-sizing: border-box;
-    }
-
-    .container .item.reorder {
-        cursor: grab;
-        border: solid 1px #ccc;
-    }
-
-    .container .item.reorder:active {
-        cursor: grabbing;
-    }
-
-    .container .item.dragging {
-        opacity: 0.5;
-    }
-
-    /* make every other item gray */
-    .container .item:nth-child(even) {
-        background-color: #f0f0f0;
-    }
-
-    .container .item span {
-        /* fill extra space */
-        flex-grow: 1;
-        font-size: 1.5rem;
-        width: 100%;
-    }
-
-    .container .item img {
-        /* make img width 20% of parent */
-        width: 20%;
-    }
-
-    .container .item input[type="text"] {
-        /* fill extra space */
-        flex-grow: 1;
-        font-size: 0.7rem;
-        width: 100%;
-        box-sizing: border-box;
-        height: 42px;
-        padding: 0;
-    }
-
-    .container .item .remove {
-        background-color: #bd1010;
-        color: #dedede;
-    }
-
-    .container .item button {
-        padding: 0.5rem;
-        cursor: pointer;
-        width: 42px;
-        height: 42px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .container form {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        padding: 2rem;
-    }
-
-    .container button.warning {
-        background-color: #bd1010;
-        color: #dedede;
-    }
-
-    .container .item .reorder {
-        /* vertical layout with a gap of 5 px */
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 34px;
-    }
-
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        -webkit-transition: 0.4s;
-        transition: 0.4s;
-    }
-
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        -webkit-transition: 0.4s;
-        transition: 0.4s;
-    }
-
-    input:checked + .slider {
-        background-color: #2196f3;
-    }
-
-    input:focus + .slider {
-        box-shadow: 0 0 1px #2196f3;
-    }
-
-    input:checked + .slider:before {
-        -webkit-transform: translateX(26px);
-        -ms-transform: translateX(26px);
-        transform: translateX(26px);
-    }
-
-    /* Rounded sliders */
-    .slider.round {
-        border-radius: 34px;
-    }
-
-    .slider.round:before {
-        border-radius: 50%;
-    }
-</style>

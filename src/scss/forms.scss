@@ -1,0 +1,163 @@
+// set up variables for form colors
+:root {
+    --form-bg-color: #dcdcdc;
+    --form-text-color: #383838;
+    --form-element-height: 60px;
+}
+
+.form {
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+    background-color: #fff;
+    color: var(--form-text-color);
+    border-radius: 0;
+    border: solid 3px #505050;
+    box-sizing: border-box;
+    padding: 1em;
+    font-size: 1.2em;
+    text-align: center;
+    width: 100%;
+    height: var(--form-element-height);
+}
+
+button {
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 1rem;
+    transition: all 0.3s ease-in-out;
+    height: var(--form-element-height);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    border-radius: 6px;
+    border: 0;
+    background-color: var(--button-color);
+    color: var(--button-text-color);
+
+    &.secondary {
+        background-color: var(--button-secondary-color);
+        color: black;
+    }
+
+    &.warning {
+        background-color: var(--warning-color);
+        color: black;
+    }
+
+    &.danger {
+        background-color: var(--danger-color);
+        color: black;
+    }
+
+    &.success {
+        background-color: var(--success-color);
+        color: white;
+    }
+
+    &.failure {
+        background-color: var(--danger-color);
+        color: black;
+    }
+
+    &:disabled {
+        background-color: #ccc;
+        color: #999;
+        cursor: not-allowed;
+    }
+}
+
+.text-field {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    &.inline {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0;
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            border-radius: 15px 0 0 15px;
+            margin-right: -1px;
+            border-right: none;
+        }
+
+        button {
+            width: auto;
+            border-radius: 0 15px 15px 0;
+        }
+    }
+}
+
+.paginationControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+
+    > * {
+        flex: 1 1 0;
+    }
+
+    button {
+        padding: 0.5rem 1rem;
+        width: auto;
+    }
+}
+
+.drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+    transition: all 0.3s ease-in-out;
+    margin: 4px 0;
+    position: relative;
+    min-height: 88px;
+
+    &:hover {
+        background-color: #f0f0f0;
+        border-color: #aaa;
+    }
+
+    &.drag-over {
+        background-color: #e0e0e0;
+        border-color: #888;
+    }
+
+    p {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        font-size: 1.2em;
+
+    }
+}

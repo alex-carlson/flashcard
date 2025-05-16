@@ -25,6 +25,7 @@
 
             const data = await response.json();
             collections = data;
+            console.log("Fetched collections:", collections);
             filteredCollections = data; // Initialize filteredCollections
         } catch (error) {
             console.error("Error fetching collections:", error);
@@ -71,7 +72,7 @@
 <div class="container white">
     <h1>Explore</h1>
 
-    <div class="sort-and-filter">
+    <div class="sort-and-filter padding">
         <!-- Items per page selector -->
         <div class="itemsPerPageSelector">
             <label for="itemsPerPage">Items per page:</label>
@@ -91,27 +92,23 @@
         />
     </div>
 
-    <!-- List collection items paginated -->
-    <div class="paginatedList">
-        {#each paginatedCollections as collection}
-            <div
-                class="collectionItem"
-                style="background-image: url({collection.items[0]
-                    .image}); background-size: cover; background-position: center;"
-            >
-                <a href="#/{collection.author}/{collection.category}">
-                    <p>{collection.category} by: {collection.author}</p>
-                    <!-- if sort option is date, show created_at. if sort option is size, show [items.length]-->
-                    {#if sortOption === "date"}
-                        <p>
-                            Created: {formatTimestamp(collection.created_at)}
+    <div class="list">
+        <ul>
+            {#each paginatedCollections as collection}
+                <li>
+                    <a href="#/{collection.author_id}/{collection.category}">
+                        <img src={collection.items[0].image} alt="">
+                        <p>{collection.category}
+                            {#if sortOption === "date"}
+                             {formatTimestamp(collection.created_at)}
+                            {:else if sortOption === "size"}
+                             [{collection.items.length}]
+                            {/if}
                         </p>
-                    {:else if sortOption === "size"}
-                        <p>{collection.items.length} Cards</p>
-                    {/if}
-                </a>
-            </div>
-        {/each}
+                    </a>
+                </li>
+            {/each}
+        </ul>
     </div>
 
     <!-- Pagination controls -->
@@ -130,86 +127,3 @@
         </button>
     </div>
 </div>
-
-<style global>
-    .itemsPerPageSelector {
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-direction: row;
-    }
-
-    .paginatedList {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
-
-    .collectionItem {
-        display: flex;
-        flex-direction: column;
-        background: #f0f0f0;
-        border-radius: 15px;
-        position: relative;
-        overflow: hidden;
-        height: 120px;
-    }
-
-    .collectionItem a {
-        text-decoration: none;
-        color: white;
-        background: rgba(0, 0, 0, 0.7);
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        padding: 0.5rem;
-    }
-
-    .paginationControls {
-        margin-top: 1rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .paginationControls button {
-        padding: 0.5rem 1rem;
-        border: none;
-        background-color: var(--color-primary, #007bff);
-        color: white;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .paginationControls button:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-    }
-
-    .sort-and-filter {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-
-    @media (max-width: 768px) {
-        .sort-and-filter {
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .itemsPerPageSelector {
-            width: 100%;
-            flex-direction: column;
-        }
-    }
-</style>

@@ -59,30 +59,3 @@
         <button on:click={nextCard}><Fa icon={faArrowDown} /></button>
     </div>
 {/if}
-
-<style>
-    .pagination {
-        position: fixed;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .pagination button {
-        cursor: pointer;
-        font-size: 25px;
-        padding: 10px;
-        width: 42px;
-        height: 42px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        background: rgba(0, 0, 0, 0.5);
-        border: none;
-    }
-</style>

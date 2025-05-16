@@ -104,35 +104,3 @@
     bind:this={fileInput}
     on:change={convertFileToImage}
 />
-
-<style>
-    .drop-zone {
-        min-height: 200px;
-        border: 4px dashed #797979;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 10px;
-        font-size: 2em;
-        position: relative;
-        cursor: pointer;
-        margin: 5px 0px 20px 0px;
-    }
-
-    .drop-zone img {
-        max-width: 100%;
-        max-height: 100%;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    .drop-zone .filled {
-        display: none;
-    }
-
-    .drop-zone .empty {
-        display: block;
-    }
-</style>

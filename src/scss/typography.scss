@@ -21,3 +21,12 @@ p, span, li, button, input, select {
     font-weight: 700;
     font-style: normal;
 }
+
+a {
+    color: var(--link-color);
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}

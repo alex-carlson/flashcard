@@ -1,6 +1,9 @@
 <script>
     let searchTerm = "";
     let searchResults = [];
+    // import fontawesome search icon
+    import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+    import Fa from "svelte-fa";
 
     async function search(event) {
         try {
@@ -27,7 +30,7 @@
 </script>
 
 <div class="searchForm">
-    <div class="searchInputContainer">
+    <div class="text-field inline">
         <input
             type="text"
             placeholder="Search..."
@@ -52,7 +55,7 @@
                 search({ detail: { query } });
             }}
         >
-            Search
+            <Fa icon={faMagnifyingGlass} />
         </button>
     </div>
 
@@ -75,86 +78,3 @@
         </div>
     {/if}
 </div>
-
-<style>
-    .searchInputContainer {
-        display: flex;
-        align-items: center; /* Vertically align input and button */
-        gap: 0.5rem; /* Add spacing between input and button */
-    }
-
-    .searchInputContainer input {
-        flex: 1; /* Make the input take up the remaining space */
-        min-height: 60px;
-        padding: 0.5rem;
-        font-size: 1rem;
-        box-sizing: border-box;
-    }
-
-    .searchInputContainer button {
-        min-height: 60px;
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .searchInputContainer button:hover {
-        background-color: #0056b3;
-    }
-
-    /* Media query for screens narrower than 300px */
-    @media (max-width: 335px) {
-        .searchInputContainer {
-            flex-direction: column; /* Stack input and button vertically */
-            gap: 0.25rem; /* Reduce spacing between input and button */
-        }
-
-        .searchInputContainer input,
-        .searchInputContainer button {
-            width: 100%; /* Make both input and button take up the full width */
-        }
-    }
-    .searchForm {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .searchForm > * {
-        min-height: 60px;
-        padding: 0.5rem;
-        font-size: 1rem;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .searchResults {
-        margin-top: 1rem;
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-
-    ul {
-        list-style-type: none;
-        padding: 0;
-    }
-
-    li {
-        margin: 0;
-        padding: 2em;
-    }
-
-    li:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    a {
-        text-decoration: none;
-        color: #007bff;
-    }
-</style>
