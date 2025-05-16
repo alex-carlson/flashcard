@@ -54,10 +54,10 @@
   }
 </script>
 
-<div class="container white">
+<div class="container white padding">
   {#if !$user}
     <h1>{isLogin ? 'Log In' : 'Sign Up'}</h1>
-    <form on:submit|preventDefault={handleSubmit}>
+    <form class="form" on:submit|preventDefault={handleSubmit}>
       <input type="email" placeholder="Email" bind:value={email} required />
       <input type="password" placeholder="Password" bind:value={password} required />
 
