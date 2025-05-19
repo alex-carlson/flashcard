@@ -1,0 +1,30 @@
+.sort-and-filter {
+    display: flex;
+    flex-wrap: nowrap; // Prevent wrapping to keep items on the same line
+    gap: 4px;
+
+    .quarter,
+    .half,
+    .three-quarters,
+    .third {
+        padding: 0;
+        box-sizing: border-box;
+        min-width: 0; // Allow shrinking below content size
+    }
+
+    .quarter {
+        flex: 1 1 25%; // Allow shrinking and growing
+    }
+
+    .half {
+        flex: 1 1 50%;
+    }
+
+    .three-quarters {
+        flex: 1 1 75%;
+    }
+
+    .third {
+        flex: 1 1 33.33%;
+    }
+}

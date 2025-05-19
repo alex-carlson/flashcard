@@ -7,7 +7,6 @@
     let page = 0;
     let sortOption = "name"; // Default sort option
     let itemsPerPage = 10; // Default items per page
-    let itemsPerPageOptions = [10, 20, 50]; // Options for items per page
 
     // Fetch all collections
     async function fetchCollections() {
@@ -71,26 +70,15 @@
 
 <div class="container white">
     <h1>Explore</h1>
-
-    <div class="sort-and-filter padding">
-        <!-- Items per page selector -->
-        <div class="itemsPerPageSelector">
-            <label for="itemsPerPage">Items per page:</label>
-            <select id="itemsPerPage" bind:value={itemsPerPage}>
-                {#each itemsPerPageOptions as option}
-                    <option value={option}>{option}</option>
-                {/each}
-            </select>
-        </div>
-        <SortAndFilter
-            collection={collections}
-            bind:sortOption
-            on:sortAndFilterChange={(event) => {
-                filteredCollections = event.detail; // Update filteredCollections
-                page = 0; // Reset to the first page after sorting/filtering
-            }}
-        />
-    </div>
+    <SortAndFilter
+        collection={collections}
+        bind:sortOption
+        bind:itemsPerPage
+        on:sortAndFilterChange={(event) => {
+            filteredCollections = event.detail; // Update filteredCollections
+            page = 0; // Reset to the first page after sorting/filtering
+        }}
+    />
 
     <div class="list">
         <ul>

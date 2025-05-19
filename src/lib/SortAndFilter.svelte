@@ -5,8 +5,10 @@
     export let collection = [];
     export let sortOption = "name";
     export let sortOrder = "asc"; // Default to ascending order
+    export let itemsPerPage = 10; // Default items per page
     export let sortedAndFilteredCollection = [];
     let filterText = "";
+    let itemsPerPageOptions = [10, 20, 50]; // Options for items per page
 
     $: {
         // Sort and filter the collection based on user input
@@ -43,22 +45,35 @@
     }
 </script>
 
-<div class="sort-and-filter">
-    <div class="sort-options">
-        <label for="sort">Sort by:</label>
-        <select id="sort" bind:value={sortOption}>
-            <option value="name">Alphabetical</option>
-            <option value="date">Creation Date</option>
-            <option value="size">Size</option>
-        </select>
-        <label for="order">Order:</label>
-        <select id="order" bind:value={sortOrder}>
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-        </select>
+<details class="sort-and-filter">
+    <summary>Sort/Filter</summary>
+    <div class="padding">
+        <div class="third">
+            <label for="itemsPerPage">Items per page:</label>
+            <select id="itemsPerPage" bind:value={itemsPerPage} >
+                {#each itemsPerPageOptions as option}
+                    <option value={option}>{option}</option>
+                {/each}
+            </select>
+        </div>
+        <div class="item third">
+            <label for="sort">Sort by:</label>
+            <select id="sort" bind:value={sortOption}>
+                <option value="name">Alphabetical</option>
+                <option value="date">Creation Date</option>
+                <option value="size">Size</option>
+            </select>
+        </div>
+        <div class="item third">
+            <label for="order">Order:</label>
+            <select id="order" bind:value={sortOrder}>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
     </div>
 
-    <div class="filter-options">
+    <div class="filter-options padding">
         <label for="filter">Filter by:</label>
         <input
             type="text"
@@ -67,4 +82,4 @@
             placeholder="Type to filter..."
         />
     </div>
-</div>
+</details>
