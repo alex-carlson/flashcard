@@ -104,7 +104,7 @@
         const data = {
             category: tempCategory,
             author_id: $user.id,
-            author: $user.user_metadata.display_name,
+            author: $user.user_metadata.username,
         };
 
         try {
@@ -421,7 +421,7 @@
     }
 
     async function uploadData() {
-        const username = $user.user_metadata.display_name;
+        const username = $user.user_metadata.username;
         const formData = new FormData();
         formData.append("uuid", uuidv4());
         formData.append("file", localItem.file);
@@ -474,7 +474,7 @@
     }
 
     async function setVisible(event) {
-        const username = $user.user_metadata.display_name;
+        const username = $user.user_metadata.username;
         const data = {
             category,
             author: username,

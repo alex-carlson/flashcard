@@ -4,6 +4,7 @@
 
     let collections = [];
     let author_id = null;
+    let author = null;
 
     function fetchCollections(author) {
         // Fetch collections from the server

@@ -1,8 +1,9 @@
-<script>
-  import { user } from '../../stores/user';
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { profile, user } from '$stores/user';
   import { push } from 'svelte-spa-router';
-  import { signInWithEmail } from '$lib/auth/login';
-  import { signUpWithEmail } from '$lib/auth/signup';
+  import { signInWithEmail, signUpWithEmail, createProfileIfMissing } from '$lib/auth/auth';
+  import { supabase } from '$lib/supabaseClient';
 
   let email = '';
   let password = '';
@@ -10,12 +11,16 @@
   let errorMsg = '';
   let isLogin = false;
 
-  document.title = 'Login';
+  document.title = isLogin ? 'Login' : 'Sign Up';
 
-  // Redirect if already logged in
-  $: if ($user) {
-    push('/dashboard');
-  }
+  // 🔁 Check for existing session on mount
+  onMount(async () => {
+    const { data, error } = await supabase.auth.getSession();
+    if (data.session) {
+      push('/dashboard');
+    }
+  });
+
   async function handleSubmit() {
     errorMsg = '';
 
@@ -24,35 +29,41 @@
       return;
     }
 
-    let response;
-
-    if (isLogin) {
-      try {
+    try {
+      if (isLogin) {
+        console.log('Logging in...');
         const { session, user: loggedInUser } = await signInWithEmail(email, password);
-        user.set(loggedInUser); // optional if you're managing your own store
-      } catch (error) {
-        errorMsg = error.message;
-      }
 
-    } else {
-      const { data, error } = await signUpWithEmail(email, password, displayName);
-      if (error) {
-        errorMsg = error.message;
-        return;
+        if (loggedInUser) {
+          // Ensure session token is persisted
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Try to fetch a fresh session just in case
+          const { data: refreshedSession } = await supabase.auth.getSession();
+          if (!refreshedSession.session) {
+            throw new Error('Session not yet available after login');
+          }
+
+          // Create profile only if missing
+          const displayNameFinal = displayName || loggedInUser.email?.split('@')[0];
+          await createProfileIfMissing(loggedInUser.id, displayNameFinal);
+
+          // Redirect AFTER session and profile have been handled
+          await push('/dashboard');
+        }
+      } else {
+        const { user: newUser } = await signUpWithEmail(email, password, displayName);
+        if (newUser) {
+          alert('Please check your email to confirm your account.');
+        }
       }
-      response = data;
-      if (response) {
-        const { user: newUser } = response;
-        user.set(newUser); // optional if you're managing your own store
-      }
+    } catch (error) {
+      errorMsg = error.message ?? 'An error occurred. Please try again.';
     }
 
-    const { error } = response;
-    if (error) {
-      errorMsg = error.message;
-    }
   }
 </script>
+
 
 <div class="container white padding">
   {#if !$user}
@@ -67,7 +78,9 @@
 
       <button type="submit">{isLogin ? 'Log In' : 'Sign Up'}</button>
 
-      <p style="color: red">{errorMsg}</p>
+      {#if errorMsg}
+        <p style="color: red">{errorMsg}</p>
+      {/if}
 
       <p>
         {isLogin

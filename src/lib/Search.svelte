@@ -22,7 +22,6 @@
 
             // save data to collections
             searchResults = data;
-            console.log("Search Results:", searchResults);
         } catch (error) {
             console.error("Error fetching search results:", error);
         }
@@ -64,7 +63,7 @@
             <ul>
                 {#each searchResults as result}
                     <li>
-                        <a href="#/{result.author}/{result.category}">
+                        <a href="#/{result.author_id}/{result.category}">
                             <img
                                 src={result.items[0].image}
                                 alt={result.category}

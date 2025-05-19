@@ -76,6 +76,15 @@ button {
         color: #999;
         cursor: not-allowed;
     }
+    &.red {
+        background-color: var(--danger-color);
+        color: white;
+    }
+
+    &.green {
+        background-color: var(--success-color);
+        color: white;
+    }
 }
 
 .text-field {

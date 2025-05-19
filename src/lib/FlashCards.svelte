@@ -36,7 +36,6 @@
 
     // function to fetch collection from id
     async function fetchCollection() {
-        console.log("Fetching collection with:", collection);
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/collections/user/${author_id}/${collection}`,
@@ -57,8 +56,6 @@
             if (!data.items || data.items.length === 0) {
                 return;
             }
-
-            console.log(data);
 
             cards = data.items.map((card) => ({
                 ...card,
@@ -85,7 +82,6 @@
     }
 
     function toggleReveal(index) {
-        console.log("Toggling reveal for card:", index);
         cards[index].revealed = !cards[index].revealed;
     }
 
@@ -113,7 +109,6 @@
 
     function toggleGrid() {
         isGrid = !isGrid;
-        console.log("Toggling grid mode:", isGrid);
     }
 
     function scaleImage(amount) {
@@ -198,7 +193,6 @@
 
     function selectOption(e, item) {
         const value = e.target.value; // Get the selected value
-        console.log("Selected option:", value);
 
         if (value === "Hide") {
             item.hidden = !item.hidden; // Toggle the hidden state

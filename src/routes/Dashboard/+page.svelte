@@ -1,22 +1,34 @@
-<script>
-    import AccountSettings from '../../lib/AccountSettings.svelte';
-    import AccountRecents from '../../lib/AccountRecents.svelte';
-    import { user } from '$stores/user';
+<script lang="ts">
+  import AccountSettings from '$lib/AccountSettings.svelte';
+  import { user } from '$stores/user';
+  import {logOut} from '$lib/auth/auth';
+  import { onMount } from 'svelte';
 
-    import { onMount } from 'svelte';
+  let currentUser = null;
 
-    onMount(() => {
-        // Fetch user data or perform any necessary setup
-        console.log('User data:', user);
-    });
-    document.title = "User Dashboard"
+  // Subscribe to user store
+  const unsubscribe = user.subscribe(value => {
+    currentUser = value;
+  });
+
+  onMount(() => {
+    document.title = "User Dashboard";
+
+    // Clean up subscription if needed (optional here)
+    return () => unsubscribe();
+  });
 </script>
 
 <div class="container white padding">
-    <h2>Welcome, {$user.user_metadata?.display_name}!</h2>
+  {#if currentUser}
+    <h2>Welcome, {currentUser.username || currentUser.email}!</h2>
+
     <AccountSettings />
-    <!-- button to upload -->
-     <div class="form padding">
-        <a href="#/upload">Create or Edit your Quizzems</a>
-     </div>
+
+    <div class="form padding">
+      <a href="#/upload">Create or Edit your Quizzems</a>
+    </div>
+  {:else}
+    <p>Loading user data...</p>
+  {/if}
 </div>
