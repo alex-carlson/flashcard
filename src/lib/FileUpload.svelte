@@ -50,22 +50,6 @@
         }
     };
 
-    const handleDrop = (e) => {
-        e.preventDefault();
-        //prevent open image as file in new tab
-        e.stopPropagation();
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            const file = files[0];
-            convertFileToImage({ target: { files: [file] } });
-        }
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy"; // Show copy cursor
-    };
-
     window.addEventListener("paste", handlePaste);
 </script>
 
@@ -79,8 +63,6 @@
             fileInput?.click();
         }
     }}
-    on:drop={handleDrop}
-    on:dragover={handleDragOver}
 >
     <div class="drop-zone__prompt">
         <p class={"text " + (myImg ? "filled" : "empty")}>
