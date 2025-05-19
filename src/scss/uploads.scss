@@ -1,0 +1,19 @@
+.uploader {
+    ul{
+        li{
+            button {
+                background: none;
+                border: none;
+                cursor: pointer;
+
+                &.danger {
+                    color: var(--danger-color);
+                }
+
+                &.success {
+                    color: var(--success-color);
+                }
+            }
+        }
+    }
+}

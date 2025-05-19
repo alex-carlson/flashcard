@@ -8,7 +8,7 @@
     import Fa from "svelte-fa";
     import {
         faPenToSquare,
-        faSquareMinus,
+        faTrashCan,
         faFloppyDisk,
         faBan,
         faChevronUp,
@@ -133,16 +133,16 @@
             errorMessage = "Remove failed. Please try again.";
         }
     }
-
-    // Edit item
-    async function editItem(itemId) {
+    
+    async function saveEdit(){
         try {
-            const item = items.find((item) => item.id === itemId);
+            const item = items.find((item) => item.id === editableItemId);
             await apiFetch("/items/edit", "POST", {
                 collection: category,
-                id: itemId,
+                id: editableItemId,
                 answer: item.answer,
             });
+            editableItemId = null;
         } catch (error) {
             console.error("Error editing item:", error);
             errorMessage = "Edit failed. Please try again.";
@@ -268,7 +268,7 @@
     document.title = "Upload Data";
 </script>
 
-<div class="container form padding">
+<div class="container form padding uploader">
     {#if !user}
         <p><a href="/login">Log in</a> to upload data.</p>
     {:else}
@@ -314,16 +314,16 @@
             >Rename</button
         >
             {#if items.length > 1}
-            {#if !isReordering}
-                <button
-                class="secondary"
-                on:click={() => (isReordering = true)}>Reorder</button
-                >
-            {:else}
-                <button class="secondary" on:click={reorderItems}
-                >Done</button
-                >
-            {/if}
+                {#if !isReordering}
+                    <button
+                    class="secondary"
+                    on:click={() => (isReordering = true)}>Reorder</button
+                    >
+                {:else}
+                    <button class="secondary" on:click={reorderItems}
+                    >Done</button
+                    >
+                {/if}
             {/if}
         {/if}
         <div class="list uploads">
@@ -334,34 +334,37 @@
                     draggable={isReordering}
                 >
                     {#if editableItemId === item.id}
-                    <img src={localItem.image} alt="Preview" />
-                    <input
-                        type="text"
-                        bind:value={localItem.answer}
-                        placeholder="Enter an answer"
-                    />
-                    <button class="success" on:click={saveEdit}
-                        ><Fa icon={faFloppyDisk} /></button
-                    >
-                    <button on:click={cancelEdit}
-                        ><Fa icon={faBan} /></button
-                    >
+                        <img src={item.image} alt="Preview" />
+                        <input
+                            type="text"
+                            bind:value={item.answer}
+                            placeholder="Enter an answer"
+                        />
+                        <div class="vertical">
+                            <button class="success" on:click={saveEdit}
+                                ><Fa icon={faFloppyDisk} /></button
+                            >
+                            <button class="danger" on:click={editableItemId = null}
+                                ><Fa icon={faBan} /></button
+                            >
+                        </div>
                     {:else}
                     <img src={item.image} alt="Preview" />
                     <span>{item.answer}</span>
                     {#if isReordering}
                         <div class="reorder">
-                        <button on:click={() => ReOrder(index, index - 1)}>
-                            <Fa icon={faChevronUp} />
-                        </button>
-                        <button on:click={() => ReOrder(index, index + 1)}>
-                            <Fa icon={faChevronDown} />
-                        </button>
+                            <button on:click={() => ReOrder(index, index - 1)}>
+                                <Fa icon={faChevronUp} />
+                            </button>
+                            <button on:click={() => ReOrder(index, index + 1)}>
+                                <Fa icon={faChevronDown} />
+                            </button>
                         </div>
                     {:else}
+                    <div class="vertical">
                         <button
                         class="edit secondary"
-                        on:click={() => onEditClick(item.id)}
+                        on:click={() => editableItemId = item.id}
                         >
                         <Fa icon={faPenToSquare} />
                         </button>
@@ -369,8 +372,9 @@
                         class="remove danger"
                         on:click={() => removeItem(item.id)}
                         >
-                        <Fa icon={faSquareMinus} />
+                        <Fa icon={faTrashCan} />
                         </button>
+                    </div>
                     {/if}
                     {/if}
                 </li>

@@ -103,7 +103,7 @@ ul {
                 width: 100px;
                 height: 100px;
             }
-            span {
+            span, input[type="text"] {
                 // fill the space
                 flex: 1;
             }
