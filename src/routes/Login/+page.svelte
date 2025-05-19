@@ -48,8 +48,9 @@
           const displayNameFinal = displayName || loggedInUser.email?.split('@')[0];
           await createProfileIfMissing(loggedInUser.id, displayNameFinal);
 
-          // Redirect AFTER session and profile have been handled
-          await push('/dashboard');
+          // go to dashboard
+          push('/dashboard');
+
         }
       } else {
         const { user: newUser } = await signUpWithEmail(email, password, displayName);

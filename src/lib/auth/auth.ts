@@ -1,5 +1,6 @@
 import { supabase } from '$lib/supabaseClient';
 import { user, profile } from '$stores/user';
+import { fetchProfile } from '../../stores/user';
 
 
 export async function signInWithEmail(email: string, password: string) {
@@ -12,6 +13,16 @@ export async function signInWithEmail(email: string, password: string) {
     console.error('Login error:', error.message);
     throw error;
   }
+
+  // set user and profile stores
+  const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Error fetching current user:', userError.message);
+    throw userError;
+  }
+
+  user.set(currentUser);
+  profile.set(fetchProfile(currentUser.id));
 
   return data;
 }
@@ -107,8 +118,7 @@ export async function updateUsername(newUsername: string) {
 
 export async function logOut() {
   // Remove session and user data from stores
-  user.set(null);
-  profile.set(null);
+
 
   const { error } = await supabase.auth.signOut();
   if (error) {
@@ -116,6 +126,8 @@ export async function logOut() {
     throw error;
   }
 
+  user.set(null);
+  profile.set(null);
 
   console.log('Log out successful');
   return true;

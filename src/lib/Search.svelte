@@ -64,11 +64,13 @@
                 {#each searchResults as result}
                     <li>
                         <a href="#/{result.author_id}/{result.category}">
+                            {#if result.items.length > 0}
                             <img
                                 src={result.items[0].image}
                                 alt={result.category}
                                 style="max-width: 50px; max-height: 50px; margin-right: 10px;"
                             />
+                            {/if}
                             {result.category} by: {result.author}
                         </a>
                     </li>

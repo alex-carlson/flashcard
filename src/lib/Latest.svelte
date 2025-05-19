@@ -36,7 +36,9 @@
                 {#each data as collection}
                     <li>
                         <a href="#/{collection.author_id}/{collection.category}">
-                            <img src="{collection.items[0].image}" alt="{collection.category}" />
+                            {#if collection.items.length > 0}
+                                <img src="{collection.items[0].image}" alt="{collection.category}" />
+                            {/if}
                             <div class="vertical fill align-right">
                                 <span>{collection.category} [{collection.items.length}]</span>
                                 <span><b>{collection.author}</b></span>

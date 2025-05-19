@@ -97,7 +97,9 @@
             {#each paginatedCollections as collection}
                 <li>
                     <a href="#/{collection.author_id}/{collection.category}">
-                        <img src={collection.items[0].image} alt="">
+                        {#if collection.items.length > 0}
+                            <img src={collection.items[0].image} alt="">
+                        {/if}
                         <p>{collection.category}
                             {#if sortOption === "date"}
                              {formatTimestamp(collection.created_at)}

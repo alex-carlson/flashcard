@@ -21,7 +21,7 @@
         <button on:click={() => updateUsername($profile.username)}>Update Name</button>
       </div>
       <p>{message}</p>
-      <button class="warning" on:click={logOut}>Log Out</button>
+      <button class="warning" on:click={() => { logOut(); window.location.href = '/'; }}>Log Out</button>
       <button class="danger" on:click={logOut}>Delete Account</button>
     </div>
   </details>

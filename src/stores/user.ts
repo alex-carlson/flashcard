@@ -6,7 +6,7 @@ export const user = writable(null);
 export const profile = writable(null);
 
 // Internal helper to load profile from Supabase
-async function fetchProfile(userId) {
+export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -37,29 +37,17 @@ async function fetchProfile(userId) {
   return data;
 }
 
-let lastFetchedUserId: string | null = null;
 
 async function updateProfile(userId: string | null) {
-  if (!userId) {
-    profile.set(null);
-    return;
-  }
-  if (userId === lastFetchedUserId) return;
-  lastFetchedUserId = userId;
   const data = await fetchProfile(userId);
   profile.set(data);
+  console.log('Profile updated:', data);
 }
 
 // Initialize user and profile on app start
 supabase.auth.getSession().then(({ data }) => {
+  console.log('Initial session:', data);
   const sessionUser = data.session?.user ?? null;
-  user.set(sessionUser);
-  updateProfile(sessionUser?.id ?? null);
-});
-
-// Listen to auth state changes and update user/profile
-supabase.auth.onAuthStateChange((_event, session) => {
-  const sessionUser = session?.user ?? null;
   user.set(sessionUser);
   updateProfile(sessionUser?.id ?? null);
 });

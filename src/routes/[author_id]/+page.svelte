@@ -42,7 +42,9 @@
             {#each collections as item}
                 <li>
                     <a href={`/#/${item.author}/${item.category}`}>
-                        <img src={item.items[0].image} alt={item.category} />
+                        {#if item.items.length > 0}
+                            <img src={item.items[0].image} alt={item.category} />
+                        {/if}
                         <span>{item.category} - {item.items.length}</span>
                     </a>
                 </li>

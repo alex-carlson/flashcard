@@ -22,10 +22,12 @@
             {#each collections as collection}
                 <li>
                     <a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
-                        <img
-                            src={collection.items[0] ? collection.items[0].image : ""}
-                            alt={collection.category}
-                        />
+                        {#if collection.items.length > 0}
+                            <img
+                                src={collection.items[0].image}
+                                alt={collection.category}
+                            />
+                        {/if}
                         <span>
                             {collection.category}
                         </span>

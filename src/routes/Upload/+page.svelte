@@ -1,5 +1,5 @@
 <script>
-    import { user } from '$stores/user';
+    import { user, profile } from '$stores/user';
     import { getSession } from '../../lib/supabaseClient';
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
@@ -26,145 +26,93 @@
     let isRenaming = false;
     let isReordering = false;
 
-    // Fetch collections from the server on load
+    // fetch collections on mount
+    onMount(async () => {
+        const { data: sessionData, error: sessionError } = await getSession();
+        if (sessionError || !sessionData?.session) {
+            return;
+        }
+        fetchCollections();
+    });
+
+    async function getAuthHeaders() {
+        const { data: sessionData, error: sessionError } = await getSession();
+        if (sessionError || !sessionData?.session) {
+            throw new Error('User session not found');
+        }
+        return {
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+        };
+    }
+
+    async function apiFetch(endpoint, method = "GET", body = null, isFormData = false) {
+        const headers = await getAuthHeaders();
+        if (!isFormData) headers["Content-Type"] = "application/json";
+        const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+            method,
+            headers,
+            body: isFormData ? body : body ? JSON.stringify(body) : null,
+        });
+
+        if (!response.ok) {
+            throw new Error(`${method} ${endpoint} failed: ${response.statusText}`);
+        }
+
+        return response.json();
+    }
+
+    // Fetch collections
     async function fetchCollections() {
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const url = `${import.meta.env.VITE_API_URL}/collections/user/${$user.id}`;
-            const response = await fetch(url, {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch collections");
-            }
-
-            collections = await response.json();
-            // sort collections by created_at date (timestamp timezone)
-            collections.sort((a, b) => {
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
+            const url = `/collections/user/${$user.id}`;
+            collections = await apiFetch(url);
+            collections.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         } catch (error) {
             console.error("Error fetching collections:", error);
         }
     }
 
+    // Fetch collection details
     async function fetchCollectionData(id) {
-        const { data: sessionData, error: sessionError } = await getSession();
-        if (sessionError || !sessionData.session) {
-            throw new Error('User session not found');
-        }
-        const token = sessionData.session.access_token;
-        isRenaming = false;
-        const url = `${import.meta.env.VITE_API_URL}/collections/id/${id}`;
-        console.log("Fetching collection data from:", url);
+        console.log("Fetching collection data for ID:", id);
         try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error("Error fetching collection data");
-            }
-
-            const collectionData = await response.json();
-
-            category = collectionData.category;
-
-            if (!collectionData.items || !Array.isArray(collectionData.items)) {
-                throw new Error(
-                    "Invalid collection data: items missing or not an array",
-                );
-            }
-
-            items = collectionData.items;
-
-            console.log("Collection data is private:", collectionData.private);
-
-            isPublic = collectionData.private ? false : true;
+            const data = await apiFetch(`/collections/id/${id}`);
+            category = data.category;
+            items = Array.isArray(data.items) ? data.items : [];
+            isPublic = !data.private;
+            isRenaming = false;
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
     }
 
+    // Create new collection
     async function createCollection() {
-        let url = import.meta.env.VITE_API_URL + "/collections/createCollection";
-        const data = {
-            category: tempCategory,
-            author_id: $user.id,
-            author: $user.user_metadata.username,
-        };
-
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
-
-            const val = response.json().then((val) => {
-                console.log(val);
-                collections = [...collections, val];
-                category = tempCategory;
-            });
+            const username = $profile.username;
+            const data = {
+                category: tempCategory,
+                author_id: $user.id,
+                author: username,
+            };
+            console.log("Creating collection with data:", data);
+            const created = await apiFetch("/collections/createCollection", "POST", data);
+            collections = [...collections, created];
+            category = tempCategory;
         } catch (error) {
             console.error("Error creating collection:", error);
             errorMessage = "Create failed. Please try again.";
         }
     }
 
+    // Rename collection
     async function renameCollection() {
         isRenaming = false;
-        //rename collection on server
-        let url =
-            import.meta.env.VITE_API_URL + "/collections/renameCollection";
-
-        console.log("Renaming to: ", category);
-
-        const data = {
-            oldCategory: category,
-            newCategory: tempCategory,
-        };
-
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
+            await apiFetch("/collections/renameCollection", "POST", {
+                oldCategory: category,
+                newCategory: tempCategory,
             });
-
-            if (!response.ok) {
-                throw new Error("Failed to rename collection");
-            }
-
             category = tempCategory;
         } catch (error) {
             console.error("Error renaming collection:", error);
@@ -172,256 +120,78 @@
         }
     }
 
-    function handleCollectionSelection(event) {
-        fetchCollectionData(event.detail);
-    }
-
-    onMount(() => {
-        fetchCollections();
-    });
-
-    function handleDragStart(event, index) {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", index); // Store the index of the dragged item
-        // set aria grabbed to true
-        event.target.setAttribute("aria-grabbed", "true");
-    }
-
-    function handleDragOver(event) {
-        event.preventDefault(); // Allow dropping
-        event.dataTransfer.dropEffect = "move";
-    }
-
-    function handleDrop(event, dropIndex) {
-        event.preventDefault();
-        const dragIndex = parseInt(
-            event.dataTransfer.getData("text/plain"),
-            10,
-        );
-
-        if (dragIndex === dropIndex) return; // No-op if dropped on same item
-
-        const draggedItem = items[dragIndex];
-
-        items.splice(dragIndex, 1); // Remove dragged
-        items.splice(dropIndex, 0, draggedItem); // Insert at new index
-
-        // set aria-grabbed to false
-        event.target.setAttribute("aria-grabbed", "false");
-
-        items = [...items]; // Trigger reactivity
-    }
-
-    function MoveUp(index) {
-        if (index > 0) {
-            const temp = items[index];
-            items[index] = items[index - 1];
-            items[index - 1] = temp;
-        }
-    }
-
-    function MoveDown(index) {
-        if (index < items.length - 1) {
-            const temp = items[index];
-            items[index] = items[index + 1];
-            items[index + 1] = temp;
-        }
-    }
-
-    // remove item on server based on item id
+    // Remove item
     async function removeItem(itemId) {
-        console.log("Removing item:", itemId);
-        let url = import.meta.env.VITE_API_URL + "/items/remove";
-        const data = {
-            category,
-            itemId,
-        };
-
         try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Remove failed: ${response.statusText}`,
-                        );
-                    }
-
-                    // remove the item from the items array
-                    items = items.filter((item) => item.id !== itemId);
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                });
+            await apiFetch("/items/remove", "POST", {
+                category,
+                itemId,
+            });
+            items = items.filter((item) => item.id !== itemId);
         } catch (error) {
             console.error("Error removing item:", error);
             errorMessage = "Remove failed. Please try again.";
         }
     }
 
+    // Edit item
     async function editItem(itemId) {
-        let url = import.meta.env.VITE_API_URL + "/items/edit";
-        const data = {
-            collection: category,
-            id: itemId,
-            answer: items.find((item) => item.id === itemId).answer,
-        };
-
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Edit failed with error: ${response.statusText}`,
-                        );
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                });
+            const item = items.find((item) => item.id === itemId);
+            await apiFetch("/items/edit", "POST", {
+                collection: category,
+                id: itemId,
+                answer: item.answer,
+            });
         } catch (error) {
             console.error("Error editing item:", error);
             errorMessage = "Edit failed. Please try again.";
         }
     }
 
-    // reorder items and call items/upload on the server with the new collection
-
+    // Reorder items
     async function reorderItems() {
-        let url = import.meta.env.VITE_API_URL + "/items/reorder";
-        // get all item answers
-        const itemAnswers = items.map((item) => item.answer);
         try {
-            // post to url with data
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ category, itemAnswers }),
-            });
-
-            // log the response
-
-            if (!response.ok) {
-                throw new Error(
-                    `Reorder failed: ${response.status} ${response.statusText}`,
-                );
-            }
-
-            const data = await response.json();
-        } catch {
+            const itemAnswers = items.map((item) => item.answer);
+            await apiFetch("/items/reorder", "POST", { category, itemAnswers });
+            isReordering = false;
+        } catch (error) {
             console.error("Error reordering items:", error);
             errorMessage = "Reorder failed. Please try again.";
         }
-        isReordering = false;
     }
 
-    function onEditClick(itemId) {
-        editableItemId = itemId;
-        //move the data to the localItem and scroll down to form
-        localItem = { ...items.find((item) => item.id === itemId) };
-    }
-
-    function saveEdit() {
-        try {
-            // Update the item in the items array
-            items = items.map((item) =>
-                item.id === editableItemId ? { ...item, ...localItem } : item,
-            );
-            editableItemId = null; // Reset editable item ID
-            editItem(localItem.id);
-        } catch (error) {
-            console.error("Error saving item:", error);
-            errorMessage = "Save failed. Please try again.";
-        }
-        localItem = null; // Reset local item
-    }
-
-    function cancelEdit() {
-        editableItemId = null;
-        localItem.answer = "";
-    }
-
-    function toggleRenaming() {
-        isRenaming = !isRenaming;
-    }
-
-    function handleFileChange(event) {
-        console.log("File changed:", event.detail);
-        localItem.file = event.detail;
-    }
-
-    function confirmDelete() {
-        //show popup to confirm delete
-        if (confirm("Are you sure you want to proceed?")) {
-            deleteCollection();
-            alert("Collection Deleted! 💨");
-        }
-    }
-
+    // Delete collection
     async function deleteCollection() {
-        let url =
-            import.meta.env.VITE_API_URL +
-            `/collections/${username}/${category}`;
-        const data = {
-            category,
-            username,
-        };
-
         try {
-            const response = await fetch(url, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Delete failed: ${response.statusText}`,
-                        );
-                    }
-
-                    // remove the item from the items array
-                    collections = collections.filter(
-                        (collection) => collection.category !== category,
-                    );
-
-                    document.location.reload();
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                });
+            const username = $profile.username;
+            const data = {
+                collection: category,
+                author_id: $user.id,
+                username: username,
+            };
+            console.log("Deleting collection:", data);
+            await apiFetch(`/collections/${username}/${category}`, "DELETE", data);
+            collections = collections.filter((c) => c.category !== category);
+            document.location.reload();
         } catch (error) {
-            console.error("Error removing item:", error);
-            errorMessage = "Remove failed. Please try again.";
+            console.error("Error deleting collection:", error);
+            errorMessage = "Delete failed. Please try again.";
         }
     }
 
+    // show confirm delete popup
+    function confirmDelete() {
+        if (confirm("Are you sure you want to delete this collection?")) {
+            deleteCollection();
+        }
+    }
+
+    // Upload data
     async function uploadData() {
-        const username = $user.user_metadata.username;
+        console.log("Profile is ", profile);
+        const username = $profile.username;
+        const author_id = $user.id;
         const formData = new FormData();
         formData.append("uuid", uuidv4());
         formData.append("file", localItem.file);
@@ -429,43 +199,18 @@
         formData.append("answer", localItem.answer);
         formData.append("category", category);
         formData.append("author", username);
-
-        let url = import.meta.env.VITE_API_URL + "/items/upload";
+        formData.append("author_id", author_id);
 
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    `Upload failed: ${response.status} ${response.statusText}`,
-                );
-            }
-
+            const result = await apiFetch("/items/upload", "POST", formData, true);
             showSuccessMessage("Upload successful!");
             const preview = document.querySelector(".preview");
-            preview.src = null;
-            // clear answer field
-            localItem.answer = "";
-            const answerInput = document.getElementById("answer");
-            answerInput.value = "";
+            if (preview) preview.src = null;
 
-            // get image from response
-            const data = await response.json();
-            const returnedItems = data[0].items;
-            items = returnedItems;
-            localItem.file = null; // Reset local item file
-            localItem.answer = ""; // Reset local item answer
+            localItem.answer = "";
+            document.getElementById("answer").value = "";
+            items = result[0]?.items || [];
+            localItem.file = null;
             preview.scrollIntoView({ behavior: "smooth" });
         } catch (error) {
             console.error("Error uploading data:", error);
@@ -473,30 +218,16 @@
         }
     }
 
+    // Set visibility
     async function setVisible(event) {
-        const username = $user.user_metadata.username;
         const data = {
             category,
-            author: username,
+            author: $profile.username,
             visible: event.target.checked,
         };
-        
-        let url = import.meta.env.VITE_API_URL + "/collections/setVisible";
-        
+
         try {
-            const { data: sessionData, error: sessionError } = await getSession();
-            if (sessionError || !sessionData.session) {
-                throw new Error('User session not found');
-            }
-            const token = sessionData.session.access_token;
-            const respone = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
+            await apiFetch("/collections/setVisible", "POST", data);
         } catch (error) {
             console.error("Error setting visibility:", error);
             errorMessage = "Visibility change failed. Please try again.";
@@ -517,6 +248,23 @@
         }, 10000);
     }
 
+    function ReOrder(prevIndex, newIndex) {
+        console.log("Reordering items");
+        const item = items[prevIndex];
+        items.splice(prevIndex, 1);
+        items.splice(newIndex, 0, item);
+        // update items to rerender
+        items = [...items];
+    }
+
+    function toggleRenaming() {
+        isRenaming = !isRenaming;
+        if (isRenaming) {
+            tempCategory = category;
+            document.getElementById("categoryName").focus();
+        }
+    }
+
     document.title = "Upload Data";
 </script>
 
@@ -527,7 +275,7 @@
         {#if collections.length > 0}
             <Collections
                 {collections}
-                on:selectCollection={handleCollectionSelection}
+                on:selectCollection={(e) => fetchCollectionData(e.detail)}
             />
         {/if}
         {#if category === ""}
@@ -550,30 +298,32 @@
             <button class="warning" on:click={toggleRenaming}>Cancel</button
             >
         {:else}
-            <h2>{category}</h2>
-            <div class="row">
-                <h2>{isPublic ? "Public" : "Private"}</h2>
-                <label class="switch">
-                    <input
-                        type="checkbox"
-                        bind:checked={isPublic}
-                        on:change={setVisible}
-                    />
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <button class="secondary" on:click={toggleRenaming}
-                >Rename</button
-            >
+        <h2>{category}</h2>
+        <div class="row">
+            <h2>{isPublic ? "Public" : "Private"}</h2>
+            <label class="switch">
+            <input
+                type="checkbox"
+                bind:checked={isPublic}
+                on:change={setVisible}
+            />
+            <span class="slider round"></span>
+            </label>
+        </div>
+        <button class="secondary" on:click={toggleRenaming}
+            >Rename</button
+        >
+            {#if items.length > 1}
             {#if !isReordering}
                 <button
-                    class="secondary"
-                    on:click={() => (isReordering = true)}>Reorder</button
+                class="secondary"
+                on:click={() => (isReordering = true)}>Reorder</button
                 >
             {:else}
                 <button class="secondary" on:click={reorderItems}
-                    >Done</button
+                >Done</button
                 >
+            {/if}
             {/if}
         {/if}
         <div class="list uploads">
@@ -605,10 +355,10 @@
                     <span>{item.answer}</span>
                     {#if isReordering}
                         <div class="reorder">
-                        <button on:click={() => MoveUp(index)}>
+                        <button on:click={() => ReOrder(index, index - 1)}>
                             <Fa icon={faChevronUp} />
                         </button>
-                        <button on:click={() => MoveDown(index)}>
+                        <button on:click={() => ReOrder(index, index + 1)}>
                             <Fa icon={faChevronDown} />
                         </button>
                         </div>
@@ -643,7 +393,7 @@
         {#if category}
             <!-- on submit form, call UploadFile -->
             <form class="form">
-                <FileUpload on:uploadImage={handleFileChange} />
+                <FileUpload on:uploadImage={(event) => localItem.file = event.detail} />
                 {#if localItem.file}
                     <img
                         src={localItem.file}
