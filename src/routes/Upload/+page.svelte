@@ -332,10 +332,6 @@
                 <li
                     class={isReordering ? "item reorder" : "item"}
                     draggable={isReordering}
-                    aria-grabbed="false"
-                    on:dragstart={(e) => handleDragStart(e, index)}
-                    on:dragover={handleDragOver}
-                    on:drop={(e) => handleDrop(e, index)}
                 >
                     {#if editableItemId === item.id}
                     <img src={localItem.image} alt="Preview" />
