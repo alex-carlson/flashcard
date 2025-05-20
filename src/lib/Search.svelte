@@ -33,13 +33,8 @@
         <input
             type="text"
             placeholder="Search..."
+            id="search"
             bind:value={searchTerm}
-            on:input={(event) => {
-                searchTerm = event.target.value;
-                if (event.key === "Enter") {
-                    search({ detail: { query: searchTerm } });
-                }
-            }}
             on:keydown={(event) => {
                 if (event.key === "Enter") {
                     event.preventDefault();
@@ -50,8 +45,11 @@
         <button
             on:click={(event) => {
                 event.preventDefault();
-                const query = event.target.previousElementSibling.value;
-                search({ detail: { query } });
+                const searchBox = document.getElementById("search");
+                if (searchBox) {
+                    searchTerm = searchBox.value;
+                }
+                search({ detail: { query: searchTerm } });
             }}
         >
             <Fa icon={faMagnifyingGlass} />
@@ -59,7 +57,7 @@
     </div>
 
     {#if searchResults.length > 0}
-        <div class="searchResults">
+        <div class="searchResults list condensed">
             <ul>
                 {#each searchResults as result}
                     <li>
@@ -68,7 +66,6 @@
                             <img
                                 src={result.items[0].image}
                                 alt={result.category}
-                                style="max-width: 50px; max-height: 50px; margin-right: 10px;"
                             />
                             {/if}
                             {result.category} by: {result.author}

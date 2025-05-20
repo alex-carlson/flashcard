@@ -137,15 +137,21 @@
     async function saveEdit(){
         try {
             const item = items.find((item) => item.id === editableItemId);
+            const itemTextFieldValue = document.getElementById("editedAnswer").value;
             await apiFetch("/items/edit", "POST", {
                 collection: category,
                 id: editableItemId,
-                answer: item.answer,
+                author_id: $user.id,
+                answer: itemTextFieldValue,
             });
             editableItemId = null;
         } catch (error) {
             console.error("Error editing item:", error);
             errorMessage = "Edit failed. Please try again.";
+            // clear error message after 10 seconds
+            setTimeout(() => {
+                errorMessage = ""; // Clear the error message after 10 seconds
+            }, 10000);
         }
     }
 
@@ -223,6 +229,7 @@
         const data = {
             category,
             author: $profile.username,
+            author_id: $user.id,
             visible: event.target.checked,
         };
 
@@ -261,7 +268,6 @@
         isRenaming = !isRenaming;
         if (isRenaming) {
             tempCategory = category;
-            document.getElementById("categoryName").focus();
         }
     }
 
@@ -336,6 +342,7 @@
                     {#if editableItemId === item.id}
                         <img src={item.image} alt="Preview" />
                         <input
+                            id="editedAnswer"
                             type="text"
                             bind:value={item.answer}
                             placeholder="Enter an answer"
@@ -411,7 +418,7 @@
                 <button type="button" class="" on:click={uploadData}
                     >Add item</button
                 >
-                <button class="danger" on:click={confirmDelete}
+                <button class="danger" style="margin-top: 44px" on:click={confirmDelete}
                     >Delete Collection</button
                 >
             </form>
