@@ -1,6 +1,6 @@
 :root {
     --header-font-family: "DM Serif Display", serif;
-    --body-font-family: "Puritan", sans-serif;
+    --body-font-family: "Roboto Condensed", sans-serif;
 }
 
 body {
@@ -18,7 +18,7 @@ h1, h2, h3, h4, h5, h6 {
 p, span, li, button, input, select {
     font-family: var(--body-font-family);
     font-optical-sizing: auto;
-    font-weight: 700;
+    font-weight: 500;
     font-style: normal;
 }
 

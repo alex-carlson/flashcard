@@ -1,7 +1,6 @@
 .flashcards {
         background: rgba(0, 0, 0, 0.1);
         border-radius: 0;
-    }
 
     .grid {
         display: grid;
@@ -76,6 +75,28 @@
                 }
             }
         }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+
+            button {
+                background-color: #1a1a1a;
+                transition: 0.2s;
+
+                &.red {
+                    background-color: var(--danger-color);
+                }
+
+                &.green {
+                    background-color: var(--success-color);
+                }
+            }
+        }
     }
 
     .grid .card {
@@ -102,91 +123,88 @@
         opacity: 1;
     }
 
-    :fullscreen {
-        overflow-x: hidden;
+    
+    :not(:root):fullscreen::backdrop {
+        background: black;
+    }
+}
+:fullscreen {
+    overflow-x: hidden;
+    height: 100vh;
+    background: black;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+
+    .flashcards .card {
+        height: 100vh;
     }
 
-    :fullscreen.container {
+    .container {
         padding: 0;
         margin: 0;
-    }
-
-    /* styles for .card when in fullscreen */
-    :fullscreen .card {
-        height: 100vh;
-        width: 100vw;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        position: relative;
+        height: auto; // ✅ let it grow with number of cards
+
+        .flashcards {
+            .card {
+                height: 100vh;
+                width: 100vw;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+                position: relative;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+    
+                span {
+                    padding: 0.4em;
+                    background: black;
+                    color: white;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                    height: 20vh;
+                    font-size: clamp(1rem, 10vw, 5rem);
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                }
+    
+                img {
+                    height: 60vw;
+                }
+            }
+        }
     }
 
-    :fullscreen .card span {
-        padding: 0.4em;
-        background: black;
-        color: white;
-        width: 100%;
-        display: block;
-        box-sizing: border-box;
-        height: 20vh;
-        font-size: clamp(1rem, 10vw, 5rem);
-        /* center text vertically */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        position: absolute;
-        bottom: 0;
-        left: 0;
-    }
-
-    :fullscreen .card img {
-        height: 60vw;
-    }
-
-    /* make it so the toolbar is fixed in full screen mode */
-    :fullscreen .toolbar {
-        position: absolute;
+    .toolbar {
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 100;
         padding: 1em 0;
+
+        .row {
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            width: 100%;
+            max-width: 50px;
+        }
     }
 
-    :fullscreen .toolbar .row {
-        gap: 4px;
-        /* flex items to fit content */
-        flex-wrap: wrap;
-    }
-
-    :fullscreen .toolbar button {
-        /* make buttons full width */
-        width: 100%;
-        max-width: 50px;
-    }
-
-    :fullscreen .headline {
+    .headline {
         display: none;
     }
-
-    :fullscreen .flashcards {
-        height: 100vh;
-        background: black;
-        scroll-snap-type: y mandatory;
-        scroll-behavior: smooth;
-        overflow-y: auto;
-    }
-
-    :fullscreen.container {
-        overflow-y: hidden;
-    }
-    .btn {
-        padding: 0.5rem;
-    }
-
-    :not(:root):fullscreen::backdrop {
-        background: black;
-    }
+}

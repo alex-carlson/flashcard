@@ -16,7 +16,7 @@ header {
     }
 
     .navContainer {
-        background-color: rgb(38, 40, 43);
+        background-color: #202020;
         ul {
             display: flex;
             flex-direction: row;
@@ -26,6 +26,16 @@ header {
 
             li {
                 margin: 0 1rem;
+
+                .active {
+                        text-decoration: underline;
+                        color: var(--primary-color);
+                }
+
+                a{
+                    color: white;
+                    text-decoration: none;
+                }
             }
         }
     }

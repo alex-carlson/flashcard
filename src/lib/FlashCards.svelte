@@ -253,7 +253,7 @@
     </div>
 
     {#if cards.length > 0}
-        <div class="headline">
+        <div class="headline padding">
             <h1>{collection}</h1>
             <p>
                 by <a href={`#/${author_id}`}>{author}</a>

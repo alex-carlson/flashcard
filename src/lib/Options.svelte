@@ -61,7 +61,7 @@
     }
 </script>
 
-<div class="options">
+<div class="options padding">
     {#if drawnCards}
         <!-- loop through drawncards -->
         {#each drawnCards as card}

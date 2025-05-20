@@ -47,7 +47,7 @@
 
 <details class="sort-and-filter">
     <summary>Sort/Filter</summary>
-    <div class="padding">
+    <div class="padding align-left">
         <div class="third">
             <label for="itemsPerPage">Items per page:</label>
             <select id="itemsPerPage" bind:value={itemsPerPage} >
