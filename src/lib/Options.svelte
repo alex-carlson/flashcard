@@ -56,12 +56,11 @@
     }
 
     $: if (shuffleTrigger) {
-        console.log("shuffling...");
         drawCards();
     }
 </script>
 
-<div class="options padding">
+<div class="options">
     {#if drawnCards}
         <!-- loop through drawncards -->
         {#each drawnCards as card}
