@@ -77,7 +77,7 @@
         <ul>
             {#each collections as item}
                 <li>
-                    <a href={`/#/${item.author}/${item.category}`}>
+                    <a href={`/#/${item.author_id}/${item.category}`}>
                         {#if item.items.length > 0}
                             <img src={item.items[0].image} alt={item.category} />
                         {/if}
