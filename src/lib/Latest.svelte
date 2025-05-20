@@ -41,7 +41,7 @@
                             {/if}
                             <div class="vertical fill align-left">
                                 <span>{collection.category} [{collection.items.length}]</span>
-                                <span><b>{collection.author}</b></span>
+                                <span class="sm">{collection.author}</span>
                             </div>
                         </a>
                     </li>

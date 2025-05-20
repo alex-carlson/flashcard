@@ -14,5 +14,4 @@
     <div class="padding">
         <a href="/#/explore">See More...</a>
     </div>
-
 </div>

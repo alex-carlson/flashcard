@@ -73,6 +73,10 @@ ul {
     span {
         font-size: 16px;
         font-weight: 500;
+
+        &.sm {
+            font-size: 12px;
+        }
     }
 
     .error,
@@ -186,4 +190,8 @@ footer {
 
 .align-center {
     text-align: center;
+}
+
+.sm {
+    font-size: 12px;
 }
