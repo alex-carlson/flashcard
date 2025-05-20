@@ -18,6 +18,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
+textarea,
 select {
     background-color: #fff;
     color: var(--form-text-color);
@@ -30,6 +31,10 @@ select {
     width: 100%;
     height: var(--form-element-height);
     vertical-align: baseline;
+}
+
+textarea {
+    text-align: left;
 }
 
 button {

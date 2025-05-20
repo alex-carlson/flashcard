@@ -8,12 +8,11 @@
 
     // Extract author_id and collectionName from the route params
     $: if ($params) {
-        console.log($params);
         author_id = $params.author_id;
         category = $params.category;
 
         // set page title to <category> by <author_id>
-        document.title = `${category} by ${author_id}`;
+        document.title = `${category}`;
     }
 </script>
 

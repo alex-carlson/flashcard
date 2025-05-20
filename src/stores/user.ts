@@ -41,12 +41,72 @@ export async function fetchProfile(userId) {
 async function updateProfile(userId: string | null) {
   const data = await fetchProfile(userId);
   profile.set(data);
-  console.log('Profile updated:', data);
+}
+
+export async function setUserAvatarUrl(userId: string | null, avatarUrl: string) {
+  if (!userId) {
+    console.error('No userId provided');
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: avatarUrl })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating avatar_url:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function setUserBio(userId: string | null, bio: string) {
+  if (!userId) {
+    console.error('No userId provided');
+    return null;
+  }
+
+  console.log('Setting bio:', bio);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ bio })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating bio:', error.message);
+    return null;
+  }
+  return data;
+}
+
+export async function setUserDisplayName(userId: string | null, displayName: string) {
+  if (!userId) {
+    console.error('No userId provided');
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ username: displayName })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating username:', error.message);
+    return null;
+  }
+  return data;
 }
 
 // Initialize user and profile on app start
 supabase.auth.getSession().then(({ data }) => {
-  console.log('Initial session:', data);
   const sessionUser = data.session?.user ?? null;
   user.set(sessionUser);
   updateProfile(sessionUser?.id ?? null);

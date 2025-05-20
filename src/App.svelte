@@ -9,14 +9,12 @@
   import FlashCards from "./routes/[collectionId]/+page.svelte";
   import Author from "./routes/[author_id]/+page.svelte";
   import NotFound from "./routes/NotFound/+page.svelte";
-  import Account from "./routes/Account/+page.svelte";
   import Explore from "./routes/Explore/+page.svelte";
 
   const routes = {
     "/": Home,
     "/login": Login,
     "/upload": UploadForm,
-    "/account": Account,
     "/dashboard": Dashboard,
     "/explore": Explore,
     "/:author_id/:category": FlashCards,
