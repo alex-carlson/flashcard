@@ -272,13 +272,11 @@
             tempCategory = category;
         }
     }
-
-    document.title = "Upload Data";
 </script>
 
 <div class="container form padding uploader">
     {#if !user}
-        <p><a href="/login">Log in</a> to upload data.</p>
+        <p><a href="/login">Log in</a> to manager your collections.</p>
     {:else}
         {#if collections.length > 0}
             <Collections

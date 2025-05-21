@@ -101,42 +101,48 @@
 
 {#if $profile}
   <ProfilePicture userId={$profile.id} size=150 />
-  <details class="accountSettings padding">
+  <details class="accountSettings">
     <summary>Account Settings</summary>
-    <!-- upload profile picture -->
-    <div class="profile-picture">
-      <input
-        type="file"
-        accept="image/*"
-        bind:files={file}
-        multiple={false}
-      />
-      <button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
+    <div class="form padding">
+      <!-- upload profile picture -->
+      <div class="profile-picture">
+        <input
+          type="file"
+          accept="image/*"
+          bind:files={file}
+          multiple={false}
+        />
+        <button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
+      </div>
+        <div class="text-field">
+          <label>
+            <strong>Email:</strong>
+            <input type="email" bind:value={$profile.email} />
+          </label>
+          <button on:click={() => updateEmail($profile.email)}>Update Email</button>
+        </div>
+        <div class="text-field">
+          <label>
+            <strong>Display Name:</strong>
+            <input type="text" bind:value={$profile.username} />
+          </label>
+          <button on:click={() => updateUsername($profile.username)}>Update Name</button>
+        </div>
+        <div class="text-field">
+          <label>
+            <strong>Bio:</strong>
+            <textarea bind:value={$profile.bio}></textarea>
+          </label>
+          <button on:click={() => updateBio()}>Update Bio</button>
+        </div>
+        <p>{message}</p>
+        <div class="padding">
+          <button class="warning" on:click={logOut}>Log Out</button>
+        </div>
+        <div class="padding">
+          <button class="danger" on:click={logOut}>Delete Account</button>
+        </div>
     </div>
-      <div class="text-field">
-        <label>
-          <strong>Email:</strong>
-          <input type="email" bind:value={$profile.email} />
-        </label>
-        <button on:click={() => updateEmail($profile.email)}>Update Email</button>
-      </div>
-      <div class="text-field">
-        <label>
-          <strong>Display Name:</strong>
-          <input type="text" bind:value={$profile.username} />
-        </label>
-        <button on:click={() => updateUsername($profile.username)}>Update Name</button>
-      </div>
-      <div class="text-field">
-        <label>
-          <strong>Bio:</strong>
-          <textarea bind:value={$profile.bio} />
-        </label>
-        <button on:click={() => updateBio()}>Update Bio</button>
-      </div>
-      <p>{message}</p>
-      <button class="warning" on:click={() => { logOut(); window.location.href = '/'; }}>Log Out</button>
-      <button class="danger" on:click={logOut}>Delete Account</button>
   </details>
 {:else}
   <p>Loading profile...</p>

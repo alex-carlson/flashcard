@@ -106,8 +106,10 @@ export async function setUserDisplayName(userId: string | null, displayName: str
 }
 
 // Initialize user and profile on app start
-supabase.auth.getSession().then(({ data }) => {
+(async () => {
+  const { data } = await supabase.auth.getSession();
   const sessionUser = data.session?.user ?? null;
-  user.set(sessionUser);
-  updateProfile(sessionUser?.id ?? null);
-});
+  user.set(sessionUser);  if (sessionUser) {
+    await updateProfile(sessionUser.id);
+  }
+})();
