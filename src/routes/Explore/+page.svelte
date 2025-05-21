@@ -8,6 +8,8 @@
     let sortOption = "name"; // Default sort option
     let itemsPerPage = 10; // Default items per page
 
+    document.title = "Explore";
+
     // Fetch all collections
     async function fetchCollections() {
         try {

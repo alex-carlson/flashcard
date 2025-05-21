@@ -31,8 +31,6 @@
     }
 
     function fetchUser(author_id){
-        console.log("Fetching user for author_id:", author_id);
-        // Fetch user from the server
         fetch(`${import.meta.env.VITE_API_URL}/users/${author_id}`)
             .then((response) => {
                 if (!response.ok) {
@@ -42,7 +40,7 @@
             })
             .then((data) => {
                 bio = data.bio;
-                console.log("Fetched user data:", data);
+                document.title = `${data.username}'s profile`;
             })
             .catch((error) => {
                 console.error("Error fetching user:", error);

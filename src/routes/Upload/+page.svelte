@@ -26,6 +26,8 @@
     let isRenaming = false;
     let isReordering = false;
 
+    document.title = "Manage Collections";
+
     // fetch collections on mount
     onMount(async () => {
         const { data: sessionData, error: sessionError } = await getSession();

@@ -1,7 +1,6 @@
 <script lang="ts">
   import AccountSettings from '$lib/AccountSettings.svelte';
   import { user } from '$stores/user';
-  import {logOut} from '$lib/auth/auth';
   import { onMount } from 'svelte';
 
   let currentUser = null;
