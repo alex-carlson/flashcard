@@ -83,6 +83,7 @@ button {
         color: #999;
         cursor: not-allowed;
     }
+
     &.red {
         background-color: var(--danger-color);
         color: white;
@@ -134,7 +135,7 @@ button {
     box-sizing: border-box;
     padding: 1rem;
 
-    > * {
+    >* {
         flex: 1 1 0;
     }
 
@@ -182,5 +183,51 @@ button {
         max-height: 100%;
         object-fit: cover;
         border-radius: 0.5rem;
+    }
+}
+
+.suggestions {
+    .suggestion {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+
+        .suggestion-item {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 0.5rem;
+            margin: 0;
+
+            a {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-decoration: none;
+                color: inherit;
+
+                img {
+                    width: 100px;
+                    height: 100px;
+                    object-fit: cover;
+                    border-radius: 6px;
+                    margin-bottom: 0.5rem;
+                }
+
+                p {
+                    margin: 0;
+                    font-size: 1em;
+                    text-align: center;
+                    word-break: break-word;
+                }
+            }
+        }
     }
 }
