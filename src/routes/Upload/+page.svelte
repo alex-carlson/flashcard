@@ -503,6 +503,8 @@
                     on:addImage={async (e) => {
                         localItem.file = e.detail;
                         uploadData();
+                        localItem.file = null;
+                        localItem.answer = "";
                     }}
                     bind:searchTerm={localItem.answer}
                 />

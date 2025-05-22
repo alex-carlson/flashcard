@@ -7,7 +7,7 @@
     export let searchTerm = "";
 
     let query = "";
-    let suggestions = [];
+    export let suggestions = [];
 
     // Update query when category or searchTerm changes
     $: query = [category, searchTerm].filter(Boolean).join(" ");
@@ -44,24 +44,19 @@
     }
 </script>
 
-<details>
-    <div class="suggestions">
-        <h6>Search results for: {query}</h6>
-        <div class="scroll-wrapper">
-            <div class="suggestion">
-                {#each suggestions as suggestion}
-                    <div class="suggestion-item">
-                        <img
-                            src={suggestion.thumbnail}
-                            alt={suggestion.title}
-                        />
-                        <p>{suggestion.title}</p>
-                        <button on:click={() => handleAddImage(suggestion.url)}
-                            >Add</button
-                        >
-                    </div>
-                {/each}
-            </div>
+<div class="suggestions">
+    <h6>Search results for: {query}</h6>
+    <div class="scroll-wrapper">
+        <div class="suggestion">
+            {#each suggestions as suggestion}
+                <div class="suggestion-item">
+                    <img src={suggestion.thumbnail} alt={suggestion.title} />
+                    <p>{suggestion.title}</p>
+                    <button on:click={() => handleAddImage(suggestion.url)}
+                        >Add</button
+                    >
+                </div>
+            {/each}
         </div>
     </div>
-</details>
+</div>
