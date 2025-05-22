@@ -222,6 +222,42 @@
     async function uploadData() {
         const username = $profile.username;
         const author_id = $user.id;
+
+        // If file is a URL (string), call /upload-url
+        if (typeof localItem.file === "string") {
+            try {
+                const data = {
+                    uuid: uuidv4(),
+                    url: localItem.file,
+                    folder: `${username}/${category}`,
+                    answer: localItem.answer,
+                    category,
+                    author: username,
+                    author_id,
+                };
+                console.log("Uploading URL data:", data);
+                const result = await apiFetch(
+                    "/items/upload-url",
+                    "POST",
+                    data,
+                );
+                showSuccessMessage("Upload successful!");
+                const preview = document.querySelector(".preview");
+                if (preview) preview.src = null;
+
+                localItem.answer = "";
+                document.getElementById("answer").value = "";
+                items = result[0]?.items || [];
+                localItem.file = null;
+                if (preview) preview.scrollIntoView({ behavior: "smooth" });
+            } catch (error) {
+                console.error("Error uploading URL data:", error);
+                showErrorMessage("Upload failed. Please try again.");
+            }
+            return;
+        }
+
+        // Otherwise, upload as file
         const formData = new FormData();
         formData.append("uuid", uuidv4());
         formData.append("file", localItem.file);
@@ -254,7 +290,7 @@
             document.getElementById("answer").value = "";
             items = result[0]?.items || [];
             localItem.file = null;
-            preview.scrollIntoView({ behavior: "smooth" });
+            if (preview) preview.scrollIntoView({ behavior: "smooth" });
         } catch (error) {
             console.error("Error uploading data:", error);
             showErrorMessage("Upload failed. Please try again.");
@@ -449,9 +485,10 @@
                 />
                 {#if localItem.file}
                     <img
+                        class="preview"
                         src={localItem.file}
                         alt="Preview"
-                        style="display: none;"
+                        style="display: block;"
                     />
                 {/if}
                 <input
