@@ -501,10 +501,7 @@
                 <ImageSuggestions
                     bind:category
                     on:addImage={async (e) => {
-                        localItem.file = await imageUrlToFile(
-                            e.detail,
-                            "image.png",
-                        );
+                        localItem.file = e.detail;
                         uploadData();
                     }}
                     bind:searchTerm={localItem.answer}
