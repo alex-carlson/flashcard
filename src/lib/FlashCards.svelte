@@ -245,9 +245,7 @@
                 <Fa icon={isGrid ? faList : faTableCells} />
             </button>
         {/if}
-        <button
-            on:click={isFullscreen ? exitFullscreen : goFullscreen}
-        >
+        <button on:click={isFullscreen ? exitFullscreen : goFullscreen}>
             <Fa icon={isFullscreen ? faCompress : faExpand} />
         </button>
     </div>
@@ -271,16 +269,11 @@
             </select>
         </div>
 
-        <div
-            class={"flashcards " +
-                (isGrid
-                    ? "grid"
-                    : "vertical")}
-        >
+        <div class={"flashcards padding " + (isGrid ? "grid" : "vertical")}>
             {#each cards as item, i}
                 {#if !item.hidden}
                     <div
-                        class="card"
+                        class="card {item.revealed ? 'revealed' : ''}"
                         role="button"
                         tabindex="0"
                         on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
