@@ -90,10 +90,15 @@
     }
 
     function shuffleCards() {
-        // shuffle cards array
-        cards = cards.sort(() => Math.random() - 0.5);
-        cards = [...cards];
-        shuffleTrigger += 1; // trigger shuffle
+        // Fisher-Yates shuffle
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+
+        // If needed to trigger reactivity (e.g., in a Svelte or React app)
+        cards = [...cards]; // create a new array reference
+        shuffleTrigger += 1;
     }
 
     function toggleCards() {
@@ -328,8 +333,12 @@
                         class="card {item.revealed ? 'revealed' : ''}"
                         role="button"
                         tabindex="0"
-                        on:keydown={(e) => currentMode === Modes.DEFAULT && e.key === "Enter" && toggleReveal(i)}
-                        on:click={() => currentMode === Modes.DEFAULT && toggleReveal(i)}
+                        on:keydown={(e) =>
+                            currentMode === Modes.DEFAULT &&
+                            e.key === "Enter" &&
+                            toggleReveal(i)}
+                        on:click={() =>
+                            currentMode === Modes.DEFAULT && toggleReveal(i)}
                     >
                         <LazyLoadImage
                             imageUrl={item.imageUrl}
@@ -353,7 +362,7 @@
                                 numberOfOptions="4"
                                 {shuffleTrigger}
                             />
-                        {:else if currentMode === "FILL_IN_THE_BLANK"}                             
+                        {:else if currentMode === "FILL_IN_THE_BLANK"}
                             <!-- make a text input with debounce -->
                             <span
                                 class={item.revealed ? "revealed" : "hidden"}
