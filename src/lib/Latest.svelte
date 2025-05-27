@@ -1,5 +1,6 @@
 <script>
     import { onMount } from "svelte";
+    import LazyLoadImage from "./LazyLoadImage.svelte";
     let collections = [];
 
     function fetchLatestCollections() {
@@ -35,12 +36,19 @@
             <ul>
                 {#each data as collection}
                     <li>
-                        <a href="#/{collection.author_id}/{collection.category}">
+                        <a
+                            href="#/{collection.author_id}/{collection.category}"
+                        >
                             {#if collection.items.length > 0}
-                                <img src="{collection.items[0].image}" alt="{collection.category}" />
+                                <LazyLoadImage
+                                    imageUrl={collection.items[0].image}
+                                />
                             {/if}
                             <div class="vertical fill align-left">
-                                <span>{collection.category} [{collection.items.length}]</span>
+                                <span
+                                    >{collection.category} [{collection.items
+                                        .length}]</span
+                                >
                                 <span class="sm">{collection.author}</span>
                             </div>
                         </a>

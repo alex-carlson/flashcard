@@ -16,6 +16,7 @@
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
     import Options from "./Options.svelte";
+    import LazyLoadImage from "./LazyLoadImage.svelte";
     export let collection = null;
     export let author_id = null;
     let author = null;
@@ -279,16 +280,13 @@
                         on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
                         on:click={() => toggleReveal(i)}
                     >
-                        <img
-                            src={item.imageUrl}
-                            alt="flashcard"
-                            style={`transform: scale(${item.scale})`}
+                        <LazyLoadImage
+                            imageUrl={item.imageUrl}
                             on:load={() => onCardLoad(i)}
                             on:error={() => {
                                 item.hidden = true;
                                 updateCards();
                             }}
-                            class="img-fluid select-none position-relative zoomable"
                         />
                         {#if currentMode === "TRUE_FALSE"}
                             <Options

@@ -1,5 +1,6 @@
 <script>
     import { createEventDispatcher } from "svelte";
+    import LazyLoadImage from "./LazyLoadImage.svelte";
     export let collections = [];
     let isCollapsed = true;
 
@@ -21,11 +22,14 @@
         <ul>
             {#each collections as collection}
                 <li>
-                    <a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
+                    <a
+                        href="#"
+                        on:click|preventDefault={() =>
+                            selectCollection(collection.id)}
+                    >
                         {#if collection.items.length > 0}
-                            <img
-                                src={collection.items[0].image}
-                                alt={collection.category}
+                            <LazyLoadImage
+                                imageUrl={collection.items[0].image}
                             />
                         {/if}
                         <span>

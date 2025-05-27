@@ -1,5 +1,6 @@
 <script>
     import SortAndFilter from "../../lib/SortAndFilter.svelte";
+    import LazyLoadImage from "../../lib/LazyLoadImage.svelte";
     import { onMount } from "svelte";
 
     let collections = []; // Original collections array
@@ -88,13 +89,16 @@
                 <li>
                     <a href="#/{collection.author_id}/{collection.category}">
                         {#if collection.items.length > 0}
-                            <img src={collection.items[0].image} alt="">
+                            <LazyLoadImage
+                                imageUrl={collection.items[0].image}
+                            />
                         {/if}
-                        <p>{collection.category}
+                        <p>
+                            {collection.category}
                             {#if sortOption === "date"}
-                             {formatTimestamp(collection.created_at)}
+                                {formatTimestamp(collection.created_at)}
                             {:else if sortOption === "size"}
-                             [{collection.items.length}]
+                                [{collection.items.length}]
                             {/if}
                         </p>
                     </a>
