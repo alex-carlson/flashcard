@@ -31,6 +31,7 @@
         DEFAULT: "Flash Cards",
         TRUE_FALSE: "True / False",
         MULTIPLE_CHOICE: "Multiple Choice",
+        FILL_IN_THE_BLANK: "Fill in the Blank",
     };
 
     let currentMode = Modes.DEFAULT;
@@ -65,6 +66,8 @@
                 loaded: false,
                 hidden: false,
                 scale: 1,
+                userAnswer: "",
+                answer: card.answer || "", // ensure answer is defined
             }));
         } catch (error) {
             console.error("Error fetching collection:", error);
@@ -216,6 +219,52 @@
         cards = [...cards];
     }
 
+    function areStringsClose(a, b, threshold = 0.8) {
+        a = a
+            .replace(/\bthe\b/gi, "")
+            .trim()
+            .toLowerCase();
+        b = b
+            .replace(/\bthe\b/gi, "")
+            .trim()
+            .toLowerCase();
+
+        if (!a || !b) return false;
+
+        const lenA = a.length;
+        const lenB = b.length;
+        const matrix = [];
+
+        // Initialize the matrix
+        for (let i = 0; i <= lenB; i++) {
+            matrix[i] = [i];
+        }
+        for (let j = 0; j <= lenA; j++) {
+            matrix[0][j] = j;
+        }
+
+        // Fill in the matrix
+        for (let i = 1; i <= lenB; i++) {
+            for (let j = 1; j <= lenA; j++) {
+                if (b[i - 1] === a[j - 1]) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // substitution
+                        matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j] + 1, // deletion
+                    );
+                }
+            }
+        }
+
+        const distance = matrix[lenB][lenA];
+        const maxLen = Math.max(lenA, lenB);
+        const similarity = 1 - distance / maxLen;
+
+        return similarity >= threshold;
+    }
+
     onMount(() => {
         fetchCollection();
     });
@@ -301,6 +350,45 @@
                                 currentCardIndex={i}
                                 numberOfOptions="4"
                                 {shuffleTrigger}
+                            />
+                        {:else if currentMode === "FILL_IN_THE_BLANK"}
+                            <!-- make a text input with debounce -->
+                            <input
+                                type="text"
+                                placeholder="Type your answer here..."
+                                bind:value={item.userAnswer}
+                                on:input={(e) => {
+                                    clearTimeout(item._debounceTimeout);
+                                    item._debounceTimeout = setTimeout(() => {
+                                        if (
+                                            areStringsClose(
+                                                item.userAnswer,
+                                                item.answer,
+                                                0.9,
+                                            )
+                                        ) {
+                                            item.revealed = true;
+                                            item.userAnswer = item.answer; // set user answer to correct answer
+                                            e.target.value = item.answer; // update input value
+                                            // lock the input
+                                            e.target.disabled = true;
+                                            e.target.style.backgroundColor =
+                                                "#d4edda"; // light green background
+                                            // scroll down to the next text input
+                                            const nextInput =
+                                                document.querySelector(
+                                                    `input[type="text"]:not([disabled])`,
+                                                );
+                                            if (nextInput) {
+                                                nextInput.focus();
+                                                //scroll into view
+                                                nextInput.scrollIntoView({
+                                                    behavior: "smooth",
+                                                });
+                                            }
+                                        }
+                                    }, 100); // debounce delay in ms
+                                }}
                             />
                         {:else}
                             <span
