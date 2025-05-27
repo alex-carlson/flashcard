@@ -27,12 +27,38 @@ export async function signInWithEmail(email: string, password: string) {
   return data;
 }
 
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      // redirectTo: `${location.origin}/dashboard`, // optional
+    },
+  });
+
+  if (error) {
+    console.error('Google sign-in error:', error.message);
+    throw error;
+  }
+
+  // set user and profile stores
+  const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Error fetching current user:', userError.message);
+    throw userError;
+  }
+
+  user.set(currentUser);
+  profile.set(fetchProfile(currentUser.id));
+
+  return data;
+}
+
 export async function signUpWithEmail(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${location.origin}/auth/callback`, // optional
+      // emailRedirectTo: `${location.origin}/dashboard`, // optional
     },
   });
 
