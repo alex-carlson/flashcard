@@ -374,17 +374,23 @@
                                             e.target.disabled = true;
                                             e.target.style.backgroundColor =
                                                 "#d4edda"; // light green background
-                                            // scroll down to the next text input
-                                            const nextInput =
-                                                document.querySelector(
-                                                    `input[type="text"]:not([disabled])`,
+                                            // get all inputs in .flashcards, and select input[index+1]
+                                            const inputs =
+                                                document.querySelectorAll(
+                                                    ".flashcards input",
                                                 );
-                                            if (nextInput) {
-                                                nextInput.focus();
-                                                //scroll into view
-                                                nextInput.scrollIntoView({
-                                                    behavior: "smooth",
-                                                });
+                                            if (inputs[i + 1]) {
+                                                // if input is disabled, find the next non-disabled input
+                                                for (
+                                                    let j = i + 1;
+                                                    j < inputs.length;
+                                                    j++
+                                                ) {
+                                                    if (!inputs[j].disabled) {
+                                                        inputs[j].focus();
+                                                        break;
+                                                    }
+                                                }
                                             }
                                         }
                                     }, 100); // debounce delay in ms
