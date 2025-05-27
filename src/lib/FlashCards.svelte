@@ -387,7 +387,19 @@
                                                     j++
                                                 ) {
                                                     if (!inputs[j].disabled) {
-                                                        inputs[j].focus();
+                                                        // Scroll so the input is at the bottom of the view (accounting for keyboard on mobile)
+                                                        inputs[
+                                                            j
+                                                        ].scrollIntoView({
+                                                            behavior: "smooth",
+                                                            block: "end",
+                                                            inline: "nearest",
+                                                        });
+                                                        setTimeout(() => {
+                                                            inputs[j].focus({
+                                                                preventScroll: true,
+                                                            });
+                                                        }, 200);
                                                         break;
                                                     }
                                                 }
