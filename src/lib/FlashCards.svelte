@@ -202,6 +202,8 @@
             item.hidden = !item.hidden; // Toggle the hidden state
         } else if (value === "Reset") {
             item.scale = 1; // Reset the scale
+        } else if (value === "Reveal") {
+            item.revealed = true; // Reveal the answer
         }
 
         updateCards(); // Trigger reactivity to update the UI
@@ -326,8 +328,8 @@
                         class="card {item.revealed ? 'revealed' : ''}"
                         role="button"
                         tabindex="0"
-                        on:keydown={(e) => e.key === "Enter" && toggleReveal(i)}
-                        on:click={() => toggleReveal(i)}
+                        on:keydown={(e) => currentMode === Modes.DEFAULT && e.key === "Enter" && toggleReveal(i)}
+                        on:click={() => currentMode === Modes.DEFAULT && toggleReveal(i)}
                     >
                         <LazyLoadImage
                             imageUrl={item.imageUrl}
@@ -351,8 +353,12 @@
                                 numberOfOptions="4"
                                 {shuffleTrigger}
                             />
-                        {:else if currentMode === "FILL_IN_THE_BLANK"}
+                        {:else if currentMode === "FILL_IN_THE_BLANK"}                             
                             <!-- make a text input with debounce -->
+                            <span
+                                class={item.revealed ? "revealed" : "hidden"}
+                                style="transform: scale(1);">{item.answer}</span
+                            >
                             <input
                                 type="text"
                                 placeholder="Type your answer here..."
@@ -372,6 +378,8 @@
                                             e.target.value = item.answer; // update input value
                                             // lock the input
                                             e.target.disabled = true;
+                                            // hide the input
+                                            e.target.style.display = "none";
                                             e.target.style.backgroundColor =
                                                 "#d4edda"; // light green background
                                             // get all inputs in .flashcards, and select input[index+1]
@@ -423,6 +431,7 @@
                             >
                                 <option value="...">...</option>
                                 <option value="Hide"> Hide </option>
+                                <option value="Reveal"> Reveal </option>
                                 <option value="Reset">Reset Scale</option>
                             </select>
                         </div>
