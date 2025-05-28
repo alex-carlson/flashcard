@@ -1,0 +1,67 @@
+.image-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: url('/public/splash.jpg') no-repeat center center;
+    background-size: cover;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(111, 29, 27, 0.6);
+        z-index: 1; // Ensure the overlay is behind the content
+    }
+
+    .image-content {
+        position: relative; // Position relative to allow z-index to work
+        z-index: 2; // Ensure content is above the overlay
+        text-align: center;
+        color: var(--primary-color);
+        margin: 5rem 0;
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: var(--primary-color);
+        }
+
+        .drop-quote {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            position: relative;
+            padding: 0 0.7rem;
+            display: inline;
+
+            &::before,
+            &::after {
+                font-size: 1.4rem;
+                color: var(--primary-color);
+                position: absolute;
+                top: 0;
+            }
+
+            &::before {
+                content: '“';
+                left: 0;
+                top: -0.25rem;
+            }
+
+            &::after {
+                content: '”';
+                right: 0;
+                top: -0.25rem;
+            }
+        }
+    }
+
+}

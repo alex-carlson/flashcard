@@ -10,9 +10,11 @@
   import Author from "./routes/[author_id]/+page.svelte";
   import NotFound from "./routes/NotFound/+page.svelte";
   import Explore from "./routes/Explore/+page.svelte";
+  import About from "./routes/About/+page.svelte";
 
   const routes = {
     "/": Home,
+    "/about": About,
     "/login": Login,
     "/upload": UploadForm,
     "/dashboard": Dashboard,

@@ -272,6 +272,33 @@
         return similarity >= threshold;
     }
 
+    function completeQuiz() {
+        // show an alert with the number of correct answers
+        const correctAnswers = cards.filter(
+            (card) => card.revealed && card.userAnswer === card.answer,
+        ).length;
+
+        const percentage = Math.round((correctAnswers / cards.length) * 100);
+
+        const myGrade = toLetterGrade(percentage);
+
+        // alert with grade and percentage
+        alert(
+            `You answered ${correctAnswers} out of ${cards.length} questions correctly.\nYour grade is ${myGrade} (${percentage}%).`,
+        );
+    }
+
+    function toLetterGrade(score) {
+        if (score >= 85) return "A";
+        if (score >= 80) return "A-";
+        if (score >= 70) return "B";
+        if (score >= 65) return "B-";
+        if (score >= 60) return "C+";
+        if (score >= 55) return "C";
+        if (score >= 50) return "D";
+        return "F";
+    }
+
     onMount(() => {
         fetchCollection();
     });
@@ -396,30 +423,33 @@
                                                 document.querySelectorAll(
                                                     ".flashcards input",
                                                 );
-                                            if (inputs[i + 1]) {
-                                                // if input is disabled, find the next non-disabled input
-                                                for (
-                                                    let j = i + 1;
-                                                    j < inputs.length;
-                                                    j++
-                                                ) {
-                                                    if (!inputs[j].disabled) {
-                                                        // Scroll so the input is at the bottom of the view (accounting for keyboard on mobile)
-                                                        inputs[
-                                                            j
-                                                        ].scrollIntoView({
-                                                            behavior: "smooth",
-                                                            block: "end",
-                                                            inline: "nearest",
+                                            let foundNext = false;
+                                            for (
+                                                let j = i + 1;
+                                                j < inputs.length;
+                                                j++
+                                            ) {
+                                                if (!inputs[j].disabled) {
+                                                    // Scroll so the input is at the bottom of the view (accounting for keyboard on mobile)
+                                                    inputs[j].scrollIntoView({
+                                                        behavior: "smooth",
+                                                        block: "end",
+                                                        inline: "nearest",
+                                                    });
+                                                    setTimeout(() => {
+                                                        inputs[j].focus({
+                                                            preventScroll: true,
                                                         });
-                                                        setTimeout(() => {
-                                                            inputs[j].focus({
-                                                                preventScroll: true,
-                                                            });
-                                                        }, 200);
-                                                        break;
-                                                    }
+                                                    }, 200);
+                                                    foundNext = true;
+                                                    break;
                                                 }
+                                            }
+                                            // If no more enabled inputs, call completeQuiz
+                                            if (!foundNext) {
+                                                setTimeout(() => {
+                                                    completeQuiz();
+                                                }, 300);
                                             }
                                         }
                                     }, 100); // debounce delay in ms
