@@ -18,29 +18,30 @@
 </script>
 
 <div class="lazy-load">
-    <img
+    <img src={imageUrl} />
+    <!-- <img
         src={imageUrl}
         alt="Lazy Loaded Image"
         loading="lazy"
         class:loaded
         on:load={handleLoad}
         on:error={handleError}
-    />
+    /> -->
 </div>
 
 <style>
     .lazy-load {
-        overflow: hidden;
-        position: relative;
+        /* overflow: hidden; */
+        /* position: relative; */
     }
 
     .lazy-load img {
-        display: block;
-        transition: opacity 0.3s ease-in-out;
-        opacity: 0;
+        /* display: block; */
+        /* transition: opacity 0.3s ease-in-out; */
+        /* opacity: 0; */
     }
 
     .lazy-load img.loaded {
-        opacity: 1;
+        /* opacity: 1; */
     }
 </style>

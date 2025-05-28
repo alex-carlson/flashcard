@@ -19,6 +19,16 @@
             });
     }
 
+    // convert timestamptz to mm/dd/yyyy format
+    function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
+    }
+
     onMount(() => {
         fetchLatestCollections()
             .then((data) => {
@@ -49,7 +59,11 @@
                                     >{collection.category} [{collection.items
                                         .length}]</span
                                 >
-                                <span class="sm">{collection.author}</span>
+                                <span class="sm"
+                                    >{collection.author} - {formatDate(
+                                        collection.created_at,
+                                    )}</span
+                                >
                             </div>
                         </a>
                     </li>

@@ -5,7 +5,7 @@
     document.title = "Home";
 
     const taglines = [
-        "The best place on the whole internet for doing trivia",
+        "The best place on the whole internet for doing trivia (probably)",
         "Your new favorite dot com",
         "The cure for brainrot",
         "One of the websites of all time",
@@ -13,6 +13,7 @@
         "Less orange than the alternative!",
         "We love NFT! (Not Failing Trivia)",
         "Tell ur dad!",
+        "0% ABV",
     ];
 
     function getRandomTagline() {
