@@ -54,6 +54,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signUpWithEmail(email: string, password: string) {
+  console.log('Signing up with email:', email);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

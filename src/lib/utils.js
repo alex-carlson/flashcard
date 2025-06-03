@@ -1,40 +1,25 @@
-// slugify
-export const slugify = (text) => {
-    // replace spaces with -, conver to lowercase, and remove non-alphanumeric characters
-    text = text.replace(/ /g, '-').toLowerCase().replace(/[^a-zA-Z0-9-]/g, '');
-    return text;
-};
+import { supabase } from '../lib/supabaseClient';
 
-export const sanitize = (text) => {
-    // remove all non-alphanumeric characters
-    text = text.replace(/[^a-zA-Z0-9]/g, '');
-    return text;
-};
-
-function getDistance(touches) {
-    const [touch1, touch2] = touches;
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-export function scrollZoom(event, img) {
-    const delta = event.deltaY;
-    console.log(delta);
-    img.scale += delta * -0.01; // Increase or decrease the scale
-}
-
-export function handleTouchStart(event, img) {
-    if (event.touches.length === 2) {
-        img.startDistance = getDistance(event.touches);
+/**
+ * Gets the user's name from the Supabase `profiles` table by their ID.
+ * Returns "Anonymous" if ID is "0", or null if not found or on error.
+ */
+export async function getUserName(id) {
+    console.log('Fetching username for ID:', id);
+    if (id === '0') {
+        return 'Anonymous';
     }
-}
 
-export function handleTouchMove(event, img) {
-    if (event.touches.length === 2) {
-        const newDistance = getDistance(event.touches);
-        const scaleChange = newDistance / img.startDistance;
-        img.scale *= scaleChange; // Update the scale only for the touched image
-        img.startDistance = newDistance;
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Error fetching username:', error);
+        return null;
     }
+
+    return data?.username || "Anonymous";
 }

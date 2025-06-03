@@ -1,6 +1,7 @@
 // src/lib/stores/user.ts
 import { writable } from 'svelte/store';
 import { supabase } from '$lib/supabaseClient';
+import { socketStore } from './socket';
 
 export const user = writable(null);
 export const profile = writable(null);
@@ -42,6 +43,34 @@ async function updateProfile(userId: string | null) {
   const data = await fetchProfile(userId);
   profile.set(data);
 }
+
+// Update socket auth and connect
+function authenticateSocket(token: string | null) {
+  socketStore.update(socket => {
+    if (token) {
+      socket.auth.token = token;
+      if (!socket.connected) socket.connect();
+    } else {
+      socket.disconnect();
+    }
+    return socket;
+  });
+}
+
+// Listen for auth changes and react accordingly
+supabase.auth.onAuthStateChange(async (event, session) => {
+  const sessionUser = session?.user ?? null;
+  user.set(sessionUser);
+
+  if (sessionUser) {
+    await updateProfile(sessionUser.id);
+    const token = session.access_token;
+    authenticateSocket(token);
+  } else {
+    profile.set(null);
+    authenticateSocket(null);
+  }
+});
 
 export async function setUserAvatarUrl(userId: string | null, avatarUrl: string) {
   if (!userId) {
@@ -105,11 +134,14 @@ export async function setUserDisplayName(userId: string | null, displayName: str
   return data;
 }
 
-// Initialize user and profile on app start
+// Initial load
 (async () => {
   const { data } = await supabase.auth.getSession();
   const sessionUser = data.session?.user ?? null;
-  user.set(sessionUser);  if (sessionUser) {
+  user.set(sessionUser);
+
+  if (sessionUser) {
     await updateProfile(sessionUser.id);
+    authenticateSocket(data.session?.access_token ?? null);
   }
 })();

@@ -11,6 +11,28 @@
   import NotFound from "./routes/NotFound/+page.svelte";
   import Explore from "./routes/Explore/+page.svelte";
   import About from "./routes/About/+page.svelte";
+  import Party from "./routes/Party/+page.svelte";
+  import Game from "./routes/[party_id]/+page.svelte";
+  import Join from "./routes/Join/+page.svelte";
+  import Host from "./routes/Host/+page.svelte";
+  import { onMount } from "svelte";
+  import { socketStore } from "./stores/socket";
+
+  onMount(() => {
+    const unsubscribe = socketStore.subscribe((socket) => {
+      if (!socket.connected) socket.connect();
+
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+    });
+
+    return () => unsubscribe();
+  });
 
   const routes = {
     "/": Home,
@@ -19,6 +41,10 @@
     "/upload": UploadForm,
     "/dashboard": Dashboard,
     "/explore": Explore,
+    "/party": Party,
+    "/join": Join,
+    "/host": Host,
+    "/party/:party_id": Game,
     "/:author_id/:category": FlashCards,
     "/:author_id": Author,
     "*": NotFound,

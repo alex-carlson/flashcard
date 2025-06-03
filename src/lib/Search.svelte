@@ -4,6 +4,16 @@
     // import fontawesome search icon
     import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import Fa from "svelte-fa";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+
+    function onClicked(event) {
+        // clear search term and results
+        searchTerm = "";
+        searchResults = [];
+        // Dispatch a custom event with the clicked search item
+        dispatch("SearchItemClicked", event.detail);
+    }
 
     async function search(event) {
         try {
@@ -61,12 +71,16 @@
             <ul>
                 {#each searchResults as result}
                     <li>
-                        <a href="#/{result.author_id}/{result.category}">
+                        <a
+                            href="#/{result.author_id}/{result.category}"
+                            on:click|preventDefault={() =>
+                                onClicked({ detail: result })}
+                        >
                             {#if result.items.length > 0}
-                            <img
-                                src={result.items[0].image}
-                                alt={result.category}
-                            />
+                                <img
+                                    src={result.items[0].image}
+                                    alt={result.category}
+                                />
                             {/if}
                             {result.category} by: {result.author}
                         </a>

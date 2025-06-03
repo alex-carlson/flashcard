@@ -28,7 +28,7 @@
   async function handleSubmit() {
     errorMsg = "";
 
-    if (!email || !password || !isLogin) {
+    if (!email || !password) {
       errorMsg = "Please fill out all required fields.";
       return;
     }
