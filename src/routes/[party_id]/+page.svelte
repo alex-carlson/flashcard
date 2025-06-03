@@ -50,14 +50,11 @@
         });
 
         socketInstance.on("score-updated", (data) => {
-            console.log("Score update received:", data);
             const { scores: newScores, cardIndex } = data;
 
-            console.log("Score updated:", newScores);
             // Ensure keys are stringified
             scores = { ...scores, ...newScores };
 
-            console.log("Updated scores:", scores);
             if (flashCardsRef) {
                 flashCardsRef.setRevealed(cardIndex, true);
             } else {
@@ -174,7 +171,6 @@
             "index" in cardIndex
                 ? cardIndex.index
                 : cardIndex;
-        console.log("Scoring point for card index:", idx);
         socketInstance.emit("score-point", {
             code: party_id,
             playerId: currentUser?.id,
@@ -205,8 +201,8 @@
 <div class="container white partymode">
     <div class="padding">
         <h1>Party ID: {party_id}</h1>
-        <p>Connected players:</p>
         {#if players.length > 0 && !partyData.isStarted}
+            <p>Connected players:</p>
             <ul class="players-list">
                 {#each players as player}
                     <li>
@@ -214,13 +210,6 @@
                     </li>
                 {/each}
             </ul>
-        {:else}
-            <div class="players-list">
-                <p>
-                    No players found. Click the button to see the players in
-                    this party.
-                </p>
-            </div>
         {/if}
 
         {#if partyData && partyData.hostId === currentUser?.id && !partyData.isStarted}
@@ -228,8 +217,6 @@
         {/if}
 
         {#if partyData && partyData.isStarted && author_id}
-            <p>The game has started! Get ready to play with the flashcards.</p>
-            <!-- draw scores -->
             <h2>Scores:</h2>
             <ul class="scores-list padding">
                 {#each players as playerId}

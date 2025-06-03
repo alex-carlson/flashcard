@@ -1,6 +1,12 @@
 .scores-list {
-
     list-style: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
 
     li {
         display: flex;

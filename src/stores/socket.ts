@@ -3,7 +3,11 @@ import { io, Socket } from 'socket.io-client';
 import { writable } from 'svelte/store';
 
 let socketInstance: Socket | null = null;
-
+let playerId = localStorage.getItem('playerId') || null;
+if (!playerId) {
+    playerId = Math.random().toString(36).substring(2, 15); // Generate a random player ID
+    localStorage.setItem('playerId', playerId);
+}
 // Use a writable store to expose the socket instance reactively
 export const socket = writable<Socket | null>(null);
 
@@ -18,6 +22,7 @@ export function initSocket(token: string) {
     socketInstance = io(SOCKET_URL, {
         auth: {
             token,
+            anonId: playerId
         },
         withCredentials: true,
         autoConnect: true,
@@ -26,6 +31,7 @@ export function initSocket(token: string) {
 
     socketInstance.on('connect', () => {
         console.log('Socket connected');
+        socketInstance.emit('connect-request')
         socket.set(socketInstance);
     });
 

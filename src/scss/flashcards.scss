@@ -53,6 +53,13 @@
                 transition: 0.2s;
                 animation: bounce 0.5s;
             }
+
+            // hide the text box
+            input[type="text"] {
+                opacity: 0;
+                pointer-events: none;
+                display: none;
+            }
         }
 
         &.disabled {
