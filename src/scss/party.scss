@@ -1,0 +1,23 @@
+.scores-list {
+
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center; // Vertically center items
+        gap: 4px;
+        padding: 0.5rem;
+
+        .profile-picture {
+            margin-right: 0.5rem;
+            display: flex;
+            align-items: center; // Ensure image is vertically centered
+        }
+
+        span {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center; // Vertically center text if needed
+        }
+    }
+}

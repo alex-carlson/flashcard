@@ -16,22 +16,10 @@
   import Join from "./routes/Join/+page.svelte";
   import Host from "./routes/Host/+page.svelte";
   import { onMount } from "svelte";
-  import { socketStore } from "./stores/socket";
+  import { user } from "./stores/user.js";
 
-  onMount(() => {
-    const unsubscribe = socketStore.subscribe((socket) => {
-      if (!socket.connected) socket.connect();
-
-      socket.on("connect", () => {
-        console.log("Socket connected:", socket.id);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("Socket disconnected");
-      });
-    });
-
-    return () => unsubscribe();
+  onMount(async () => {
+    document.title = "Quizzems - Flashcard Game";
   });
 
   const routes = {

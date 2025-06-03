@@ -1,5 +1,5 @@
 <script>
-  import { profile, user, setUserBio, setUserAvatarUrl } from "$stores/user";
+  import { user, setUserBio, setUserAvatarUrl } from "$stores/user";
   import { getSession } from "$lib/supabaseClient";
   import { logOut, updateUsername, updateEmail } from "$lib/auth/auth";
   import ProfilePicture from "./ProfilePicture.svelte";
@@ -66,8 +66,8 @@
 
       const formData = new FormData();
       formData.append("file", jpgBlob, "avatar.jpg");
-      formData.append("uuid", $profile.id);
-      formData.append("folder", $profile.id);
+      formData.append("uuid", $user.id);
+      formData.append("folder", $user.id);
       formData.append("bucket", "profilepictures");
       formData.append("fileName", `avatar.jpg`);
       const response = await fetch(
@@ -78,18 +78,18 @@
           body: formData,
         },
       );
-      if (response.ok) {
-        $profile.picture = URL.createObjectURL(file);
-        await setUserAvatarUrl(userId, URL.createObjectURL(file));
-        message = "Profile picture updated successfully!";
-      } else {
-        message = "Failed to update profile picture.";
-      }
+      // if (response.ok) {
+      //   $profile.picture = URL.createObjectURL(file);
+      //   await setUserAvatarUrl(userId, URL.createObjectURL(file));
+      //   message = "Profile picture updated successfully!";
+      // } else {
+      //   message = "Failed to update profile picture.";
+      // }
     }
   }
 
   async function updateBio() {
-    const bio = $profile.bio;
+    const bio = $user.bio;
     if (!userId) {
       message = "User ID not found";
       return;
@@ -104,8 +104,8 @@
   }
 </script>
 
-{#if $profile}
-  <ProfilePicture userId={$profile.id} size="150" />
+{#if $user}
+  <ProfilePicture userId={$user.id} size="150" />
   <details class="accountSettings padding">
     <summary>Account Settings</summary>
     <div class="form">
@@ -127,25 +127,23 @@
       <div class="text-field padding">
         <label>
           <strong>Email:</strong>
-          <input type="email" bind:value={$profile.email} />
+          <input type="email" bind:value={$user.email} />
         </label>
-        <button on:click={() => updateEmail($profile.email)}
-          >Update Email</button
-        >
+        <button on:click={() => updateEmail($user.email)}>Update Email</button>
       </div>
       <div class="text-field padding">
         <label>
           <strong>Display Name:</strong>
-          <input type="text" bind:value={$profile.username} />
+          <input type="text" bind:value={$user.username} />
         </label>
-        <button on:click={() => updateUsername($profile.username)}
+        <button on:click={() => updateUsername($user.username)}
           >Update Name</button
         >
       </div>
       <div class="text-field padding">
         <label>
           <strong>Bio:</strong>
-          <textarea bind:value={$profile.bio}></textarea>
+          <textarea bind:value={$user.bio}></textarea>
         </label>
         <button on:click={() => updateBio()}>Update Bio</button>
       </div>

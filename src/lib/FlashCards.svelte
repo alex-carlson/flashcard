@@ -19,6 +19,7 @@
     import LazyLoadImage from "./LazyLoadImage.svelte";
     export let collection = null;
     export let author_id = null;
+    export let isPartyMode = false;
     let author = null;
     let cards = [];
     let isGrid = false;
@@ -35,6 +36,8 @@
     };
 
     let currentMode = Modes.DEFAULT;
+
+    const dispatch = createEventDispatcher();
 
     // function to fetch collection from id
     async function fetchCollection() {
@@ -69,6 +72,10 @@
                 userAnswer: "",
                 answer: card.answer || "", // ensure answer is defined
             }));
+            // if isPartyMode, set mode to FILL_IN_THE_BLANK
+            if (isPartyMode) {
+                currentMode = "FILL_IN_THE_BLANK";
+            }
         } catch (error) {
             console.error("Error fetching collection:", error);
         }
@@ -83,6 +90,20 @@
     function onCardLoad(index) {
         cards[index].loaded = true;
         updateCards();
+    }
+
+    export function setRevealed(index, value) {
+        // get card at index and add the class "disabled"
+        console.log(
+            "Setting revealed for card at index:",
+            index,
+            "to value:",
+            value,
+        );
+        if (cards[index]) {
+            cards[index].revealed = value;
+            updateCards();
+        }
     }
 
     function toggleReveal(index) {
@@ -305,34 +326,36 @@
 </script>
 
 <div class="container">
-    <div class="toolbar">
-        <button on:click={shuffleCards}>
-            <Fa icon={faShuffle} />
-        </button>
-        <button on:click={toggleCards}>
-            <Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
-        </button>
-        {#if canReset}
-            <button on:click={resetCards}>
-                <Fa icon={faRotateBack} />
+    {#if !isPartyMode}
+        <div class="toolbar">
+            <button on:click={shuffleCards}>
+                <Fa icon={faShuffle} />
             </button>
-        {/if}
-        {#if isFullscreen}
-            <button on:click={() => scaleImage(-0.25)}>
-                <Fa icon={faMinus} />
+            <button on:click={toggleCards}>
+                <Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
             </button>
-            <button on:click={() => scaleImage(0.25)}>
-                <Fa icon={faPlus} />
+            {#if canReset}
+                <button on:click={resetCards}>
+                    <Fa icon={faRotateBack} />
+                </button>
+            {/if}
+            {#if isFullscreen}
+                <button on:click={() => scaleImage(-0.25)}>
+                    <Fa icon={faMinus} />
+                </button>
+                <button on:click={() => scaleImage(0.25)}>
+                    <Fa icon={faPlus} />
+                </button>
+            {:else}
+                <button on:click={toggleGrid}>
+                    <Fa icon={isGrid ? faList : faTableCells} />
+                </button>
+            {/if}
+            <button on:click={isFullscreen ? exitFullscreen : goFullscreen}>
+                <Fa icon={isFullscreen ? faCompress : faExpand} />
             </button>
-        {:else}
-            <button on:click={toggleGrid}>
-                <Fa icon={isGrid ? faList : faTableCells} />
-            </button>
-        {/if}
-        <button on:click={isFullscreen ? exitFullscreen : goFullscreen}>
-            <Fa icon={isFullscreen ? faCompress : faExpand} />
-        </button>
-    </div>
+        </div>
+    {/if}
 
     {#if cards.length > 0}
         <div class="headline padding">
@@ -340,17 +363,19 @@
             <p>
                 by <a href={`#/${author_id}`}>{author}</a>
             </p>
-            <select
-                name="mode"
-                id="mode"
-                on:change={() => SetMode(event.target.value)}
-            >
-                {#each Object.keys(Modes) as mode}
-                    <option value={mode}>
-                        {Modes[mode]}
-                    </option>
-                {/each}
-            </select>
+            {#if !isPartyMode}
+                <select
+                    name="mode"
+                    id="mode"
+                    on:change={() => SetMode(event.target.value)}
+                >
+                    {#each Object.keys(Modes) as mode}
+                        <option value={mode}>
+                            {Modes[mode]}
+                        </option>
+                    {/each}
+                </select>
+            {/if}
         </div>
 
         <div class={"flashcards padding " + (isGrid ? "grid" : "vertical")}>
@@ -418,6 +443,11 @@
                                             e.target.style.display = "none";
                                             e.target.style.backgroundColor =
                                                 "#d4edda"; // light green background
+
+                                            dispatch("correctAnswer", {
+                                                index: i,
+                                            });
+
                                             // get all inputs in .flashcards, and select input[index+1]
                                             const inputs =
                                                 document.querySelectorAll(
@@ -462,18 +492,20 @@
                             >
                         {/if}
 
-                        <div class="card-options">
-                            <select
-                                name="card-options"
-                                id="cardOptions"
-                                on:change={(e) => selectOption(e, item)}
-                            >
-                                <option value="...">...</option>
-                                <option value="Hide"> Hide </option>
-                                <option value="Reveal"> Reveal </option>
-                                <option value="Reset">Reset Scale</option>
-                            </select>
-                        </div>
+                        {#if !isPartyMode}
+                            <div class="card-options">
+                                <select
+                                    name="card-options"
+                                    id="cardOptions"
+                                    on:change={(e) => selectOption(e, item)}
+                                >
+                                    <option value="...">...</option>
+                                    <option value="Hide"> Hide </option>
+                                    <option value="Reveal"> Reveal </option>
+                                    <option value="Reset">Reset Scale</option>
+                                </select>
+                            </div>
+                        {/if}
                     </div>
                 {/if}
             {/each}

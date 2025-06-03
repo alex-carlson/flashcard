@@ -1,7 +1,14 @@
 <script>
-    import { socketStore } from "../../stores/socket";
+    import { onDestroy } from "svelte";
+    import { socket } from "../../stores/socket.js";
 
     let roomCode = "";
+    let socketInstance = null;
+
+    // Subscribe to socket store to get socket instance
+    const unsubscribe = socket.subscribe((instance) => {
+        socketInstance = instance;
+    });
 
     function joinRoom() {
         if (!roomCode) {
@@ -9,13 +16,27 @@
             return;
         }
 
-        socketStore.emit("join-room", { code: roomCode });
+        if (!socketInstance) {
+            alert("Socket not connected yet, please try again shortly.");
+            return;
+        }
+
+        // Emit join-room event with roomCode
+        socketInstance.emit("join-room", { code: roomCode });
+
+        // Listen once for room-update event to confirm join
+        socketInstance.once("room-update", (room) => {
+            console.log("Joined room:", room);
+            window.location.href = `#/party/${room.roomCode}`;
+        });
     }
 
-    socketStore.on("room-update", (room) => {
-        console.log("Joined room:", room);
-        // Redirect to the game page with the room code
-        window.location.href = `#/party/${room.roomCode}`;
+    onDestroy(() => {
+        // Clean up socket event listeners to avoid leaks
+        if (socketInstance) {
+            socketInstance.off("room-update");
+        }
+        unsubscribe();
     });
 </script>
 

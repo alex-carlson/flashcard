@@ -1,5 +1,5 @@
 <script>
-    import { user, profile } from "$stores/user";
+    import { user } from "$stores/user";
     import { getSession } from "../../lib/supabaseClient";
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
@@ -105,7 +105,7 @@
     // Create new collection
     async function createCollection() {
         try {
-            const username = $profile.username;
+            const username = $user.username;
             const data = {
                 category: tempCategory,
                 author_id: $user.id,
@@ -191,7 +191,7 @@
     // Delete collection
     async function deleteCollection() {
         try {
-            const username = $profile.username;
+            const username = $user.username;
             const data = {
                 collection: category,
                 author_id: $user.id,
@@ -220,7 +220,7 @@
 
     // Upload data
     async function uploadData() {
-        const username = $profile.username;
+        const username = $user.username;
         const author_id = $user.id;
 
         // If file is a URL (string), call /upload-url
@@ -301,7 +301,7 @@
     async function setVisible(event) {
         const data = {
             category,
-            author: $profile.username,
+            author: $user.username,
             author_id: $user.id,
             visible: event.target.checked,
         };

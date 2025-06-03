@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { profile, user } from "$stores/user";
+  import { user } from "$stores/user";
   import { push } from "svelte-spa-router";
   import {
     signInWithEmail,

@@ -1,7 +1,5 @@
 import { supabase } from '$lib/supabaseClient';
-import { user, profile } from '$stores/user';
-import { fetchProfile } from '../../stores/user';
-
+import { user } from '$stores/user';
 
 export async function signInWithEmail(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -22,7 +20,6 @@ export async function signInWithEmail(email: string, password: string) {
   }
 
   user.set(currentUser);
-  profile.set(fetchProfile(currentUser.id));
 
   return data;
 }
@@ -46,9 +43,7 @@ export async function signInWithGoogle() {
     console.error('Error fetching current user:', userError.message);
     throw userError;
   }
-
   user.set(currentUser);
-  profile.set(fetchProfile(currentUser.id));
 
   return data;
 }
@@ -154,7 +149,6 @@ export async function logOut() {
   }
 
   user.set(null);
-  profile.set(null);
 
   console.log('Log out successful');
   return true;
