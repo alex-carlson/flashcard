@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [
     svelte(),
   ],
+  optimizeDeps: {
+    include: ['@supabase/supabase-js']
+  },
   resolve: {
     alias: {
       $lib: path.resolve('./src/lib'),

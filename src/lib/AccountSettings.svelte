@@ -148,12 +148,6 @@
         <button on:click={() => updateBio()}>Update Bio</button>
       </div>
       <p>{message}</p>
-      <div class="padding">
-        <button class="warning" on:click={logOut}>Log Out</button>
-      </div>
-      <div class="padding">
-        <button class="danger" on:click={logOut}>Delete Account</button>
-      </div>
     </div>
   </details>
 {:else}

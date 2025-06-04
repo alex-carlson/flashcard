@@ -1,23 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import LazyLoadImage from "./LazyLoadImage.svelte";
-    let collections = [];
-
-    function fetchLatestCollections() {
-        const url = `${import.meta.env.VITE_API_URL}/collections/latest`;
-        return fetch(url, {
-            method: "GET",
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Failed to fetch latest collections");
-                }
-                return response.json();
-            })
-            .catch((error) => {
-                console.error("Error fetching latest collections:", error);
-            });
-    }
+    import { fetchLatestCollections } from "./collections";
 
     // convert timestamptz to mm/dd/yyyy format
     function formatDate(timestamp) {
@@ -30,13 +14,7 @@
     }
 
     onMount(() => {
-        fetchLatestCollections()
-            .then((data) => {
-                collections = data;
-            })
-            .catch((error) => {
-                console.error("Error fetching latest collections:", error);
-            });
+        fetchLatestCollections();
     });
 </script>
 

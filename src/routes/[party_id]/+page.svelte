@@ -47,6 +47,7 @@
         socketInstance.on("game-started", (data) => {
             console.log("Game started:", data);
             partyData = { ...partyData, isStarted: true };
+            updatePre();
         });
 
         socketInstance.on("score-updated", (data) => {
@@ -82,6 +83,15 @@
             socketInstance.emit("join-room", { code: party_id });
         } else {
             console.warn("Socket or party_id not ready to join room");
+        }
+    }
+
+    function updatePre() {
+        // This function is not used in the current code, but can be used to update the pre element
+        // if needed in the future.
+        const preElement = document.getElementById("party-data");
+        if (preElement) {
+            preElement.textContent = JSON.stringify(partyData, null, 2);
         }
     }
 
@@ -199,6 +209,8 @@
 </script>
 
 <div class="container white partymode">
+    <!-- create a code box to store partydata in for debugging -->
+    <pre class="debug-box" id="party-data"></pre>
     <div class="padding">
         <h1>Party ID: {party_id}</h1>
         {#if players.length > 0 && !partyData.isStarted}

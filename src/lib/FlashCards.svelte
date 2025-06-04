@@ -17,6 +17,7 @@
     import { onMount } from "svelte";
     import Options from "./Options.svelte";
     import LazyLoadImage from "./LazyLoadImage.svelte";
+    import { fetchCollectionById } from "./collections";
     export let collection = null;
     export let author_id = null;
     export let isPartyMode = false;
@@ -42,18 +43,7 @@
     // function to fetch collection from id
     async function fetchCollection() {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections/user/${author_id}/${collection}`,
-                {
-                    method: "GET",
-                },
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch collection");
-            }
-
-            const data = await response.json();
+            const data = await fetchCollectionById(author_id, collection);
 
             author = data.author;
 

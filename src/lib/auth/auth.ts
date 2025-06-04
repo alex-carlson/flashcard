@@ -2,27 +2,32 @@ import { supabase } from '$lib/supabaseClient';
 import { user } from '$stores/user';
 
 export async function signInWithEmail(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
-    console.error('Login error:', error.message);
-    throw error;
+    if (error) {
+      console.error('[signInWithEmail] Login error:', error.message);
+      throw error;
+    }
+
+    const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error('[signInWithEmail] Error fetching current user:', userError.message);
+      throw userError;
+    }
+
+    user.set(currentUser);
+    ensureProfileExists(currentUser.id, currentUser.user_metadata?.username || 'New User');
+
+    return data;
+  } catch (err) {
+    console.error('[signInWithEmail] Exception caught:', err);
+    throw err;
   }
-
-  // set user and profile stores
-  const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-  if (userError) {
-    console.error('Error fetching current user:', userError.message);
-    throw userError;
-  }
-
-  user.set(currentUser);
-
-  return data;
 }
+
+
 
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -44,6 +49,7 @@ export async function signInWithGoogle() {
     throw userError;
   }
   user.set(currentUser);
+  ensureProfileExists(currentUser.id, currentUser.user_metadata?.username || 'New User');
 
   return data;
 }
@@ -141,7 +147,6 @@ export async function updateUsername(newUsername: string) {
 export async function logOut() {
   // Remove session and user data from stores
 
-
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.error('Log out error:', error.message);
@@ -163,4 +168,15 @@ export async function deleteUser(userId: string) {
   }
 
   console.log("User deleted successfully");
+}
+
+// create profile row if it doesn't exist
+export async function ensureProfileExists(userId: string, username: string) {
+  try {
+    await createProfileIfMissing(userId, username);
+    console.log('Profile ensured for user:', userId);
+  } catch (error) {
+    console.error('Error ensuring profile exists:', error);
+    throw error;
+  }
 }

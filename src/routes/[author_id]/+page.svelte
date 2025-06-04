@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { params } from "svelte-spa-router";
     import ProfilePicture from "$lib/ProfilePicture.svelte";
-    import { fetchUser, fetchCollections } from "../../lib/user";
+    import { fetchUser, fetchUserCollections } from "../../lib/user";
 
     let collections = [];
     let author_id = null;
@@ -11,7 +11,7 @@
     let userData = null;
 
     async function init(author_id) {
-        collections = await fetchCollections(author_id);
+        collections = await fetchUserCollections(author_id);
         userData = await fetchUser(author_id);
         bio = userData?.bio || null;
         if (!author) author = userData?.username || null;

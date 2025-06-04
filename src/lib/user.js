@@ -12,7 +12,7 @@ export async function fetchUser(author_id) {
         });
 }
 
-export async function fetchCollections(author_id) {
+export async function fetchUserCollections(author_id) {
     return fetch(`${import.meta.env.VITE_API_URL}/collections/user/${author_id}/all`)
         .then((response) => {
             if (!response.ok) {
@@ -30,3 +30,4 @@ export async function fetchCollections(author_id) {
             return [];  // Return empty array on error
         });
 }
+
