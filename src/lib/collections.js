@@ -1,3 +1,20 @@
+export async function fetchCollections() {
+    console.log("Fetching collections from API");
+    const url = `${import.meta.env.VITE_API_URL}/collections`;
+    return fetch(url, {
+        method: "GET",
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch collections");
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            console.error("Error fetching collections:", error);
+        });
+}
+
 export function fetchLatestCollections() {
     const url = `${import.meta.env.VITE_API_URL}/collections/latest`;
     return fetch(url, {

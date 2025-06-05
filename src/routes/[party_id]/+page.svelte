@@ -7,6 +7,9 @@
     import { user } from "../../stores/user.js";
     import ProfilePicture from "../../lib/ProfilePicture.svelte";
 
+    import { faFlag } from "@fortawesome/free-solid-svg-icons";
+    import Fa from "svelte-fa";
+
     let party_id = null;
     let players = [];
     let scores = {};
@@ -14,6 +17,7 @@
     let author_id = null;
     let category = null;
     let flashCardsRef;
+    let isHost = false;
 
     let socketInstance = null;
 
@@ -37,11 +41,14 @@
         socketInstance.off("game-started");
 
         socketInstance.on("room-update", (room) => {
-            console.log("Room update received:", room);
-            if (room.roomCode === party_id) {
-                players = room.players;
-                console.log("Updated player list:", players);
-            }
+            console.log("Room update received");
+            players = room.players;
+            partyData = {
+                ...partyData,
+                players: room.players,
+                isStarted: room.isStarted,
+            };
+            updatePre();
         });
 
         socketInstance.on("game-started", (data) => {
@@ -64,6 +71,18 @@
             }
         });
 
+        socketInstance.on("player-gave-up", (data) => {
+            const { playerId, finishedPlayers } = data;
+            console.log("Player gave up:", playerId);
+            // set partyData.finishedPlayers to the new array
+            partyData = {
+                ...partyData,
+                finishedPlayers: finishedPlayers || [],
+            };
+
+            updatePre();
+        });
+
         socketInstance.on("player-joined", (playerId) => {
             console.log("Player joined:", playerId);
             if (!players.includes(playerId)) {
@@ -74,6 +93,18 @@
         socketInstance.on("player-left", (playerId) => {
             console.log("Player left:", playerId);
             players = players.filter((p) => p !== playerId);
+        });
+
+        socketInstance.on("game-finished", () => {
+            console.log("Game finished");
+            // Handle game finish logic here, e.g., show results or reset state
+            partyData = {
+                ...partyData,
+                isStarted: false,
+                isFinished: true,
+                finishedPlayers: [],
+            };
+            updatePre();
         });
     }
 
@@ -166,6 +197,13 @@
                 document.title = `Party - ${data.name || "Unknown Party"}`;
                 players = data.players || [];
                 partyData = data;
+
+                isHost = data.hostId === currentUser?.id;
+
+                partyData.hostId = data.hostId;
+                partyData.collectionId = data.collectionId;
+                updatePre();
+
                 getCollectionInformation(data.collectionId);
             })
             .catch((error) => {
@@ -185,6 +223,13 @@
             code: party_id,
             playerId: currentUser?.id,
             cardIndex: idx,
+        });
+    }
+
+    function giveUp() {
+        socketInstance.emit("give-up", {
+            code: party_id,
+            playerId: currentUser?.id,
         });
     }
 
@@ -209,10 +254,9 @@
 </script>
 
 <div class="container white partymode">
-    <!-- create a code box to store partydata in for debugging -->
-    <pre class="debug-box" id="party-data"></pre>
     <div class="padding">
-        <h1>Party ID: {party_id}</h1>
+        <pre class="debug-box padding" id="party-data"></pre>
+        <h1 class="room-label">{party_id}</h1>
         {#if players.length > 0 && !partyData.isStarted}
             <p>Connected players:</p>
             <ul class="players-list">
@@ -224,15 +268,29 @@
             </ul>
         {/if}
 
-        {#if partyData && partyData.hostId === currentUser?.id && !partyData.isStarted}
+        {#if partyData && isHost && !partyData.isStarted && !partyData.isFinished}
             <button class="button" on:click={startGame}>Start Game</button>
         {/if}
 
-        {#if partyData && partyData.isStarted && author_id}
-            <h2>Scores:</h2>
+        {#if partyData && partyData.isFinished}
+            <h2>That's a wrap!</h2>
+            <ul class="final-scores-list padding">
+                {#each partyData.players as playerId}
+                    <li>
+                        <ProfilePicture userId={playerId} size={32} />
+                        <span>{scores[playerId] || 0}</span>
+                    </li>
+                {/each}
+            </ul>
+        {/if}
+
+        {#if partyData && partyData.isStarted && author_id && !partyData.isFinished}
             <ul class="scores-list padding">
                 {#each players as playerId}
-                    <li>
+                    <li
+                        class:finishedPlayer={partyData.finishedPlayers &&
+                            partyData.finishedPlayers.includes(playerId)}
+                    >
                         <ProfilePicture userId={playerId} size={32} />
                         <span>{scores[playerId] || 0}</span>
                     </li>
@@ -245,7 +303,11 @@
                 {author_id}
                 on:correctAnswer={(e) => scorePoint(e.detail)}
             />
-        {:else}
+            <!-- add give up button with white flag icon -->
+            <button class="button" on:click={giveUp}>
+                Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" />
+            </button>
+        {:else if partyData && !partyData.isFinished}
             <p>
                 The game has not started yet. Waiting for the host to start...
             </p>

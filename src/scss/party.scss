@@ -1,29 +1,86 @@
-.scores-list {
-    list-style: none;
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+.partymode {
 
-    li {
-        display: flex;
-        align-items: center; // Vertically center items
-        gap: 4px;
-        padding: 0.5rem;
+    .room-label {
+        padding: 1rem 2rem;
+        background-color: white;
+        border: solid 3px var(--bg-color);
+        display: inline-block;
+        margin: 1rem 0;
+        border-radius: 8px;
+    }
 
-        .profile-picture {
-            margin-right: 0.5rem;
+    .scores-list,
+    .final-scores-list {
+        list-style: none;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+
+        li {
             display: flex;
-            align-items: center; // Ensure image is vertically centered
-        }
+            align-items: center; // Vertically center items
+            gap: 4px;
+            padding: 0.5rem;
 
-        span {
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center; // Vertically center text if needed
+
+            &.finishedPlayer {
+                img {
+                    opacity: 0.5;
+                }
+
+                span {
+
+                    color: black;
+                }
+            }
+
+            .profile-picture {
+                margin-right: 0.5rem;
+                display: flex;
+                align-items: center; // Ensure image is vertically centered
+            }
+
+            span {
+                font-size: 1.4rem;
+                display: flex;
+                align-items: center; // Vertically center text if needed
+            }
         }
+    }
+
+
+    .final-scores-list {
+        position: relative;
+    }
+
+    .roomSetup {
+        .collection {
+            img {
+                width: auto;
+                height: 200px;
+            }
+
+            h3 {
+                font-size: 1.8rem;
+                margin: 0.5rem 0;
+            }
+        }
+    }
+
+    pre {
+
+        display: none;
+        background-color: #282c34;
+        color: #44e459;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        text-align: left;
+        font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+        font-size: 1rem;
+        overflow-x: auto;
     }
 }

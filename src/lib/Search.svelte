@@ -1,7 +1,6 @@
 <script>
     let searchTerm = "";
     let searchResults = [];
-    // import fontawesome search icon
     import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import Fa from "svelte-fa";
     import { createEventDispatcher } from "svelte";

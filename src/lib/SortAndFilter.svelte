@@ -37,10 +37,6 @@
 
     // Send sortAndFilterChange event to parent component
     function sendSortAndFilterChange() {
-        console.log(
-            "Dispatching sortAndFilterChange event with sorted and filtered collection:",
-            sortedAndFilteredCollection,
-        );
         dispatch("sortAndFilterChange", sortedAndFilteredCollection);
     }
 </script>
@@ -50,7 +46,7 @@
     <div class="padding align-left">
         <div class="third">
             <label for="itemsPerPage">Items per page:</label>
-            <select id="itemsPerPage" bind:value={itemsPerPage} >
+            <select id="itemsPerPage" bind:value={itemsPerPage}>
                 {#each itemsPerPageOptions as option}
                     <option value={option}>{option}</option>
                 {/each}

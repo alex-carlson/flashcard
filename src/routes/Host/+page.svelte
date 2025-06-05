@@ -70,7 +70,7 @@
 </script>
 
 <div class="container white">
-    <h1>{collection ? collection.category : "Host a match"}</h1>
+    <h1>Room Setup</h1>
     <div class="categoryPicker padding">
         <Search
             on:SearchItemClicked={(e) => {
@@ -93,11 +93,11 @@
                     <p>Author: {collection.author}</p>
                 </div>
                 <button class="button" on:click={createRoom}>
-                    Start Match
+                    Create Room
                 </button>
             </div>
         {:else}
-            <p>Select a collection to host a match.</p>
+            <p>Pick a collection to host a match.</p>
         {/if}
     </div>
 </div>

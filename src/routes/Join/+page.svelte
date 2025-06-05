@@ -43,13 +43,18 @@
 <div class="container white">
     <h1>Join a Quizzboxx</h1>
 
-    <div class="join-container">
-        <input
-            type="text"
-            placeholder="Enter room code"
-            bind:value={roomCode}
-            class="join-input"
-        />
-        <button on:click={joinRoom} class="button">Join Room</button>
+    <div class="join-container padding">
+        <div class="padding">
+            <input
+                type="text"
+                placeholder="Enter room code"
+                bind:value={roomCode}
+                class="join-input"
+            />
+        </div>
+
+        <div class="padding">
+            <button on:click={joinRoom} class="button">Join Room</button>
+        </div>
     </div>
 </div>

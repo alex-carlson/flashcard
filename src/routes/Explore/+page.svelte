@@ -3,6 +3,8 @@
     import LazyLoadImage from "../../lib/LazyLoadImage.svelte";
     import { onMount } from "svelte";
 
+    import { fetchCollections } from "$lib/collections";
+
     let collections = []; // Original collections array
     let filteredCollections = []; // Array for sorted/filtered collections
     let page = 0;
@@ -10,29 +12,6 @@
     let itemsPerPage = 10; // Default items per page
 
     document.title = "Explore";
-
-    // Fetch all collections
-    async function fetchCollections() {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections`,
-                {
-                    method: "GET",
-                },
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch collections");
-            }
-
-            const data = await response.json();
-            collections = data;
-            console.log("Fetched collections:", collections);
-            filteredCollections = data; // Initialize filteredCollections
-        } catch (error) {
-            console.error("Error fetching collections:", error);
-        }
-    }
 
     function nextPage() {
         if ((page + 1) * itemsPerPage < filteredCollections.length) {
@@ -66,22 +45,26 @@
         page = 0;
     }
 
-    onMount(() => {
-        fetchCollections();
+    onMount(async () => {
+        collections = await fetchCollections();
     });
 </script>
 
 <div class="container white">
     <h1>Explore</h1>
-    <SortAndFilter
-        collection={collections}
-        bind:sortOption
-        bind:itemsPerPage
-        on:sortAndFilterChange={(event) => {
-            filteredCollections = event.detail; // Update filteredCollections
-            page = 0; // Reset to the first page after sorting/filtering
-        }}
-    />
+    {#if collections.length > 0}
+        <SortAndFilter
+            collection={collections}
+            bind:sortOption
+            bind:itemsPerPage
+            on:sortAndFilterChange={(event) => {
+                filteredCollections = event.detail; // Update filteredCollections
+                page = 0; // Reset to the first page after sorting/filtering
+            }}
+        />
+    {:else}
+        <p>Loading collections...</p>
+    {/if}
 
     <div class="list">
         <ul>
