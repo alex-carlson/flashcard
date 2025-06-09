@@ -5,7 +5,7 @@ import { fetchUser } from '../lib/user'
 
 export const user = writable(null);
 
-async function fetchUserProfile(sessionUser) {
+async function fetchUserProfile(sessionUser, token = null) {
   if (!sessionUser) {
     console.error('No session user provided');
     return Promise.resolve(null);
@@ -26,7 +26,8 @@ async function fetchUserProfile(sessionUser) {
   const updatedUser = {
     ...sessionUser,
     bio,
-    username
+    username,
+    token
   };
 
   return updatedUser;
@@ -37,7 +38,7 @@ async function fetchUserProfile(sessionUser) {
 supabase.auth.onAuthStateChange(async (_event, session) => {
   const sessionUser = session?.user ?? null;
   const token = session?.access_token ?? null;
-  const userWithProfile = await fetchUserProfile(sessionUser);
+  const userWithProfile = await fetchUserProfile(sessionUser, token);
   user.set(userWithProfile); // Update user store with new session user
 
   initSocket(token); // Reinitialize socket connection with new token
@@ -61,10 +62,10 @@ export async function initUser() {
       return;
     }
 
-    const userWithProfile = await fetchUserProfile(sessionUser);
+    const token = data.session?.access_token ?? null;
+    const userWithProfile = await fetchUserProfile(sessionUser, token);
     user.set(userWithProfile); // Set user store with fetched profile
 
-    const token = data.session?.access_token ?? null;
     initSocket(token); // Reconnect socket with token
   } catch (err) {
     console.error('Exception during initUser:', err);
@@ -86,28 +87,6 @@ export async function logOutUser() {
   } catch (err) {
     console.error('Exception during logOutUser:', err);
   }
-}
-
-// Export user profile update functions
-export async function setUserAvatarUrl(userId: string | null, avatarUrl: string) {
-  if (!userId) {
-    console.error('No userId provided');
-    return null;
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ avatar_url: avatarUrl })
-    .eq('id', userId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating avatar_url:', error.message);
-    return null;
-  }
-
-  return data;
 }
 
 export async function setUserBio(userId: string | null, bio: string) {

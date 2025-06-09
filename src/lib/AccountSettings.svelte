@@ -1,5 +1,5 @@
 <script>
-  import { user, setUserBio, setUserAvatarUrl } from "$stores/user";
+  import { user, setUserBio } from "$stores/user";
   import { getSession } from "$lib/supabaseClient";
   import { logOut, updateUsername, updateEmail } from "$lib/auth/auth";
   import ProfilePicture from "./ProfilePicture.svelte";
@@ -78,13 +78,6 @@
           body: formData,
         },
       );
-      // if (response.ok) {
-      //   $profile.picture = URL.createObjectURL(file);
-      //   await setUserAvatarUrl(userId, URL.createObjectURL(file));
-      //   message = "Profile picture updated successfully!";
-      // } else {
-      //   message = "Failed to update profile picture.";
-      // }
     }
   }
 

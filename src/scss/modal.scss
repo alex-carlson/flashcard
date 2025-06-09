@@ -1,0 +1,31 @@
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    .modal-dialog {
+        border-radius: 8px;
+        margin: 0.5rem;
+        box-sizing: border-box;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem;
+        background-color: #f1f1f1;
+        border-top: 1px solid #ddd;
+
+        button {
+            margin-left: 0.5rem;
+
+            &:first-child {
+                margin-left: 0;
+            }
+        }
+    }
+}

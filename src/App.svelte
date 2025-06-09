@@ -15,6 +15,7 @@
   import Game from "./routes/[party_id]/+page.svelte";
   import Join from "./routes/Join/+page.svelte";
   import Host from "./routes/Host/+page.svelte";
+  import Leaderboard from "./routes/Leaderboard/+page.svelte";
   import { onMount } from "svelte";
   import { user } from "./stores/user.js";
 
@@ -32,6 +33,7 @@
     "/party": Party,
     "/join": Join,
     "/host": Host,
+    "/leaderboard": Leaderboard,
     "/party/:party_id": Game,
     "/:author_id/:category": FlashCards,
     "/:author_id": Author,

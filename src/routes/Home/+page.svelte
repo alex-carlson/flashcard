@@ -21,6 +21,14 @@
         return taglines[randomIndex];
     }
 
+    function loadSearchedPage(event) {
+        console.log("Search item clicked:", event);
+        const detail = event.detail;
+        // navigate to #/author_id/category
+        const url = `#/${detail.author_id}/${detail.category}`;
+        window.location.href = url;
+    }
+
     // on mount, set a random tagline
     import { onMount } from "svelte";
     onMount(() => {
@@ -39,7 +47,7 @@
         </div>
     </div>
     <div class="padding">
-        <Search />
+        <Search on:SearchItemClicked={loadSearchedPage} />
         <Latest />
     </div>
     <div class="padding">

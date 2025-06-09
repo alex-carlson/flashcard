@@ -18,15 +18,21 @@
     import Options from "./Options.svelte";
     import LazyLoadImage from "./LazyLoadImage.svelte";
     import { fetchCollectionById } from "./collections";
+    import { completeQuiz } from "$lib/user";
+    import { user } from "$stores/user";
+    import Modal from "./Modal.svelte";
     export let collection = null;
     export let author_id = null;
     export let isPartyMode = false;
     let author = null;
+    let collectionId = null;
     let cards = [];
     let isGrid = false;
     let isFullscreen = false;
     let canReset = false;
     let shuffleTrigger = 0;
+    let isComplete = false;
+    let showModal = false;
 
     // create enum modes for default, true/false, and multiple choice
     const Modes = {
@@ -46,6 +52,7 @@
             const data = await fetchCollectionById(author_id, collection);
 
             author = data.author;
+            collectionId = data.id;
 
             // if items length is 0, or is undefined, return
             if (!data.items || data.items.length === 0) {
@@ -283,7 +290,7 @@
         return similarity >= threshold;
     }
 
-    function completeQuiz() {
+    function onCompleteQuiz() {
         // show an alert with the number of correct answers
         const correctAnswers = cards.filter(
             (card) => card.revealed && card.userAnswer === card.answer,
@@ -293,10 +300,17 @@
 
         const myGrade = toLetterGrade(percentage);
 
-        // alert with grade and percentage
-        alert(
-            `You answered ${correctAnswers} out of ${cards.length} questions correctly.\nYour grade is ${myGrade} (${percentage}%).`,
-        );
+        if ($user) {
+            console.log("Completing quiz with content:", {
+                userId: $user.id,
+                collectionId,
+                token: $user.token,
+            });
+            completeQuiz($user.id, collectionId, percentage, $user.token);
+        }
+
+        showModal = true;
+        isComplete = true;
     }
 
     function toLetterGrade(score) {
@@ -468,7 +482,7 @@
                                             // If no more enabled inputs, call completeQuiz
                                             if (!foundNext) {
                                                 setTimeout(() => {
-                                                    completeQuiz();
+                                                    onCompleteQuiz();
                                                 }, 300);
                                             }
                                         }
@@ -501,4 +515,39 @@
             {/each}
         </div>
     {/if}
+
+    <Modal
+        bind:show={showModal}
+        title="Quiz Completed"
+        message={`Congratulations! You have completed the quiz. Your score: ${Math.round((cards.filter((card) => card.revealed && card.userAnswer === card.answer).length / cards.length) * 100)}%.`}
+        onClose={() => {
+            showModal = false;
+            // reveal all cards
+            cards = cards.map((card) => {
+                card.revealed = true;
+                return card;
+            });
+        }}
+        buttons={[
+            {
+                text: "Close",
+                action: () => {
+                    showModal = false;
+                    // reveal all cards
+                    cards = cards.map((card) => {
+                        card.revealed = true;
+                        return card;
+                    });
+                },
+                class: "bg-gray-300 text-black",
+            },
+            {
+                text: "Leaderboards",
+                action: () => {
+                    window.location.hash = "#/leaderboard";
+                },
+                class: "bg-blue-500 text-white",
+            },
+        ]}
+    />
 </div>
