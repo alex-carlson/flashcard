@@ -60,6 +60,16 @@
                 pointer-events: none;
                 display: none;
             }
+
+            .revealed {
+                background-color: rgb(10, 121, 34);
+            }
+        }
+
+        &.incorrect {
+            .revealed {
+                background-color: rgb(216, 11, 11);
+            }
         }
 
         &.disabled {

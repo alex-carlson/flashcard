@@ -36,13 +36,13 @@
 
     // create enum modes for default, true/false, and multiple choice
     const Modes = {
-        DEFAULT: "Flash Cards",
+        FILL_IN_THE_BLANK: "Fill in the Blank",
+        FLASH_CARDS: "Flash Cards",
         TRUE_FALSE: "True / False",
         MULTIPLE_CHOICE: "Multiple Choice",
-        FILL_IN_THE_BLANK: "Fill in the Blank",
     };
 
-    let currentMode = Modes.DEFAULT;
+    let currentMode = "FILL_IN_THE_BLANK";
 
     const dispatch = createEventDispatcher();
 
@@ -246,13 +246,16 @@
 
     function areStringsClose(a, b, threshold = 0.8) {
         a = a
-            .replace(/\bthe\b/gi, "")
+            .replace(/\bthe\b/gi, "") // remove "the"
             .trim()
-            .toLowerCase();
+            .toLowerCase()
+            .replace(/\s+/g, ""); // remove all spaces
+
         b = b
             .replace(/\bthe\b/gi, "")
             .trim()
-            .toLowerCase();
+            .toLowerCase()
+            .replace(/\s+/g, "");
 
         if (!a || !b) return false;
 
@@ -386,7 +389,9 @@
             {#each cards as item, i}
                 {#if !item.hidden}
                     <div
-                        class="card {item.revealed ? 'revealed' : ''}"
+                        class="card {item.revealed
+                            ? 'revealed'
+                            : ''} {item.incorrect ? 'incorrect' : ''}"
                         role="button"
                         tabindex="0"
                         on:keydown={(e) =>
@@ -524,6 +529,9 @@
             showModal = false;
             // reveal all cards
             cards = cards.map((card) => {
+                if (card.userAnswer !== card.answer) {
+                    card.incorrect = true;
+                }
                 card.revealed = true;
                 return card;
             });
@@ -535,6 +543,9 @@
                     showModal = false;
                     // reveal all cards
                     cards = cards.map((card) => {
+                        if (card.userAnswer !== card.answer) {
+                            card.incorrect = true;
+                        }
                         card.revealed = true;
                         return card;
                     });

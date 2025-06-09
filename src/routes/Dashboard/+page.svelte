@@ -12,14 +12,19 @@
       const data = await getUserQuizScores($user.id);
       // For each score, resolve the collection name
       scores = await Promise.all(
-        data.map(async (score) => ({
-          ...score,
-          collectionName: await getCollectionMetadataFromId(score.quiz_id),
-          author_id: score.author_id,
-        })),
+        data.map(async (score) => {
+          const metadata = await getCollectionMetadataFromId(score.quiz_id);
+          console.log("Metadata for quiz:", metadata);
+          return {
+            ...score,
+            collectionName: metadata.category,
+            author_id: metadata.author_id,
+          };
+        }),
       );
       // Sort scores by percentage, highest to lowest
       scores.sort((a, b) => b.percentage - a.percentage);
+      console.log("Scores:", scores);
     }
   }
 
@@ -41,7 +46,7 @@
       <ul>
         {#each scores as score}
           <li>
-            <a href="/{score.author_id}/{score.collectionName}">
+            <a href="#/{score.author_id}/{score.collectionName}">
               <strong>{score.collectionName}</strong></a
             >
             - {score.percentage}%

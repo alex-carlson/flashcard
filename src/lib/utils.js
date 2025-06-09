@@ -61,5 +61,5 @@ export async function getCollectionMetadataFromId(collectionId) {
         return null;
     }
 
-    return data?.category || null;
+    return data || null;
 }
