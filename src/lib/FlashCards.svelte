@@ -21,7 +21,7 @@
     import { Modes } from "./constants.js";
     import Modal from "./Modal.svelte";
     import Card from "./Card.svelte";
-    import { areStringsClose, mapCards } from "$lib/utils";
+    import { mapCards } from "$lib/utils";
     import { getScoreMessage } from "./quizScore";
     export let collection = null;
     export let author_id = null;
@@ -316,10 +316,10 @@
                 <Card
                     {item}
                     {i}
+                    {cards}
                     {currentMode}
                     {isPartyMode}
                     {shuffleTrigger}
-                    {areStringsClose}
                     {onCardLoad}
                     {toggleReveal}
                     {selectOption}

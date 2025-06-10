@@ -333,6 +333,33 @@
         }
     }
 
+    async function uploadQuestion() {
+        const username = $user.username;
+        const author_id = $user.id;
+
+        const data = {
+            uuid: uuidv4(),
+            question: localItem.question,
+            folder: `${username}/${category}`,
+            answer: localItem.answer,
+            category,
+            author: username,
+            author_id,
+        };
+        console.log("Uploading question data:", data);
+
+        try {
+            const result = await apiFetch("/items/add-question", "POST", data);
+            showSuccessMessage("Question upload successful!");
+            items = result[0]?.items || [];
+            localItem.question = "";
+            localItem.answer = "";
+        } catch (error) {
+            console.error("Error uploading question data:", error);
+            showErrorMessage("Question upload failed. Please try again.");
+        }
+    }
+
     // Set visibility
     async function setVisible(event) {
         const data = {
@@ -564,6 +591,35 @@
                         uploadAudio(e.detail.title, e.detail.id);
                     }}
                 />
+            {:else if collectionType === "Question"}
+                <h2>Question</h2>
+                <form class="form">
+                    <input
+                        type="text"
+                        bind:value={localItem.question}
+                        placeholder="Enter a question"
+                    />
+                    <input
+                        type="text"
+                        bind:value={localItem.answer}
+                        placeholder="Enter the answer"
+                    />
+                    <button
+                        type="button"
+                        class=""
+                        on:click={() => {
+                            if (localItem.answer.trim() === "") {
+                                showErrorMessage("Please enter a question.");
+                                return;
+                            }
+                            uploadQuestion();
+                            localItem.question = "";
+                            localItem.answer = "";
+                        }}
+                    >
+                        Add Question
+                    </button>
+                </form>
             {/if}
         {/if}
     {/if}

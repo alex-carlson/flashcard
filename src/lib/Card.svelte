@@ -5,12 +5,14 @@
     import ProfilePicture from "./ProfilePicture.svelte";
     import { Modes } from "./constants";
     import YoutubeAudioPlayer from "./YoutubeAudioPlayer.svelte";
+    import { areStringsClose } from "./utils";
+
     export let item;
     export let i;
+    export let cards; // <-- Add this line
     export let currentMode;
     export let isPartyMode;
     export let shuffleTrigger;
-    export let areStringsClose;
     export let onCardLoad;
     export let toggleReveal;
     export let selectOption;
@@ -43,7 +45,6 @@
                         setTimeout(() => {
                             inputs[j].focus({ preventScroll: true });
                         }, 80);
-                        foundNext = true;
                         break;
                     }
                 }
