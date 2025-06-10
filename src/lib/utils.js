@@ -113,3 +113,30 @@ export function areStringsClose(a, b, threshold = 0.8) {
 
     return similarity >= threshold;
 }
+
+export function mapCards(rawItems) {
+    return rawItems
+        .filter((card) => card != null)
+        .map((card) => {
+            const hasImage = !!card.image;
+            const hasText = !!card.question;
+            const hasAudio = !!card.audio;
+
+            let type = "unknown";
+            if (hasImage) type = "image";
+            else if (hasText) type = "text";
+            else if (hasAudio) type = "audio";
+
+            return {
+                ...card,
+                imageUrl: card.image,
+                revealed: false,
+                loaded: false,
+                hidden: false,
+                scale: 1,
+                userAnswer: "",
+                answer: card.answer || "",
+                type,
+            };
+        });
+}

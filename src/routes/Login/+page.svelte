@@ -13,7 +13,7 @@
   let email = "";
   let password = "";
   let errorMsg = "";
-  let isLogin = false;
+  let isLogin = true;
 
   document.title = isLogin ? "Login" : "Sign Up";
 

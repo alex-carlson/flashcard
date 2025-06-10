@@ -3,6 +3,7 @@
     import { getSession } from "../../lib/supabaseClient";
     import Collections from "../../lib/Collections.svelte";
     import FileUpload from "../../lib/FileUpload.svelte";
+    import AudioUploader from "../../lib/AudioUploader.svelte";
     import { onMount } from "svelte";
     import { v4 as uuidv4 } from "uuid";
     import Fa from "svelte-fa";
@@ -17,7 +18,7 @@
     import ImageSuggestions from "../../lib/ImageSuggestions.svelte";
     let category = "";
     let tempCategory = "";
-    let tempAnswer = "";
+    let collectionType = "Image";
     let items = [];
     let errorMessage,
         successMessage = "";
@@ -296,6 +297,42 @@
         }
     }
 
+    async function uploadAudio(answer, url) {
+        const username = $user.username;
+        const author_id = $user.id;
+
+        const formData = new FormData();
+        formData.append("uuid", uuidv4());
+        formData.append("url", url);
+        formData.append("folder", `${username}/${category}`);
+        formData.append("answer", answer);
+        formData.append("category", category);
+        formData.append("author", username);
+        formData.append("author_id", author_id);
+        formData.append("type", "audio");
+        console.log("Uploading audio data:", {
+            uuid: formData.get("uuid"),
+            url: formData.get("url"),
+            folder: formData.get("folder"),
+            answer: formData.get("answer"),
+            category: formData.get("category"),
+        });
+
+        try {
+            const result = await apiFetch(
+                "/items/add-audio",
+                "POST",
+                formData,
+                true,
+            );
+            showSuccessMessage("Audio upload successful!");
+            items = result[0]?.items || [];
+        } catch (error) {
+            console.error("Error uploading audio data:", error);
+            showErrorMessage("Audio upload failed. Please try again.");
+        }
+    }
+
     // Set visibility
     async function setVisible(event) {
         const data = {
@@ -341,12 +378,6 @@
         if (isRenaming) {
             tempCategory = category;
         }
-    }
-
-    async function imageUrlToFile(url, filename) {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: blob.type });
     }
 </script>
 
@@ -476,46 +507,64 @@
             <p style="color: green">{successMessage}</p>
         {/if}
 
+        <select bind:value={collectionType}>
+            <option value="Image">Image</option>
+            <option value="Audio">Audio</option>
+            <option value="Question">Question</option>
+            <option value="Hybrid">Hybrid</option>
+        </select>
+
         {#if category}
-            <!-- on submit form, call UploadFile -->
-            <form class="form">
-                <FileUpload
-                    on:uploadImage={(event) => (localItem.file = event.detail)}
-                />
-                {#if localItem.file}
-                    <img
-                        class="preview"
-                        src={localItem.file}
-                        alt="Preview"
-                        style="display: block;"
+            {#if collectionType === "Image"}
+                <!-- on submit form, call UploadFile -->
+                <form class="form">
+                    <FileUpload
+                        on:uploadImage={(event) =>
+                            (localItem.file = event.detail)}
                     />
-                {/if}
-                <input
-                    id="answer"
-                    type="text"
-                    bind:value={localItem.answer}
-                    placeholder="Enter an answer"
-                    class="answer"
-                />
-                <ImageSuggestions
-                    bind:category
-                    on:addImage={async (e) => {
-                        localItem.file = e.detail;
-                        uploadData();
-                        localItem.file = null;
-                        localItem.answer = "";
+                    {#if localItem.file}
+                        <img
+                            class="preview"
+                            src={localItem.file}
+                            alt="Preview"
+                            style="display: block;"
+                        />
+                    {/if}
+                    <input
+                        id="answer"
+                        type="text"
+                        bind:value={localItem.answer}
+                        placeholder="Enter an answer"
+                        class="answer"
+                    />
+                    <ImageSuggestions
+                        bind:category
+                        on:addImage={async (e) => {
+                            localItem.file = e.detail;
+                            uploadData();
+                            localItem.file = null;
+                            localItem.answer = "";
+                        }}
+                        bind:searchTerm={localItem.answer}
+                    />
+                    <button type="button" class="" on:click={uploadData}
+                        >Add item</button
+                    >
+                    <button
+                        class="danger"
+                        style="margin-top: 44px"
+                        on:click={confirmDelete}>Delete Collection</button
+                    >
+                </form>
+            {:else if collectionType === "Audio"}
+                <h2>Search for song</h2>
+                <AudioUploader
+                    on:addSong={(e) => {
+                        console.log("AudioUploader addSong event:", e);
+                        uploadAudio(e.detail.title, e.detail.id);
                     }}
-                    bind:searchTerm={localItem.answer}
                 />
-                <button type="button" class="" on:click={uploadData}
-                    >Add item</button
-                >
-                <button
-                    class="danger"
-                    style="margin-top: 44px"
-                    on:click={confirmDelete}>Delete Collection</button
-                >
-            </form>
+            {/if}
         {/if}
     {/if}
     <div class="container" style="display: none;">

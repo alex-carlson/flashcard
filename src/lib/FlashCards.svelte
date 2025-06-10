@@ -15,14 +15,13 @@
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import Options from "./Options.svelte";
-    import LazyLoadImage from "./LazyLoadImage.svelte";
     import { fetchCollectionById } from "./collections";
     import { completeQuiz } from "$lib/user";
     import { user } from "$stores/user";
+    import { Modes } from "./constants.js";
     import Modal from "./Modal.svelte";
-    import ProfilePicture from "./ProfilePicture.svelte";
-    import { areStringsClose } from "$lib/utils";
+    import Card from "./Card.svelte";
+    import { areStringsClose, mapCards } from "$lib/utils";
     import { getScoreMessage } from "./quizScore";
     export let collection = null;
     export let author_id = null;
@@ -36,15 +35,6 @@
     let shuffleTrigger = 0;
     let isComplete = false;
     let showModal = false;
-
-    // create enum modes for default, true/false, and multiple choice
-    const Modes = {
-        FILL_IN_THE_BLANK: "Fill in the Blank",
-        FLASH_CARDS: "Flash Cards",
-        TRUE_FALSE: "True / False",
-        MULTIPLE_CHOICE: "Multiple Choice",
-    };
-
     let currentMode = "FILL_IN_THE_BLANK";
 
     const dispatch = createEventDispatcher();
@@ -62,16 +52,8 @@
                 return;
             }
 
-            cards = data.items.map((card) => ({
-                ...card,
-                imageUrl: card.image,
-                revealed: false,
-                loaded: false,
-                hidden: false,
-                scale: 1,
-                userAnswer: "",
-                answer: card.answer || "", // ensure answer is defined
-            }));
+            cards = mapCards(data.items);
+            console.log("Fetched cards:", cards);
             // if isPartyMode, set mode to FILL_IN_THE_BLANK
             if (isPartyMode) {
                 currentMode = "FILL_IN_THE_BLANK";
@@ -331,142 +313,21 @@
 
         <div class={"flashcards padding " + (isGrid ? "grid" : "vertical")}>
             {#each cards as item, i}
-                {#if !item.hidden}
-                    <div
-                        class="card {item.revealed
-                            ? 'revealed'
-                            : ''} {item.incorrect ? 'incorrect' : ''}"
-                        role="button"
-                        tabindex="-1"
-                        on:keydown={(e) =>
-                            currentMode === Modes.DEFAULT &&
-                            e.key === "Enter" &&
-                            toggleReveal(i)}
-                        on:click={() =>
-                            currentMode === Modes.DEFAULT && toggleReveal(i)}
-                    >
-                        <LazyLoadImage
-                            imageUrl={item.imageUrl}
-                            on:load={() => onCardLoad(i)}
-                            on:error={() => {
-                                item.hidden = true;
-                                updateCards();
-                            }}
-                        />
-                        {#if currentMode === "TRUE_FALSE"}
-                            <Options
-                                {cards}
-                                currentCardIndex={i}
-                                numberOfOptions="2"
-                                {shuffleTrigger}
-                            />
-                        {:else if currentMode === "MULTIPLE_CHOICE"}
-                            <Options
-                                {cards}
-                                currentCardIndex={i}
-                                numberOfOptions="4"
-                                {shuffleTrigger}
-                            />
-                        {:else if currentMode === "FILL_IN_THE_BLANK"}
-                            {#if item.answerer}
-                                <ProfilePicture
-                                    userId={item.answerer}
-                                    size={32}
-                                    class="answerer"
-                                />
-                            {/if}
-                            <span
-                                class={item.revealed ? "revealed" : "hidden"}
-                                style="transform: scale(1);">{item.answer}</span
-                            >
-                            <input
-                                type="text"
-                                placeholder="Type your answer here..."
-                                bind:value={item.userAnswer}
-                                on:input={(e) => {
-                                    clearTimeout(item._debounceTimeout);
-                                    item._debounceTimeout = setTimeout(() => {
-                                        if (
-                                            areStringsClose(
-                                                item.userAnswer,
-                                                item.answer,
-                                                0.9,
-                                            )
-                                        ) {
-                                            item.revealed = true;
-                                            item.userAnswer = item.answer; // set user answer to correct answer
-                                            e.target.value = item.answer; // update input value
-                                            // lock the input
-                                            e.target.disabled = true;
-                                            // hide the input
-                                            e.target.style.display = "none";
-                                            e.target.style.backgroundColor =
-                                                "#d4edda"; // light green background
-
-                                            dispatch("correctAnswer", {
-                                                index: i,
-                                            });
-
-                                            // get all inputs in .flashcards, and select input[index+1]
-                                            const inputs =
-                                                document.querySelectorAll(
-                                                    ".flashcards input",
-                                                );
-                                            let foundNext = false;
-                                            for (
-                                                let j = i + 1;
-                                                j < inputs.length;
-                                                j++
-                                            ) {
-                                                if (!inputs[j].disabled) {
-                                                    // Scroll so the input is at the bottom of the view (accounting for keyboard on mobile)
-                                                    inputs[j].scrollIntoView({
-                                                        behavior: "smooth",
-                                                        block: "end",
-                                                        inline: "nearest",
-                                                    });
-                                                    setTimeout(() => {
-                                                        inputs[j].focus({
-                                                            preventScroll: true,
-                                                        });
-                                                    }, 200);
-                                                    foundNext = true;
-                                                    break;
-                                                }
-                                            }
-                                            // If no more enabled inputs, call completeQuiz
-                                            if (!foundNext) {
-                                                setTimeout(() => {
-                                                    onCompleteQuiz();
-                                                }, 300);
-                                            }
-                                        }
-                                    }, 100); // debounce delay in ms
-                                }}
-                            />
-                        {:else}
-                            <span
-                                class={item.revealed ? "revealed" : "hidden"}
-                                style="transform: scale(1);">{item.answer}</span
-                            >
-                        {/if}
-
-                        {#if !isPartyMode}
-                            <div class="card-options">
-                                <select
-                                    name="card-options"
-                                    id="cardOptions"
-                                    on:change={(e) => selectOption(e, item)}
-                                >
-                                    <option value="...">...</option>
-                                    <option value="Hide"> Hide </option>
-                                    <option value="Reveal"> Reveal </option>
-                                    <option value="Reset">Reset Scale</option>
-                                </select>
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
+                <Card
+                    {item}
+                    {i}
+                    {currentMode}
+                    {isPartyMode}
+                    {shuffleTrigger}
+                    {areStringsClose}
+                    {onCardLoad}
+                    {toggleReveal}
+                    {selectOption}
+                    {updateCards}
+                    {onCompleteQuiz}
+                    on:correctAnswer={(e) =>
+                        dispatch("correctAnswer", e.detail)}
+                />
             {/each}
         </div>
     {/if}
