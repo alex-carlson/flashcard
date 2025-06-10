@@ -126,18 +126,21 @@
     }
 
     onMount(() => {
-        if ($params && $params.party_id) {
-            party_id = $params.party_id;
-            getPartyData(party_id);
-        }
-
-        // Wait for socket instance to be ready, then setup listeners & join room
-        const waitForSocket = setInterval(() => {
-            if (socketInstance) {
-                setupSocketListeners();
-                clearInterval(waitForSocket);
+        async function init() {
+            if ($params && $params.party_id) {
+                party_id = $params.party_id;
+                await getPartyData(party_id);
             }
-        }, 100);
+
+            // Wait for socket instance to be ready, then setup listeners & join room
+            const waitForSocket = setInterval(() => {
+                if (socketInstance) {
+                    setupSocketListeners();
+                    clearInterval(waitForSocket);
+                }
+            }, 100);
+        }
+        init();
     });
 
     onDestroy(() => {
@@ -170,26 +173,27 @@
             });
     }
 
-    function getPartyData(party_id) {
-        fetch(`${import.meta.env.VITE_API_URL}/party/${party_id}`)
-            .then((response) => response.json())
-            .then((data) => {
-                console.log("Party data:", data);
-                document.title = `Party - ${data.name || "Unknown Party"}`;
-                partyData = data;
-                console.log("Party data fetched:", partyData);
-                updatePre();
+    async function getPartyData(party_id) {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/party/${party_id}`,
+            );
+            const data = await response.json();
+            console.log("Party data:", data);
+            document.title = `Party - ${data.name || "Unknown Party"}`;
+            partyData = data;
+            console.log("Party data fetched:", partyData);
+            updatePre();
 
-                isHost = data.hostId === currentUser?.id;
+            isHost = data.hostId === currentUser?.id;
 
-                partyData.hostId = data.hostId;
-                partyData.collectionId = data.collectionId;
+            partyData.hostId = data.hostId;
+            partyData.collectionId = data.collectionId;
 
-                getCollectionInformation(data.collectionId);
-            })
-            .catch((error) => {
-                console.error("Error fetching party data:", error);
-            });
+            getCollectionInformation(data.collectionId);
+        } catch (error) {
+            console.error("Error fetching party data:", error);
+        }
     }
 
     function scorePoint(cardIndex) {
