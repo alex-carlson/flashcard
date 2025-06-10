@@ -6,11 +6,12 @@
         faPauseCircle,
     } from "@fortawesome/free-solid-svg-icons";
     export let videoId;
+    export let id;
 
     let player;
     let isPlaying = false;
     let playerReady = false;
-    let containerId = `yt-player-${Math.random().toString(36).slice(2)}`;
+    let containerEl;
 
     function togglePlay() {
         if (!playerReady) return;
@@ -33,9 +34,9 @@
     });
 
     function createPlayer() {
-        player = new YT.Player(containerId, {
-            height: "45",
-            width: "80%",
+        player = new YT.Player(containerEl, {
+            width: "640",
+            height: "480",
             videoId,
             playerVars: {
                 controls: 0,
@@ -57,18 +58,33 @@
     // Shared loader to prevent duplicate script tags or missed events
     let youtubeAPILoaded = null;
     function loadYouTubeAPI() {
-        if (window.YT && window.YT.Player) {
+        if (window.YT && typeof window.YT.Player === "function") {
             return Promise.resolve();
         }
 
         if (youtubeAPILoaded) return youtubeAPILoaded;
 
         youtubeAPILoaded = new Promise((resolve) => {
-            const tag = document.createElement("script");
-            tag.src = "https://www.youtube.com/iframe_api";
-            document.body.appendChild(tag);
+            const existingScript = document.querySelector(
+                "script[src='https://www.youtube.com/iframe_api']",
+            );
+            if (!existingScript) {
+                const tag = document.createElement("script");
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.body.appendChild(tag);
+            }
 
+            const checkYT = () => {
+                if (window.YT && typeof window.YT.Player === "function") {
+                    resolve();
+                } else {
+                    setTimeout(checkYT, 50);
+                }
+            };
+
+            // Handle case where iframe API is already loaded before we set `onYouTubeIframeAPIReady`
             window.onYouTubeIframeAPIReady = () => resolve();
+            checkYT();
         });
 
         return youtubeAPILoaded;
@@ -84,7 +100,11 @@
             <span> Play </span>
         {/if}
     </button>
-    <div id={containerId} class="hidden-iframe"></div>
+    <div
+        bind:this={containerEl}
+        class="hidden-iframe"
+        id={"yt-player-" + id}
+    ></div>
 </div>
 
 <style>

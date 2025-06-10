@@ -68,7 +68,7 @@
     >
         {#if item.type === "audio"}
             <div class="padding">
-                <YoutubeAudioPlayer videoId={item.audio} />
+                <YoutubeAudioPlayer id={item.id} videoId={item.audio} />
             </div>
         {:else if item.type === "image"}
             <LazyLoadImage
