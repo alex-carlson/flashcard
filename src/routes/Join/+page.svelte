@@ -1,27 +1,46 @@
 <script>
     import { onDestroy } from "svelte";
-    import { socket } from "../../stores/socket.js";
+    import { socket, initSocket } from "$stores/socket.js";
+    import { user } from "$stores/user.js";
+    import { get } from "svelte/store";
 
     let roomCode = "";
-    let socketInstance = null;
 
-    // Subscribe to socket store to get socket instance
-    const unsubscribe = socket.subscribe((instance) => {
-        socketInstance = instance;
-    });
-
-    function joinRoom() {
+    async function joinRoom() {
         if (!roomCode) {
             alert("Please enter a room code.");
             return;
         }
 
-        if (!socketInstance) {
-            alert("Socket not connected yet, please try again shortly.");
-            return;
+        const currentUser = get(user);
+        const token = currentUser?.token;
+
+        // Initialize socket with token only if it exists
+        if (token) {
+            initSocket(token);
+        } else {
+            initSocket();
         }
 
-        // Emit join-room event with roomCode
+        // Wait for socket instance from the store
+        const socketInstance = await new Promise((resolve) => {
+            const unsubscribe = socket.subscribe((instance) => {
+                if (instance) {
+                    unsubscribe();
+                    resolve(instance);
+                }
+            });
+        });
+
+        socketInstance.on("connect", () => {
+            console.log("Socket connected:", socketInstance.id);
+        });
+
+        socketInstance.on("connect_error", (err) => {
+            console.error("Socket connection error:", err.message);
+        });
+
+        // Emit join-room event
         socketInstance.emit("join-room", { code: roomCode });
 
         // Listen once for room-update event to confirm join
@@ -32,11 +51,11 @@
     }
 
     onDestroy(() => {
-        // Clean up socket event listeners to avoid leaks
+        // Optional: clean up socket event listener
+        const socketInstance = get(socket);
         if (socketInstance) {
             socketInstance.off("room-update");
         }
-        unsubscribe();
     });
 </script>
 

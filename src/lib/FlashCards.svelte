@@ -21,6 +21,7 @@
     import { completeQuiz } from "$lib/user";
     import { user } from "$stores/user";
     import Modal from "./Modal.svelte";
+    import ProfilePicture from "./ProfilePicture.svelte";
     export let collection = null;
     export let author_id = null;
     export let isPartyMode = false;
@@ -89,7 +90,7 @@
         updateCards();
     }
 
-    export function setRevealed(index, value) {
+    export function setRevealed(index, value, playerId = null) {
         // get card at index and add the class "disabled"
         console.log(
             "Setting revealed for card at index:",
@@ -99,6 +100,9 @@
         );
         if (cards[index]) {
             cards[index].revealed = value;
+            if (playerId) {
+                cards[index].answerer = playerId; // store who answered the card
+            }
             updateCards();
         }
     }
@@ -259,6 +263,8 @@
 
         if (!a || !b) return false;
 
+        if (a.length < b.length) return false;
+
         const lenA = a.length;
         const lenB = b.length;
         const matrix = [];
@@ -393,7 +399,7 @@
                             ? 'revealed'
                             : ''} {item.incorrect ? 'incorrect' : ''}"
                         role="button"
-                        tabindex="0"
+                        tabindex="-1"
                         on:keydown={(e) =>
                             currentMode === Modes.DEFAULT &&
                             e.key === "Enter" &&
@@ -424,7 +430,13 @@
                                 {shuffleTrigger}
                             />
                         {:else if currentMode === "FILL_IN_THE_BLANK"}
-                            <!-- make a text input with debounce -->
+                            {#if item.answerer}
+                                <ProfilePicture
+                                    userId={item.answerer}
+                                    size={32}
+                                    class="answerer"
+                                />
+                            {/if}
                             <span
                                 class={item.revealed ? "revealed" : "hidden"}
                                 style="transform: scale(1);">{item.answer}</span

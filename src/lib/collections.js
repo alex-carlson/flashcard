@@ -31,6 +31,22 @@ export function fetchLatestCollections() {
         });
 }
 
+export function fetchRandomCollections(limit = 10) {
+    console.log("Fetching random collections from API");
+    const url = `${import.meta.env.VITE_API_URL}/collections/random/${limit}`;
+    return fetch(url, {
+        method: "GET",
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch random collections");
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            console.error("Error fetching random collections:", error);
+        });
+}
 
 export function fetchCollectionById(author_id, collection_id) {
     const url = `${import.meta.env.VITE_API_URL}/collections/user/${author_id}/${collection_id}`;

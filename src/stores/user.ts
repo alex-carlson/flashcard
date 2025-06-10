@@ -1,6 +1,5 @@
 import { writable } from 'svelte/store';
 import { supabase, getSession } from '$lib/supabaseClient';
-import { initSocket } from './socket'; // <-- Import socketStore here
 import { fetchUser } from '../lib/user'
 
 export const user = writable(null);
@@ -40,37 +39,7 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
   const token = session?.access_token ?? null;
   const userWithProfile = await fetchUserProfile(sessionUser, token);
   user.set(userWithProfile); // Update user store with new session user
-
-  initSocket(token); // Reinitialize socket connection with new token
 });
-
-export async function initUser() {
-  console.log('Initializing user session...');
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    console.log('Session data:', data);
-
-    if (error) {
-      console.error('Error getting initial session:', error.message);
-      user.set(null);
-      return;
-    }
-
-    const sessionUser = data.session?.user ?? null;
-    if (!sessionUser) {
-      user.set(null);
-      return;
-    }
-
-    const token = data.session?.access_token ?? null;
-    const userWithProfile = await fetchUserProfile(sessionUser, token);
-    user.set(userWithProfile); // Set user store with fetched profile
-
-    initSocket(token); // Reconnect socket with token
-  } catch (err) {
-    console.error('Exception during initUser:', err);
-  }
-}
 
 export async function logOutUser() {
   console.log('Logging out user...');

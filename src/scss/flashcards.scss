@@ -183,6 +183,16 @@
                 }
             }
         }
+
+        .profile-picture {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+
+            img {
+                padding: 0;
+            }
+        }
     }
 
     .grid .card {

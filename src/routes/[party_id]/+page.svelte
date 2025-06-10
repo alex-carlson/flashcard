@@ -11,8 +11,6 @@
     import Fa from "svelte-fa";
 
     let party_id = null;
-    let players = [];
-    let scores = {};
     let partyData = null;
     let author_id = null;
     let category = null;
@@ -41,12 +39,9 @@
         socketInstance.off("game-started");
 
         socketInstance.on("room-update", (room) => {
-            console.log("Room update received");
-            players = room.players;
             partyData = {
                 ...partyData,
-                players: room.players,
-                isStarted: room.isStarted,
+                ...room,
             };
             updatePre();
         });
@@ -58,13 +53,29 @@
         });
 
         socketInstance.on("score-updated", (data) => {
-            const { scores: newScores, cardIndex } = data;
+            const { scores: newScores, cardIndex, playerId: pID } = data;
 
-            // Ensure keys are stringified
-            scores = { ...scores, ...newScores };
+            // Merge new scores
+            partyData = {
+                ...partyData,
+                scores: {
+                    ...(partyData.scores || {}),
+                    ...newScores,
+                },
+            };
+
+            // Sort players by score descending
+            if (partyData.scores && partyData.players) {
+                partyData.players = [...partyData.players].sort(
+                    (a, b) =>
+                        (partyData.scores[b] || 0) - (partyData.scores[a] || 0),
+                );
+            }
+
+            updatePre();
 
             if (flashCardsRef) {
-                flashCardsRef.setRevealed(cardIndex, true);
+                flashCardsRef.setRevealed(cardIndex, true, pID);
             } else {
                 // try to set the ref
                 console.warn("FlashCards reference not ready yet");
@@ -83,18 +94,6 @@
             updatePre();
         });
 
-        socketInstance.on("player-joined", (playerId) => {
-            console.log("Player joined:", playerId);
-            if (!players.includes(playerId)) {
-                players.push(playerId);
-            }
-        });
-
-        socketInstance.on("player-left", (playerId) => {
-            console.log("Player left:", playerId);
-            players = players.filter((p) => p !== playerId);
-        });
-
         socketInstance.on("game-finished", () => {
             console.log("Game finished");
             // Handle game finish logic here, e.g., show results or reset state
@@ -106,15 +105,15 @@
             };
             updatePre();
         });
-    }
 
-    // Emit join-room event once socket & party_id ready
-    function joinRoom() {
-        if (socketInstance && party_id) {
-            socketInstance.emit("join-room", { code: party_id });
-        } else {
-            console.warn("Socket or party_id not ready to join room");
-        }
+        socketInstance.on("room-closed", () => {
+            console.log("Room closed");
+            // Handle room closed logic here, e.g., redirect or show message
+            partyData = null;
+            document.title = "Party Closed";
+            updatePre();
+            window.location.hash = "#/party";
+        });
     }
 
     function updatePre() {
@@ -136,13 +135,9 @@
         const waitForSocket = setInterval(() => {
             if (socketInstance) {
                 setupSocketListeners();
-                joinRoom();
                 clearInterval(waitForSocket);
             }
         }, 100);
-
-        // Add disconnect handler
-        window.addEventListener("beforeunload", handleDisconnect);
     });
 
     onDestroy(() => {
@@ -153,21 +148,7 @@
 
         unsubscribeSocket();
         unsubscribeUser();
-
-        // Manually emit disconnect if navigating within app
-        handleDisconnect();
-
-        window.removeEventListener("beforeunload", handleDisconnect);
     });
-
-    function handleDisconnect() {
-        if (socketInstance && party_id && currentUser?.id) {
-            socketInstance.emit("player-left", {
-                code: party_id,
-                playerId: currentUser.id,
-            });
-        }
-    }
 
     function getCollectionInformation(collectionId) {
         supabase
@@ -195,14 +176,14 @@
             .then((data) => {
                 console.log("Party data:", data);
                 document.title = `Party - ${data.name || "Unknown Party"}`;
-                players = data.players || [];
                 partyData = data;
+                console.log("Party data fetched:", partyData);
+                updatePre();
 
                 isHost = data.hostId === currentUser?.id;
 
                 partyData.hostId = data.hostId;
                 partyData.collectionId = data.collectionId;
-                updatePre();
 
                 getCollectionInformation(data.collectionId);
             })
@@ -221,7 +202,7 @@
                 : cardIndex;
         socketInstance.emit("score-point", {
             code: party_id,
-            playerId: currentUser?.id,
+            playerId: currentUser?.id || localStorage.getItem("playerId"),
             cardIndex: idx,
         });
     }
@@ -229,7 +210,7 @@
     function giveUp() {
         socketInstance.emit("give-up", {
             code: party_id,
-            playerId: currentUser?.id,
+            playerId: currentUser?.id || localStorage.getItem("playerId"),
         });
     }
 
@@ -257,10 +238,10 @@
     <div class="padding">
         <pre class="debug-box padding" id="party-data"></pre>
         <h1 class="room-label">{party_id}</h1>
-        {#if players.length > 0 && !partyData.isStarted}
+        {#if partyData && partyData.players.length > 0 && !partyData.isStarted}
             <p>Connected players:</p>
             <ul class="players-list">
-                {#each players as player}
+                {#each partyData.players as player}
                     <li>
                         <ProfilePicture userId={player} size={32} />
                     </li>
@@ -277,8 +258,8 @@
             <ul class="final-scores-list padding">
                 {#each partyData.players as playerId}
                     <li>
-                        <ProfilePicture userId={playerId} size={32} />
-                        <span>{scores[playerId] || 0}</span>
+                        <ProfilePicture userId={playerId} size={64} />
+                        <span>{partyData.scores[playerId] || 0}</span>
                     </li>
                 {/each}
             </ul>
@@ -286,13 +267,13 @@
 
         {#if partyData && partyData.isStarted && author_id && !partyData.isFinished}
             <ul class="scores-list padding">
-                {#each players as playerId}
+                {#each Object.entries(partyData.scores) as [playerId, score]}
                     <li
                         class:finishedPlayer={partyData.finishedPlayers &&
                             partyData.finishedPlayers.includes(playerId)}
                     >
                         <ProfilePicture userId={playerId} size={32} />
-                        <span>{scores[playerId] || 0}</span>
+                        <span>{score}</span>
                     </li>
                 {/each}
             </ul>
