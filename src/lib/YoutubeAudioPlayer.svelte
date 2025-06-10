@@ -1,6 +1,10 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-
+    import Fa from "svelte-fa";
+    import {
+        faPlayCircle,
+        faPauseCircle,
+    } from "@fortawesome/free-solid-svg-icons";
     export let videoId;
 
     let player;
@@ -9,7 +13,6 @@
     let containerId = `yt-player-${Math.random().toString(36).slice(2)}`;
 
     function togglePlay() {
-        console.log("Toggling play state");
         if (!playerReady) return;
         if (isPlaying) {
             player.pauseVideo();
@@ -18,12 +21,9 @@
         }
     }
 
-    onMount(() => {
-        if (window.YT && window.YT.Player) {
-            createPlayer();
-        } else {
-            loadYouTubeAPI().then(createPlayer);
-        }
+    onMount(async () => {
+        await loadYouTubeAPI();
+        createPlayer();
     });
 
     onDestroy(() => {
@@ -34,8 +34,8 @@
 
     function createPlayer() {
         player = new YT.Player(containerId, {
-            height: "0",
-            width: "0",
+            height: "45",
+            width: "80%",
             videoId,
             playerVars: {
                 controls: 0,
@@ -54,23 +54,34 @@
         });
     }
 
+    // Shared loader to prevent duplicate script tags or missed events
+    let youtubeAPILoaded = null;
     function loadYouTubeAPI() {
-        return new Promise((resolve) => {
+        if (window.YT && window.YT.Player) {
+            return Promise.resolve();
+        }
+
+        if (youtubeAPILoaded) return youtubeAPILoaded;
+
+        youtubeAPILoaded = new Promise((resolve) => {
             const tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName("script")[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            document.body.appendChild(tag);
+
             window.onYouTubeIframeAPIReady = () => resolve();
         });
+
+        return youtubeAPILoaded;
     }
 </script>
 
 <div class="player-container">
     <button on:click={togglePlay} disabled={!playerReady}>
         {#if isPlaying}
-            ⏸ Pause
+            <Fa icon={faPauseCircle} /><span> Pause </span>
         {:else}
-            ▶ Play
+            <Fa icon={faPlayCircle} />
+            <span> Play </span>
         {/if}
     </button>
     <div id={containerId} class="hidden-iframe"></div>

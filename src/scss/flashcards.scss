@@ -81,6 +81,16 @@
             color: black;
         }
 
+        .player-container {
+            span {
+                background-color: transparent;
+                font-size: 24px;
+                margin-left: 0.5rem;
+                padding: 0;
+                margin-top: 0;
+            }
+        }
+
         @keyframes bounce {
             0% {
                 transform: scale(1);
