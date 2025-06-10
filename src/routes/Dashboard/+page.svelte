@@ -14,7 +14,6 @@
       scores = await Promise.all(
         data.map(async (score) => {
           const metadata = await getCollectionMetadataFromId(score.quiz_id);
-          console.log("Metadata for quiz:", metadata);
           return {
             ...score,
             collectionName: metadata.category,
@@ -24,7 +23,6 @@
       );
       // Sort scores by percentage, highest to lowest
       scores.sort((a, b) => b.percentage - a.percentage);
-      console.log("Scores:", scores);
     }
   }
 

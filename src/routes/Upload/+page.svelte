@@ -90,7 +90,6 @@
 
     // Fetch collection details
     async function fetchCollectionData(id) {
-        console.log("Fetching collection data for ID:", id);
         try {
             const data = await apiFetch(`/collections/id/${id}`);
             category = data.category;

@@ -240,7 +240,10 @@
 
 <div class="container white partymode">
     <div class="padding">
-        <pre class="debug-box padding" id="party-data"></pre>
+        <pre
+            class="debug-box padding"
+            id="party-data"
+            style="display: none;"></pre>
         <h1 class="room-label">{party_id}</h1>
         {#if partyData && partyData.players.length > 0 && !partyData.isStarted}
             <p>Connected players:</p>
@@ -262,7 +265,7 @@
             <ul class="final-scores-list padding">
                 {#each partyData.players as playerId}
                     <li>
-                        <ProfilePicture userId={playerId} size={64} />
+                        <ProfilePicture userId={playerId} size={32} />
                         <span>{partyData.scores[playerId] || 0}</span>
                     </li>
                 {/each}

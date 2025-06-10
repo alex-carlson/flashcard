@@ -10,7 +10,7 @@
         faCompress,
         faPlus,
         faMinus,
-        faEllipsisVertical,
+        faFlag,
         faRotateBack,
     } from "@fortawesome/free-solid-svg-icons";
     import { createEventDispatcher } from "svelte";
@@ -22,6 +22,8 @@
     import { user } from "$stores/user";
     import Modal from "./Modal.svelte";
     import ProfilePicture from "./ProfilePicture.svelte";
+    import { areStringsClose } from "$lib/utils";
+    import { getScoreMessage } from "./quizScore";
     export let collection = null;
     export let author_id = null;
     export let isPartyMode = false;
@@ -248,57 +250,6 @@
         cards = [...cards];
     }
 
-    function areStringsClose(a, b, threshold = 0.8) {
-        a = a
-            .replace(/\bthe\b/gi, "") // remove "the"
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, ""); // remove all spaces
-
-        b = b
-            .replace(/\bthe\b/gi, "")
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, "");
-
-        if (!a || !b) return false;
-
-        if (a.length < b.length) return false;
-
-        const lenA = a.length;
-        const lenB = b.length;
-        const matrix = [];
-
-        // Initialize the matrix
-        for (let i = 0; i <= lenB; i++) {
-            matrix[i] = [i];
-        }
-        for (let j = 0; j <= lenA; j++) {
-            matrix[0][j] = j;
-        }
-
-        // Fill in the matrix
-        for (let i = 1; i <= lenB; i++) {
-            for (let j = 1; j <= lenA; j++) {
-                if (b[i - 1] === a[j - 1]) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1, // substitution
-                        matrix[i][j - 1] + 1, // insertion
-                        matrix[i - 1][j] + 1, // deletion
-                    );
-                }
-            }
-        }
-
-        const distance = matrix[lenB][lenA];
-        const maxLen = Math.max(lenA, lenB);
-        const similarity = 1 - distance / maxLen;
-
-        return similarity >= threshold;
-    }
-
     function onCompleteQuiz() {
         // show an alert with the number of correct answers
         const correctAnswers = cards.filter(
@@ -306,8 +257,6 @@
         ).length;
 
         const percentage = Math.round((correctAnswers / cards.length) * 100);
-
-        const myGrade = toLetterGrade(percentage);
 
         if ($user) {
             console.log("Completing quiz with content:", {
@@ -320,17 +269,6 @@
 
         showModal = true;
         isComplete = true;
-    }
-
-    function toLetterGrade(score) {
-        if (score >= 85) return "A";
-        if (score >= 80) return "A-";
-        if (score >= 70) return "B";
-        if (score >= 65) return "B-";
-        if (score >= 60) return "C+";
-        if (score >= 55) return "C";
-        if (score >= 50) return "D";
-        return "F";
     }
 
     onMount(() => {
@@ -533,10 +471,25 @@
         </div>
     {/if}
 
+    <div class="padding">
+        <button class="give-up" on:click={onCompleteQuiz}>
+            <span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span
+            >
+        </button>
+    </div>
+
     <Modal
         bind:show={showModal}
         title="Quiz Completed"
-        message={`Congratulations! You have completed the quiz. Your score: ${Math.round((cards.filter((card) => card.revealed && card.userAnswer === card.answer).length / cards.length) * 100)}%.`}
+        message={getScoreMessage(
+            Math.round(
+                (cards.filter(
+                    (card) => card.revealed && card.userAnswer === card.answer,
+                ).length /
+                    cards.length) *
+                    100,
+            ),
+        )}
         onClose={() => {
             showModal = false;
             // reveal all cards

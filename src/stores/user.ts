@@ -37,6 +37,11 @@ async function fetchUserProfile(sessionUser, token = null) {
 supabase.auth.onAuthStateChange(async (_event, session) => {
   const sessionUser = session?.user ?? null;
   const token = session?.access_token ?? null;
+  if (!sessionUser) {
+    user.set(null);
+
+    return;
+  }
   const userWithProfile = await fetchUserProfile(sessionUser, token);
   user.set(userWithProfile); // Update user store with new session user
 });
