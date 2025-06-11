@@ -1,21 +1,15 @@
 <script>
     import { user } from "$stores/user";
-    import { getSession } from "../../lib/supabaseClient";
+    import { getImageUrl, getSession } from "../../lib/supabaseClient";
     import Collections from "../../lib/Collections.svelte";
-    import FileUpload from "../../lib/FileUpload.svelte";
-    import AudioUploader from "../../lib/AudioUploader.svelte";
+    import FileUpload from "../../lib/Upload/FileUpload.svelte";
+    import AudioUploader from "../../lib/Upload/AudioUploader.svelte";
     import { onMount } from "svelte";
     import { v4 as uuidv4 } from "uuid";
     import Fa from "svelte-fa";
-    import {
-        faPenToSquare,
-        faTrashCan,
-        faFloppyDisk,
-        faBan,
-        faChevronUp,
-        faChevronDown,
-    } from "@fortawesome/free-solid-svg-icons";
+    import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
     import ImageSuggestions from "../../lib/ImageSuggestions.svelte";
+    import CollectionItem from "../../lib/Upload/CollectionItem.svelte";
     let category = "";
     let tempCategory = "";
     let collectionType = "Image";
@@ -28,25 +22,26 @@
     let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = false;
     let isReordering = false;
+    let collectionType = "Image";
 
     document.title = "Manage Collections";
 
-    // fetch collections on mount
     onMount(async () => {
-        const { data: sessionData, error: sessionError } = await getSession();
-        if (sessionError || !sessionData?.session) {
+        const session = await getSession();
+        if (!session) {
+            console.log("No session, skipping fetch");
             return;
         }
         fetchCollections();
     });
 
     async function getAuthHeaders() {
-        const { data: sessionData, error: sessionError } = await getSession();
-        if (sessionError || !sessionData?.session) {
+        const session = await getSession();
+        if (!session) {
             throw new Error("User session not found");
         }
         return {
-            Authorization: `Bearer ${sessionData.session.access_token}`,
+            Authorization: `Bearer ${session.access_token}`,
         };
     }
 
@@ -78,6 +73,12 @@
 
     // Fetch collections
     async function fetchCollections() {
+        // Wait for $user to be available before fetching
+        if (!$user || !$user.id) {
+            // Retry after a short delay if user is not ready
+            setTimeout(fetchCollections, 100);
+            return;
+        }
         try {
             const url = `/collections/user/${$user.id}`;
             collections = await apiFetch(url);
@@ -154,16 +155,14 @@
         }
     }
 
-    async function saveEdit() {
+    async function saveEdit(item) {
+        console.log("Saving edit for item:", item);
         try {
-            const item = items.find((item) => item.id === editableItemId);
-            const itemTextFieldValue =
-                document.getElementById("editedAnswer").value;
             await apiFetch("/items/edit", "POST", {
                 collection: category,
-                id: editableItemId,
+                id: item.id,
                 author_id: $user.id,
-                answer: itemTextFieldValue,
+                answer: item.answer,
             });
             editableItemId = null;
         } catch (error) {
@@ -219,7 +218,7 @@
     }
 
     // Upload data
-    async function uploadData() {
+    async function uploadData(uuid = uuidv4()) {
         const username = $user.username;
         const author_id = $user.id;
 
@@ -227,7 +226,7 @@
         if (typeof localItem.file === "string") {
             try {
                 const data = {
-                    uuid: uuidv4(),
+                    uuid,
                     url: localItem.file,
                     folder: `${username}/${category}`,
                     answer: localItem.answer,
@@ -259,7 +258,7 @@
 
         // Otherwise, upload as file
         const formData = new FormData();
-        formData.append("uuid", uuidv4());
+        formData.append("uuid", uuid);
         formData.append("file", localItem.file);
         formData.append("folder", `${username}/${category}`);
         formData.append("answer", localItem.answer);
@@ -412,13 +411,13 @@
     {#if !user}
         <p><a href="/login">Log in</a> to manager your collections.</p>
     {:else}
-        {#if collections.length > 0}
-            <Collections
-                {collections}
-                on:selectCollection={(e) => fetchCollectionData(e.detail)}
-            />
-        {/if}
         {#if category === ""}
+            {#if collections.length > 0}
+                <Collections
+                    {collections}
+                    on:selectCollection={(e) => fetchCollectionData(e.detail)}
+                />
+            {/if}
             <input
                 type="text"
                 bind:value={tempCategory}
@@ -435,7 +434,25 @@
             <button class="secondary" on:click={renameCollection}>Save</button>
             <button class="warning" on:click={toggleRenaming}>Cancel</button>
         {:else}
-            <h2>{category}</h2>
+            <div class="collection-name">
+                {#await getImageUrl(`${$user.username}/${category}/thumbnail`) then url}
+                    <img
+                        src={url}
+                        alt="Thumbnail"
+                        class="thumbnail"
+                    />
+                {:catch error}
+                    <img
+                        src="/avatar.png"
+                        alt="Thumbnail"
+                        class="thumbnail"
+                    />
+                {/await}
+                <h2>{category}</h2>
+                <button class="secondary" on:click={toggleRenaming}>
+                    <Fa icon={faPenToSquare} />
+                </button>
+            </div>
             <div class="row">
                 <h2>{isPublic ? "Public" : "Private"}</h2>
                 <label class="switch">
@@ -444,85 +461,36 @@
                         bind:checked={isPublic}
                         on:change={setVisible}
                     />
-                    <span class="slider round"></span>
                 </label>
             </div>
-            <button class="secondary" on:click={toggleRenaming}>Rename</button>
-            {#if items.length > 1}
-                {#if !isReordering}
-                    <button
-                        class="secondary"
-                        on:click={() => (isReordering = true)}>Reorder</button
-                    >
-                {:else}
-                    <button class="secondary" on:click={reorderItems}
-                        >Done</button
-                    >
-                {/if}
-            {/if}
+            <div class="padding">
+                <h2>Thumbnail</h2>
+                <FileUpload
+                    on:uploadImage={(event) => {
+                        console.log("Thumbnail upload event:", event.detail);
+                        localItem.file = event.detail;
+                        uploadData("thumbnail");
+                    }}
+                />
+            </div>
         {/if}
         <div class="list uploads">
             <ul class="items-list">
                 {#each items as item, index}
-                    <li
-                        class={isReordering ? "item reorder" : "item"}
-                        draggable={isReordering}
-                    >
-                        {#if editableItemId === item.id}
-                            <img src={item.image} alt="Preview" />
-                            <input
-                                id="editedAnswer"
-                                type="text"
-                                bind:value={item.answer}
-                                placeholder="Enter an answer"
-                            />
-                            <div class="vertical">
-                                <button class="success" on:click={saveEdit}
-                                    ><Fa icon={faFloppyDisk} /></button
-                                >
-                                <button
-                                    class="danger"
-                                    on:click={(editableItemId = null)}
-                                    ><Fa icon={faBan} /></button
-                                >
-                            </div>
-                        {:else}
-                            <img src={item.image} alt="Preview" />
-                            <span>{item.answer}</span>
-                            {#if isReordering}
-                                <div class="reorder">
-                                    <button
-                                        on:click={() =>
-                                            ReOrder(index, index - 1)}
-                                    >
-                                        <Fa icon={faChevronUp} />
-                                    </button>
-                                    <button
-                                        on:click={() =>
-                                            ReOrder(index, index + 1)}
-                                    >
-                                        <Fa icon={faChevronDown} />
-                                    </button>
-                                </div>
-                            {:else}
-                                <div class="vertical">
-                                    <button
-                                        class="edit secondary"
-                                        on:click={() =>
-                                            (editableItemId = item.id)}
-                                    >
-                                        <Fa icon={faPenToSquare} />
-                                    </button>
-                                    <button
-                                        class="remove danger"
-                                        on:click={() => removeItem(item.id)}
-                                    >
-                                        <Fa icon={faTrashCan} />
-                                    </button>
-                                </div>
-                            {/if}
-                        {/if}
-                    </li>
+                    <CollectionItem
+                        {item}
+                        {index}
+                        bind:editableItemId
+                        on:removeItem={removeItem(item.id)}
+                        on:saveEdit={(e) => {
+                            console.log("Save edit event:", e.detail);
+                            saveEdit(e.detail);
+                        }}
+                        on:reorderItem={(e) =>
+                            ReOrder(e.detail.prevIndex, e.detail.newIndex)}
+                        {isReordering}
+                        {isRenaming}
+                    />
                 {/each}
             </ul>
         </div>
@@ -542,6 +510,13 @@
         </select>
 
         {#if category}
+            <h2>Add item</h2>
+
+            <select bind:value={collectionType}>
+                <option value="Image">Image</option>
+                <option value="Audio">Audio</option>
+                <option value="Question">Question</option>
+            </select>
             {#if collectionType === "Image"}
                 <!-- on submit form, call UploadFile -->
                 <form class="form">
@@ -577,14 +552,8 @@
                     <button type="button" class="" on:click={uploadData}
                         >Add item</button
                     >
-                    <button
-                        class="danger"
-                        style="margin-top: 44px"
-                        on:click={confirmDelete}>Delete Collection</button
-                    >
                 </form>
             {:else if collectionType === "Audio"}
-                <h2>Search for song</h2>
                 <AudioUploader
                     on:addSong={(e) => {
                         console.log("AudioUploader addSong event:", e);
@@ -621,6 +590,24 @@
                     </button>
                 </form>
             {/if}
+            <div class="button-group">
+                {#if items.length > 1}
+                    {#if !isReordering}
+                        <button
+                            class="secondary"
+                            on:click={() => (isReordering = true)}
+                            >Reorder</button
+                        >
+                    {:else}
+                        <button class="secondary" on:click={reorderItems}
+                            >Done</button
+                        >
+                    {/if}
+                {/if}
+                <button class="danger" on:click={confirmDelete}
+                    >Delete Collection</button
+                >
+            </div>
         {/if}
     {/if}
     <div class="container" style="display: none;">

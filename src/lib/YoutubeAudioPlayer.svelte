@@ -92,14 +92,18 @@
 </script>
 
 <div class="player-container">
-    <button on:click={togglePlay} disabled={!playerReady}>
-        {#if isPlaying}
-            <Fa icon={faPauseCircle} /><span> Pause </span>
-        {:else}
-            <Fa icon={faPlayCircle} />
-            <span> Play </span>
-        {/if}
-    </button>
+    {#if !playerReady}
+        <span>Loading...</span>
+    {:else}
+        <button on:click={togglePlay} disabled={!playerReady}>
+            {#if isPlaying}
+                <Fa icon={faPauseCircle} /><span> Pause </span>
+            {:else}
+                <Fa icon={faPlayCircle} />
+                <span> Play </span>
+            {/if}
+        </button>
+    {/if}
     <div
         bind:this={containerEl}
         class="hidden-iframe"
@@ -108,31 +112,11 @@
 </div>
 
 <style>
-    .player-container {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
     .hidden-iframe {
         width: 0;
         height: 0;
         overflow: hidden;
         position: absolute;
         pointer-events: none;
-    }
-
-    button {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-
-    button:disabled {
-        background: #aaa;
     }
 </style>

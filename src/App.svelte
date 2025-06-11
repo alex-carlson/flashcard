@@ -17,10 +17,11 @@
   import Host from "./routes/Host/+page.svelte";
   import Leaderboard from "./routes/Leaderboard/+page.svelte";
   import { onMount } from "svelte";
-  import { user } from "./stores/user.js";
+  import { user, restoreSession } from "./stores/user.js";
 
   onMount(async () => {
     document.title = "Quizzems - Flashcard Game";
+    // restoreSession();
   });
 
   const routes = {

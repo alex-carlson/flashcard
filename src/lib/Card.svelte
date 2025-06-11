@@ -67,9 +67,7 @@
         on:click={() => currentMode === Modes.DEFAULT && toggleReveal(i)}
     >
         {#if item.type === "audio"}
-            <div class="padding">
-                <YoutubeAudioPlayer id={item.id} videoId={item.audio} />
-            </div>
+            <YoutubeAudioPlayer id={item.id} videoId={item.audio} />
         {:else if item.type === "image"}
             <LazyLoadImage
                 imageUrl={item.imageUrl}

@@ -30,8 +30,31 @@ async function fetchUserProfile(sessionUser, token = null) {
   };
 
   return updatedUser;
-
 }
+
+export async function restoreSession() {
+  console.log('Restoring session...');
+  try {
+    const session = await getSession();
+    if (!session) {
+      console.log('No session found, user is not logged in');
+      user.set(null);
+      return;
+    }
+    console.log('Session found, restoring user profile...');
+    const sessionUser = session.user;
+    const token = session.access_token;
+    const userWithProfile = await fetchUserProfile(sessionUser, token);
+    user.set(userWithProfile); // Update user store with restored session user
+    console.log('User profile restored:', userWithProfile);
+    initSocket(userWithProfile); // Initialize socket with user profile
+  } catch (err) {
+    console.error('Error restoring session:', err);
+    user.set(null);
+  }
+  const userWithProfile = await fetchUserProfile(sessionUser, token);
+  user.set(userWithProfile); // Update user store with new session user
+});
 
 // Listen for auth changes and react accordingly
 supabase.auth.onAuthStateChange(async (_event, session) => {

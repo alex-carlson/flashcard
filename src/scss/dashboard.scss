@@ -1,0 +1,25 @@
+.scores {
+    .pagination {
+        // align in a horizontal line with 4px gap
+
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        margin: 10px 0;
+        padding: 0;
+        flex-direction: row;
+        align-items: center;
+        list-style: none;
+
+        button {
+            width: 80px;
+        }
+    }
+}
+
+.options {
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+}
