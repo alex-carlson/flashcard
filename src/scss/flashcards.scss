@@ -67,6 +67,60 @@
             opacity: 0.5;
         }
 
+        h2 {
+            color: black;
+        }
+
+        .player-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+
+
+            button {
+                margin: 1rem 0;
+                background-color: var(--success-color);
+                border: 0;
+                padding: 0;
+                cursor: pointer;
+                color: white;
+                font-size: 24px;
+                transition: color 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 120px;
+                height: 120px;
+                text-align: center; // Ensure text is centered
+
+                &:hover {
+                    color: black;
+                }
+
+                &:disabled {
+                    color: black;
+                    cursor: not-allowed;
+                }
+
+                span {
+                    background-color: transparent;
+                    font-size: 24px;
+                    margin-left: 0.5rem;
+                    padding: 0;
+                    margin-top: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: auto;
+                    height: auto;
+                    text-align: center;
+                }
+            }
+        }
+
         @keyframes bounce {
             0% {
                 transform: scale(1);

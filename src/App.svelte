@@ -16,10 +16,11 @@
   import Join from "./routes/Join/+page.svelte";
   import Host from "./routes/Host/+page.svelte";
   import { onMount } from "svelte";
-  import { user } from "./stores/user.js";
+  import { user, restoreSession } from "./stores/user.js";
 
   onMount(async () => {
     document.title = "Quizzems - Flashcard Game";
+    restoreSession();
   });
 
   const routes = {

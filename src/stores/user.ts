@@ -4,46 +4,47 @@ import { initSocket } from './socket'; // <-- Import socketStore here
 
 export const user = writable(null);
 
+async function fetchUserProfile(sessionUser, token = null) {
+  if (!sessionUser) {
+    console.error('No session user provided');
+    return Promise.resolve(null);
+  }
+
+  const userWithProfile = await fetchUser(sessionUser.id);
+
+  // get bio and username from userWithProfile
+  if (!userWithProfile) {
+    console.error('No user profile found for session user:', sessionUser.id);
+    return null;
+  }
+
+  const bio = userWithProfile.bio || '';
+  const username = userWithProfile.username || '';
+
+  // Update session user with profile data
+  const updatedUser = {
+    ...sessionUser,
+    bio,
+    username,
+    token
+  };
+
+  return updatedUser;
+
+}
+
 // Listen for auth changes and react accordingly
 supabase.auth.onAuthStateChange(async (_event, session) => {
   const sessionUser = session?.user ?? null;
-  user.set(sessionUser);
-
-  console.log('Auth state changed:', {
-    event: _event,
-    session,
-    user: sessionUser
-  });
-
   const token = session?.access_token ?? null;
+  if (!sessionUser) {
+    user.set(null);
 
-  initSocket(token); // Reinitialize socket connection with new token
-});
-
-export async function initUser() {
-  console.log('Initializing user session...');
-  try {
-    const { data, error } = await getSession();
-
-    if (error) {
-      console.error('Error getting initial session:', error.message);
-      user.set(null);
-      return;
-    }
-
-    console.log('Initial session data:', data);
-
-    const sessionUser = data.session?.user ?? null;
-    user.set(sessionUser);
-    console.log('Initial user session:', sessionUser);
-
-    const token = data.session?.access_token ?? null;
-
-    initSocket(token); // Initialize socket connection with token
-  } catch (err) {
-    console.error('Exception during initUser:', err);
+    return;
   }
-}
+  const userWithProfile = await fetchUserProfile(sessionUser, token);
+  user.set(userWithProfile); // Update user store with new session user
+});
 
 export async function logOutUser() {
   console.log('Logging out user...');

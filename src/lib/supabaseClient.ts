@@ -16,9 +16,18 @@ export async function getSession() {
         if (data) console.log('Session data:', data);
         if (error) console.error('Session error:', error);
 
-        return { data, error };
+        return data.session; // ✅ Return the session directly
     } catch (e) {
         console.error('Supabase getSession threw:', e);
-        return { data: null, error: e };
+        return null;
     }
+}
+
+export async function getImageUrl(path: string) {
+    const { data, error } = await supabase.storage.from('your-bucket').getPublicUrl(path);
+    if (error) {
+        console.error(error);
+        return null;
+    }
+    return data.publicUrl;
 }
