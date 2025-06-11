@@ -22,6 +22,7 @@
     let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = false;
     let isReordering = false;
+    let collectionType = "Image";
 
     document.title = "Manage Collections";
 
@@ -378,17 +379,23 @@
             <button class="warning" on:click={toggleRenaming}>Cancel</button>
         {:else}
             <div class="collection-name">
-                <img
-                    src={await getImageUrl(
-                        `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/${$user.username}/${category}/thumbnail`,
-                    )}
-                    alt="Thumbnail"
-                    class="thumbnail"
-                />
+                {#await getImageUrl(`${$user.username}/${category}/thumbnail`) then url}
+                    <img
+                        src={url}
+                        alt="Thumbnail"
+                        class="thumbnail"
+                    />
+                {:catch error}
+                    <img
+                        src="/avatar.png"
+                        alt="Thumbnail"
+                        class="thumbnail"
+                    />
+                {/await}
                 <h2>{category}</h2>
-                <button class="secondary" on:click={toggleRenaming}
-                    ><Fa icon={faPenToSquare} /></button
-                >
+                <button class="secondary" on:click={toggleRenaming}>
+                    <Fa icon={faPenToSquare} />
+                </button>
             </div>
             <div class="row">
                 <h2>{isPublic ? "Public" : "Private"}</h2>

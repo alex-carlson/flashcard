@@ -20,7 +20,7 @@
 
   onMount(async () => {
     document.title = "Quizzems - Flashcard Game";
-    restoreSession();
+    // restoreSession();
   });
 
   const routes = {

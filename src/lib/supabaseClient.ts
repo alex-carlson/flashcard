@@ -24,9 +24,9 @@ export async function getSession() {
 }
 
 export async function getImageUrl(path: string) {
-    const { data, error } = await supabase.storage.from('your-bucket').getPublicUrl(path);
-    if (error) {
-        console.error(error);
+    const { data } = supabase.storage.from('uploads').getPublicUrl(path);
+    if (!data || !data.publicUrl) {
+        console.error('No public URL returned for', path);
         return null;
     }
     return data.publicUrl;
