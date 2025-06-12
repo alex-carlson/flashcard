@@ -1,7 +1,7 @@
 <script>
   import { user, setUserBio } from "$stores/user";
   import { getSession } from "$lib/supabaseClient";
-  import { logOut, updateUsername, updateEmail } from "$lib/auth/auth";
+  import { updateUsername, updateEmail } from "$lib/auth";
   import ProfilePicture from "./ProfilePicture.svelte";
   import { get } from "svelte/store";
 

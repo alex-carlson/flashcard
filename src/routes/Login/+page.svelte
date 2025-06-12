@@ -7,7 +7,7 @@
     signUpWithEmail,
     createProfileIfMissing,
     signInWithGoogle,
-  } from "$lib/auth/auth";
+  } from "$lib/auth";
   import { supabase } from "$lib/supabaseClient";
 
   let email = "";
