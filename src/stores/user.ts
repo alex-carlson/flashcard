@@ -54,7 +54,8 @@ export async function restoreSession() {
   }
   const userWithProfile = await fetchUserProfile(sessionUser, token);
   user.set(userWithProfile); // Update user store with new session user
-});
+  console.log('Session restored and user store updated:', userWithProfile);
+}
 
 // Listen for auth changes and react accordingly
 supabase.auth.onAuthStateChange(async (_event, session) => {

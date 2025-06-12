@@ -18,15 +18,16 @@
 </script>
 
 <div class="lazy-load">
-    <img src={imageUrl} />
-    <!-- <img
-        src={imageUrl}
-        alt="Lazy Loaded Image"
-        loading="lazy"
-        class:loaded
-        on:load={handleLoad}
-        on:error={handleError}
-    /> -->
+    {#if imageUrl}
+        <img
+            src={imageUrl}
+            alt="Lazy Loaded Image"
+            loading="lazy"
+            class:loaded={loaded}
+            on:load={handleLoad}
+            on:error={handleError}
+        />
+    {/if}
 </div>
 
 <style>

@@ -1,6 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import LazyLoadImage from "./LazyLoadImage.svelte";
+    import { getImageUrl } from "./supabaseClient";
     import { fetchLatestCollections } from "./collections";
 
     // convert timestamptz to mm/dd/yyyy format
@@ -27,11 +28,9 @@
                         <a
                             href="#/{collection.author_id}/{collection.category}"
                         >
-                            {#if collection.items.length > 0}
-                                <LazyLoadImage
-                                    imageUrl={collection.items[0].image}
-                                />
-                            {/if}
+                            {#await getImageUrl(`${collection.author}/${collection.category}/thumbnail`) then imageUrl}
+                                <LazyLoadImage imageUrl={imageUrl ? imageUrl+".jpg" : collection.items[0].image} />
+                            {/await}
                             <div class="vertical fill align-left">
                                 <span
                                     >{collection.category} [{collection.items

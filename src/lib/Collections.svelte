@@ -1,6 +1,7 @@
 <script>
     import { createEventDispatcher } from "svelte";
     import LazyLoadImage from "./LazyLoadImage.svelte";
+    import { getImageUrl } from "./supabaseClient";
     export let collections = [];
     let isCollapsed = true;
 
@@ -28,9 +29,9 @@
                             selectCollection(collection.id)}
                     >
                         {#if collection.items.length > 0}
-                            <LazyLoadImage
-                                imageUrl={collection.items[0].image}
-                            />
+                        {#await getImageUrl(`${collection.author}/${collection.category}/thumbnail`) then imageUrl}
+                            <LazyLoadImage imageUrl={imageUrl ? imageUrl+".jpg" : collection.items[0].image} />
+                        {/await}
                         {/if}
                         <span>
                             {collection.category}

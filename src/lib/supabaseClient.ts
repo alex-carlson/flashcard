@@ -29,5 +29,18 @@ export async function getImageUrl(path: string) {
         console.error('No public URL returned for', path);
         return null;
     }
-    return data.publicUrl;
+
+    // Check if the URL points to a valid image
+    try {
+        const response = await fetch(data.publicUrl+'.jpg', { method: 'HEAD' });
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.startsWith('image/')) {
+            return data.publicUrl;
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.error('Error validating image URL:', e);
+        return null;
+    }
 }

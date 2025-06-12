@@ -22,7 +22,6 @@
     let localItem = { id: 1, file: null, answer: "" };
     let isRenaming = false;
     let isReordering = false;
-    let collectionType = "Image";
 
     document.title = "Manage Collections";
 
@@ -437,13 +436,7 @@
             <div class="collection-name">
                 {#await getImageUrl(`${$user.username}/${category}/thumbnail`) then url}
                     <img
-                        src={url}
-                        alt="Thumbnail"
-                        class="thumbnail"
-                    />
-                {:catch error}
-                    <img
-                        src="/avatar.png"
+                        src={url+".jpg"}
                         alt="Thumbnail"
                         class="thumbnail"
                     />

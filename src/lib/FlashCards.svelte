@@ -53,7 +53,6 @@
             }
 
             cards = mapCards(data.items);
-            console.log("Fetched cards:", cards);
             // if isPartyMode, set mode to FILL_IN_THE_BLANK
             if (isPartyMode) {
                 currentMode = "FILL_IN_THE_BLANK";
