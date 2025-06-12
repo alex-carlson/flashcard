@@ -9,15 +9,15 @@
     const convertFileToImage = (e) => {
         const image = e.target.files[0];
 
-        if (
-            ![
-                "image/jpeg",
-                "image/png",
-                "image/gif",
-                "image/svg+xml",
-                "image/webp",
-            ].includes(image?.type)
-        ) {
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/svg+xml",
+            "image/webp",
+        ];
+
+        if (!image || !allowedTypes.includes(image.type)) {
             alert("Only images are allowed (jpeg, png, gif, svg, webp)");
             return;
         }
@@ -27,8 +27,10 @@
 
         reader.onload = (e) => {
             myImg = e.target.result;
-            dispatch("uploadImage", image); // Only dispatch after image is loaded
-            fileInput.value = ""; // Reset input inside the onload
+
+            // If a forced extension is provided, convert the File to a new one with the new type
+            let imageToDispatch = image;
+            dispatch("uploadImage", imageToDispatch);
         };
     };
 

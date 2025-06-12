@@ -1,9 +1,9 @@
 <script>
     import SortAndFilter from "../../lib/SortAndFilter.svelte";
     import LazyLoadImage from "../../lib/LazyLoadImage.svelte";
-    import { onMount } from "svelte";
-
     import { fetchCollections } from "$lib/collections";
+    import { getImageUrl } from "$lib/supabaseClient";
+    import { onMount } from "svelte";
 
     let collections = []; // Original collections array
     let filteredCollections = []; // Array for sorted/filtered collections
@@ -72,9 +72,19 @@
                 <li>
                     <a href="#/{collection.author_id}/{collection.category}">
                         {#if collection.items.length > 0}
-                            <LazyLoadImage
-                                imageUrl={collection.items[0].image}
-                            />
+                            {#await getImageUrl(`${collection.author}/${collection.category}/thumbnail.jpg`)}
+                                <LazyLoadImage
+                                    imageUrl={collection.items[0].image}
+                                    tempSize="100px"
+                                />
+                            {:then imageUrl}
+                                <LazyLoadImage
+                                    imageUrl={imageUrl
+                                        ? imageUrl
+                                        : collection.items[0].image}
+                                    tempSize="100px"
+                                />
+                            {/await}
                         {/if}
                         <p>
                             {collection.category}

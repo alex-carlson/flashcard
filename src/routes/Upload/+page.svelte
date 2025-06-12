@@ -39,6 +39,7 @@
         if (!session) {
             throw new Error("User session not found");
         }
+
         return {
             Authorization: `Bearer ${session.access_token}`,
         };
@@ -217,21 +218,15 @@
     }
 
     // Upload data
-    async function uploadData(uuid = uuidv4()) {
-        const username = $user.username;
-        const author_id = $user.id;
-
+    async function uploadData(uuid = uuidv4(), forceJpg = false) {
         // If file is a URL (string), call /upload-url
         if (typeof localItem.file === "string") {
             try {
                 const data = {
                     uuid,
                     url: localItem.file,
-                    folder: `${username}/${category}`,
-                    answer: localItem.answer,
-                    category,
-                    author: username,
-                    author_id,
+                    folder: `${$user.username}/${category}`,
+                    forceJpeg: forceJpg,
                 };
                 console.log("Uploading URL data:", data);
                 const result = await apiFetch(
@@ -259,19 +254,13 @@
         const formData = new FormData();
         formData.append("uuid", uuid);
         formData.append("file", localItem.file);
-        formData.append("folder", `${username}/${category}`);
-        formData.append("answer", localItem.answer);
-        formData.append("category", category);
-        formData.append("author", username);
-        formData.append("author_id", author_id);
+        formData.append("folder", `${$user.username}/${category}`);
+        formData.append("forceJpeg", forceJpg);
 
-        console.log("Uploading data:", {
-            uuid: formData.get("uuid"),
-            file: formData.get("file"),
-            folder: formData.get("folder"),
-            answer: formData.get("answer"),
-            category: formData.get("category"),
-        });
+        // Log all FormData entries
+        for (let [key, value] of formData.entries()) {
+            console.log(`formData[${key}] =`, value);
+        }
 
         try {
             const result = await apiFetch(
@@ -434,12 +423,8 @@
             <button class="warning" on:click={toggleRenaming}>Cancel</button>
         {:else}
             <div class="collection-name">
-                {#await getImageUrl(`${$user.username}/${category}/thumbnail`) then url}
-                    <img
-                        src={url+".jpg"}
-                        alt="Thumbnail"
-                        class="thumbnail"
-                    />
+                {#await getImageUrl(`${$user.username}/${category}/thumbnail.jpg`) then url}
+                    <img src={url} alt="Thumbnail" class="thumbnail" />
                 {/await}
                 <h2>{category}</h2>
                 <button class="secondary" on:click={toggleRenaming}>
@@ -462,7 +447,7 @@
                     on:uploadImage={(event) => {
                         console.log("Thumbnail upload event:", event.detail);
                         localItem.file = event.detail;
-                        uploadData("thumbnail");
+                        uploadData("thumbnail", true);
                     }}
                 />
             </div>

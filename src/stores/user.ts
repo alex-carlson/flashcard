@@ -1,75 +1,46 @@
 import { writable } from 'svelte/store';
-import { supabase, getSession } from '$lib/supabaseClient';
-import { fetchUser } from '../lib/user'
+import { supabase } from '$lib/supabaseClient';
+import { fetchUser } from '../lib/user';
 
 export const user = writable(null);
 
+// Internal helper to merge profile data with session user
 async function fetchUserProfile(sessionUser, token = null) {
   if (!sessionUser) {
     console.error('No session user provided');
-    return Promise.resolve(null);
+    return null;
   }
 
   const userWithProfile = await fetchUser(sessionUser.id);
 
-  // get bio and username from userWithProfile
   if (!userWithProfile) {
     console.error('No user profile found for session user:', sessionUser.id);
     return null;
   }
 
-  const bio = userWithProfile.bio || '';
-  const username = userWithProfile.username || '';
-
-  // Update session user with profile data
-  const updatedUser = {
+  return {
     ...sessionUser,
-    bio,
-    username,
+    bio: userWithProfile.bio || '',
+    username: userWithProfile.username || '',
     token
   };
-
-  return updatedUser;
 }
 
-export async function restoreSession() {
-  console.log('Restoring session...');
-  try {
-    const session = await getSession();
-    if (!session) {
-      console.log('No session found, user is not logged in');
-      user.set(null);
-      return;
-    }
-    console.log('Session found, restoring user profile...');
-    const sessionUser = session.user;
-    const token = session.access_token;
-    const userWithProfile = await fetchUserProfile(sessionUser, token);
-    user.set(userWithProfile); // Update user store with restored session user
-    console.log('User profile restored:', userWithProfile);
-    initSocket(userWithProfile); // Initialize socket with user profile
-  } catch (err) {
-    console.error('Error restoring session:', err);
-    user.set(null);
-  }
-  const userWithProfile = await fetchUserProfile(sessionUser, token);
-  user.set(userWithProfile); // Update user store with new session user
-  console.log('Session restored and user store updated:', userWithProfile);
-}
-
-// Listen for auth changes and react accordingly
+// Listen for Supabase auth state changes
 supabase.auth.onAuthStateChange(async (_event, session) => {
   const sessionUser = session?.user ?? null;
   const token = session?.access_token ?? null;
+
   if (!sessionUser) {
     user.set(null);
-
     return;
   }
+
   const userWithProfile = await fetchUserProfile(sessionUser, token);
-  user.set(userWithProfile); // Update user store with new session user
+  user.set(userWithProfile);
 });
 
+// Log out and clear the store
 export async function logOutUser() {
   console.log('Logging out user...');
   try {
@@ -87,7 +58,8 @@ export async function logOutUser() {
   }
 }
 
-export async function setUserBio(userId: string | null, bio: string) {
+// Profile update helpers
+export async function setUserBio(userId, bio) {
   if (!userId) {
     console.error('No userId provided');
     return null;
@@ -108,7 +80,7 @@ export async function setUserBio(userId: string | null, bio: string) {
   return data;
 }
 
-export async function setUserDisplayName(userId: string | null, displayName: string) {
+export async function setUserDisplayName(userId, displayName) {
   if (!userId) {
     console.error('No userId provided');
     return null;

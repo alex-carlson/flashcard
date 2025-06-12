@@ -29,9 +29,19 @@
                             selectCollection(collection.id)}
                     >
                         {#if collection.items.length > 0}
-                        {#await getImageUrl(`${collection.author}/${collection.category}/thumbnail`) then imageUrl}
-                            <LazyLoadImage imageUrl={imageUrl ? imageUrl+".jpg" : collection.items[0].image} />
-                        {/await}
+                            {#await getImageUrl(`${collection.author}/${collection.category}/thumbnail.jpg`)}
+                                <LazyLoadImage
+                                    imageUrl={collection.items[0].image}
+                                    tempSize="50px"
+                                />
+                            {:then imageUrl}
+                                <LazyLoadImage
+                                    imageUrl={imageUrl
+                                        ? imageUrl
+                                        : collection.items[0].image}
+                                    tempSize="50px"
+                                />
+                            {/await}
                         {/if}
                         <span>
                             {collection.category}
