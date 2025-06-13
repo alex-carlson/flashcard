@@ -1,38 +1,43 @@
-# sv
+# Quizzems
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Quizzems is a web application designed to help users study and prepare for bar trivia nights. Create, share, and practice trivia questions across a variety of topics.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Create and organize trivia question sets
+- Practice with flashcards or quiz modes
+- Track your progress and performance
+- Share question sets with friends or teammates
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Getting Started
 
-# create a new project in my-app
-npx sv create my-app
-```
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/quizzems.git
+    cd quizzems
+    ```
 
-## Developing
+2. **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+3. **Start the development server:**
+    ```bash
+    npm start
+    ```
 
-```bash
-npm run dev
+4. **Open your browser:**
+    Visit `http://localhost:3000`
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Contributing
 
-## Building
+Contributions are welcome! Please open an issue or submit a pull request.
 
-To create a production version of your app:
+## License
 
-```bash
-npm run build
-```
+This project is licensed under the MIT License.
 
-You can preview the production build with `npm run preview`.
+## Contact
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+For questions or feedback, please open an issue on GitHub.
