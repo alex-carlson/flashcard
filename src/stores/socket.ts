@@ -2,13 +2,19 @@
 import { io, Socket } from 'socket.io-client';
 import { writable } from 'svelte/store';
 import { v4 as uuidv4 } from 'uuid';
+import { browser } from '$app/environment';
 
 let socketInstance: Socket | null = null;
-let playerId = localStorage.getItem('playerId') || null;
-if (!playerId) {
-    playerId = uuidv4(); // Generate a UUID for player ID
-    localStorage.setItem('playerId', playerId);
-    console.log('Generated new player ID:', playerId);
+let playerId: string | null = null;
+
+if (browser) {
+    // Wait for the browser to be ready before accessing localStorage
+    playerId = localStorage.getItem('playerId');
+    if (!playerId) {
+        playerId = uuidv4();
+        localStorage.setItem('playerId', playerId);
+        console.log('Generated new player ID:', playerId);
+    }
 }
 // Use a writable store to expose the socket instance reactively
 export const socket = writable<Socket | null>(null);

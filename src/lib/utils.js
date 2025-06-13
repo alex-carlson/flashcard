@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '$lib/supabaseClient';
 
 /**
  * Gets the user's name from the Supabase `profiles` table by their ID.

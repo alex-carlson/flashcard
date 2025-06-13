@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { supabase } from '$lib/supabaseClient';
-import { fetchUser } from '../lib/user';
+import { fetchUser } from '$lib/user';
 
 export const user = writable(null);
 
@@ -13,6 +13,8 @@ async function fetchUserProfile(sessionUser, token = null) {
 
   const userWithProfile = await fetchUser(sessionUser.id);
 
+  console.log('Fetched user profile:', userWithProfile);
+
   if (!userWithProfile) {
     console.error('No user profile found for session user:', sessionUser.id);
     return null;
@@ -22,7 +24,9 @@ async function fetchUserProfile(sessionUser, token = null) {
     ...sessionUser,
     bio: userWithProfile.bio || '',
     username: userWithProfile.username || '',
-    token
+    token,
+    id: userWithProfile.id || sessionUser.id,
+    uid: userWithProfile.uid || sessionUser.id,
   };
 }
 
