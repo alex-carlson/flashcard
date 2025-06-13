@@ -29,6 +29,7 @@
 	// on mount, set a random tagline
 	import { onMount } from 'svelte';
 	onMount(() => {
+		document.title = 'Quizzems';
 		const taglineElement = document.getElementById('tagline');
 		if (taglineElement) {
 			taglineElement.textContent = getRandomTagline();
