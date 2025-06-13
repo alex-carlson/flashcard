@@ -1,12 +1,10 @@
 import vercel from '@sveltejs/adapter-vercel';
-import preprocess from 'svelte-preprocess';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
 const config = {
-	preprocess: preprocess({
-		scss: {},
-		postcss: true
-	}),
+	preprocess: vitePreprocess(),
 	kit: {
-		adapter: vercel()
+		adapter: vercel(),
 	}
 };
 
