@@ -16,14 +16,14 @@
 		<ul>
 			{#each navLinks as { href, label, path }}
 				<li>
-					<a {href}>{label}</a>
+					<a {href} use:enhance>{label}</a>
 				</li>
 			{/each}
 			{#if $user}
 				<UserNav />
 			{:else}
 				<li>
-					<a href="/login">Login</a>
+					<a href="/login" use:enhance>Login</a>
 				</li>
 			{/if}
 		</ul>
