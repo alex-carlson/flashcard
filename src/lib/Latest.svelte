@@ -67,6 +67,6 @@
 			{/each}
 		</ul>
 	{:else}
-		<p class="empty">Quizzes currently unavailable :(</p>
+		<p class="empty">Loading...</p>
 	{/if}
 </div>

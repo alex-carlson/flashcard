@@ -5,6 +5,7 @@
 	import { socket, initSocket } from '$stores/socket.js';
 	import { user } from '$stores/user.js';
 	import { get } from 'svelte/store';
+	import { goto } from '$app/navigation';
 
 	let roomCode = '';
 
@@ -48,7 +49,11 @@
 		// Listen once for room-update event to confirm join
 		socketInstance.once('room-update', (room) => {
 			console.log('Joined room:', room);
-			window.location.href = `/party/${room.roomCode}`;
+
+			goto(`/party/${room.roomCode}`, {
+				state: { room },
+				replaceState: true
+			});
 		});
 	}
 

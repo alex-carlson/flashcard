@@ -323,11 +323,13 @@
 		</div>
 	{/if}
 
-	<div class="padding">
-		<button class="give-up" on:click={onCompleteQuiz}>
-			<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
-		</button>
-	</div>
+	{#if !isPartyMode && !isComplete}
+		<div class="padding">
+			<button class="give-up" on:click={onCompleteQuiz}>
+				<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
+			</button>
+		</div>
+	{/if}
 
 	<Modal
 		bind:show={showModal}

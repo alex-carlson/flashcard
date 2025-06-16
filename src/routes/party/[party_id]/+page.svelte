@@ -1,11 +1,13 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { supabase } from '$lib/supabaseClient.js';
-	import { socket } from '$stores/socket.js';
+	import { socket, disconnectSocket } from '$stores/socket.js';
 	import { user } from '$stores/user.js';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import FlashCards from '$lib/FlashCards.svelte';
+	import Search from '$lib/Search.svelte';
+	import RandomItems from '$lib/RandomItems.svelte';
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { faFlag } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
@@ -13,10 +15,12 @@
 	let party_id = null;
 	let partyData = null;
 	let author_id = null;
-	let category = null;
+	let authorName = null; // Assuming you might want to display the author's name
+	let collectionName = null; // Assuming you might want to display the collection name
+	let slug = null;
 	let flashCardsRef;
 	let isHost = false;
-
+	let collection = null;
 	let socketInstance = null;
 
 	// Subscribe to socket store
@@ -30,6 +34,14 @@
 		currentUser = u;
 	});
 
+	function startGame() {
+		if (!partyData || !isHost) return;
+
+		partyData.isStarted = true;
+
+		socketInstance.emit('start-game', party_id);
+	}
+
 	// Setup socket event listeners when socket is ready
 	function setupSocketListeners() {
 		if (!socketInstance) return;
@@ -39,6 +51,11 @@
 		socketInstance.off('game-started');
 
 		socketInstance.on('room-update', (room) => {
+			console.log('Room updated:', room);
+			// if room.collectionId changed, fetch collection info
+			if (room.collectionId && room.collectionId !== partyData?.collectionId) {
+				getCollectionInformation(room.collectionId);
+			}
 			partyData = {
 				...partyData,
 				...room
@@ -113,6 +130,32 @@
 			updatePre();
 			window.location.hash = '/party';
 		});
+
+		socketInstance.on('room-reset', (data) => {
+			console.log('Room reset:', data);
+			// Reset partyData to initial state
+			partyData = {
+				...partyData,
+				isStarted: false,
+				isFinished: false,
+				scores: {},
+				finishedPlayers: [],
+				collectionId: data.collectionId || null
+			};
+			updatePre();
+		});
+
+		socketInstance.on('collection-changed', (data) => {
+			console.log('Collection changed:', data);
+			// Update collection information
+			getCollectionInformation(data.collectionId);
+			// updated partydata with data
+			partyData = {
+				...partyData,
+				...data
+			};
+			updatePre();
+		});
 	}
 
 	function updatePre() {
@@ -147,8 +190,7 @@
 
 	onDestroy(() => {
 		if (socketInstance) {
-			socketInstance.off('room-update');
-			socketInstance.off('game-started');
+			disconnectSocket();
 		}
 
 		unsubscribeSocket();
@@ -158,7 +200,7 @@
 	function getCollectionInformation(collectionId) {
 		supabase
 			.from('collections')
-			.select('author_id, category')
+			.select('author_id, category, slug, author')
 			.eq('id', collectionId)
 			.single()
 			.then(({ data, error }) => {
@@ -167,7 +209,9 @@
 				} else {
 					console.log('Collection information:', data);
 					author_id = data.author_id;
-					category = data.category;
+					slug = data.slug; // Assuming slug is part of the collection data
+					authorName = data.author; // Assuming author name is part of the collection data
+					collectionName = data.category; // Assuming category is the collection name
 				}
 			});
 	}
@@ -181,8 +225,6 @@
 			partyData = data;
 			console.log('Party data fetched:', partyData);
 			updatePre();
-
-			isHost = data.hostId === currentUser?.id;
 
 			partyData.hostId = data.hostId;
 			partyData.collectionId = data.collectionId;
@@ -227,28 +269,60 @@
 			}
 		}
 	}
+
+	$: isHost = currentUser?.id && partyData?.hostId && currentUser.id === partyData.hostId;
 </script>
 
 <div class="container white partymode">
 	<div class="padding">
-		<pre class="debug-box padding" id="party-data" style="display: none;"></pre>
+		<pre class="debug-box padding" id="party-data" style="display: none"></pre>
 		<h1 class="room-label">{party_id}</h1>
-		{#if partyData && partyData.players.length > 0 && !partyData.isStarted}
+
+		<!-- Connected players -->
+		{#if partyData?.players?.length > 0 && !partyData.isStarted}
 			<p>Connected players:</p>
 			<ul class="players-list">
 				{#each partyData.players as player}
-					<li>
-						<ProfilePicture userId={player} size={32} />
-					</li>
+					<li><ProfilePicture userId={player} size={32} /></li>
 				{/each}
 			</ul>
 		{/if}
 
-		{#if partyData && isHost && !partyData.isStarted && !partyData.isFinished}
+		<!-- Category Picker -->
+		{#if partyData && !partyData.isStarted && !partyData.isFinished}
+			<div class="categoryPicker padding">
+				{#if isHost}
+					<Search
+						on:SearchItemClicked={(e) => {
+							collection = e.detail;
+						}}
+					/>
+					<h3>Not sure what to pick?</h3>
+					<p>How about one of these?</p>
+					<RandomItems
+						onCollectionClick={(e) => {
+							socketInstance.emit('set-collection', {
+								code: party_id,
+								collectionId: e.id
+							});
+						}}
+					/>
+				{:else if collectionName}
+					<h3>Category: {collectionName}</h3>
+					<p>Author: {authorName}</p>
+				{:else}
+					<p>No category selected yet.</p>
+				{/if}
+			</div>
+		{/if}
+
+		<!-- Start Game Button -->
+		{#if isHost && partyData && !partyData.isStarted && !partyData.isFinished && partyData.collectionId}
 			<button class="button" on:click={startGame}>Start Game</button>
 		{/if}
 
-		{#if partyData && partyData.isFinished}
+		<!-- Game Finished -->
+		{#if partyData?.isFinished}
 			<h2>That's a wrap!</h2>
 			<ul class="final-scores-list padding">
 				{#each partyData.players as playerId}
@@ -258,33 +332,50 @@
 					</li>
 				{/each}
 			</ul>
+
+			{#if isHost}
+				<div class="button-group">
+					<button class="button" on:click={() => socketInstance.emit('close-room', party_id)}>
+						Close Lobby
+					</button>
+					<button class="button" on:click={() => socketInstance.emit('reset-room', party_id)}>
+						New Category
+					</button>
+				</div>
+			{/if}
 		{/if}
 
-		{#if partyData && partyData.isStarted && author_id && !partyData.isFinished}
+		<!-- Game In Progress -->
+		{#if partyData?.isStarted && !partyData.isFinished}
 			<ul class="scores-list padding">
 				{#each Object.entries(partyData.scores) as [playerId, score]}
-					<li
-						class:finishedPlayer={partyData.finishedPlayers &&
-							partyData.finishedPlayers.includes(playerId)}
-					>
+					<li class:finishedPlayer={partyData.finishedPlayers?.includes(playerId)}>
 						<ProfilePicture userId={playerId} size={32} />
 						<span>{score}</span>
 					</li>
 				{/each}
 			</ul>
+
 			<FlashCards
-				collection={category}
+				collection={slug}
 				isPartyMode={true}
 				bind:this={flashCardsRef}
 				{author_id}
 				on:correctAnswer={(e) => scorePoint(e.detail)}
 			/>
-			<!-- add give up button with white flag icon -->
+
 			<button class="button" on:click={giveUp}>
 				Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" />
 			</button>
-		{:else if partyData && !partyData.isFinished}
-			<p>The game has not started yet. Waiting for the host to start...</p>
+		{/if}
+
+		<!-- Waiting State -->
+		{#if partyData && !partyData.isStarted && !partyData.isFinished}
+			{#if isHost && !partyData.collectionId}
+				<p>Select a category to start the match</p>
+			{:else if !isHost}
+				<p>The game has not started yet. Waiting for the host to start...</p>
+			{/if}
 		{/if}
 	</div>
 </div>

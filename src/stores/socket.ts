@@ -50,3 +50,11 @@ export function initSocket(token: string) {
 
     socketInstance.connect();
 }
+
+export function disconnectSocket() {
+    if (socketInstance) {
+        socketInstance.disconnect();
+        socket.set(null);
+        socketInstance = null;
+    }
+}

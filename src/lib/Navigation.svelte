@@ -6,8 +6,8 @@
 	const navLinks = [
 		// { href: "/", label: "Home", path: "/" },
 		{ href: '/about', label: 'About', path: '/about' },
-		{ href: '/explore', label: 'Explore', path: '/explore' }
-		// { href: '/party', label: 'Party', path: '/party' }
+		{ href: '/explore', label: 'Explore', path: '/explore' },
+		{ href: '/party', label: 'Party', path: '/party' }
 	];
 </script>
 
