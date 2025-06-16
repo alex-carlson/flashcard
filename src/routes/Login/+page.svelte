@@ -15,10 +15,9 @@
 	let errorMsg = '';
 	let isLogin = true;
 
-	document.title = isLogin ? 'Login' : 'Sign Up';
-
 	// 🔁 Check for existing session on mount
 	onMount(async () => {
+		document.title = isLogin ? 'Login' : 'Sign Up';
 		const { data, error } = await supabase.auth.getSession();
 		if (data.session) {
 			goto('/dashboard');

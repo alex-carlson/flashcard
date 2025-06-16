@@ -1,8 +1,10 @@
-<!-- 404 page -->
-
 <script>
-    console.log("404 page");
-    document.title = "404 Page Not Found";
+	import { onMount } from 'svelte';
+	console.log('404 page');
+	onMount(() => {
+		// Any additional setup can go here
+		document.title = '404 Page Not Found';
+	});
 </script>
 
 <h1>404 Page Not Found</h1>

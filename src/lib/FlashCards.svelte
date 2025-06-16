@@ -28,6 +28,7 @@
 	export let isPartyMode = false;
 	let author = null;
 	let collectionId = null;
+	let collectionName = null;
 	let cards = [];
 	let isGrid = false;
 	let isFullscreen = false;
@@ -46,6 +47,7 @@
 
 			author = data.author;
 			collectionId = data.id;
+			collectionName = data.category;
 
 			// if items length is 0, or is undefined, return
 			if (!data.items || data.items.length === 0) {
@@ -286,7 +288,7 @@
 
 	{#if cards.length > 0}
 		<div class="headline padding">
-			<h1>{collection}</h1>
+			<h1>{collectionName}</h1>
 			<p>
 				by <a href={`/author/${author_id}`}>{author}</a>
 			</p>

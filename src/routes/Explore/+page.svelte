@@ -11,8 +11,6 @@
 	let sortOption = 'name'; // Default sort option
 	let itemsPerPage = 10; // Default items per page
 
-	document.title = 'Explore';
-
 	function nextPage() {
 		if ((page + 1) * itemsPerPage < filteredCollections.length) {
 			page++;
@@ -46,6 +44,7 @@
 	}
 
 	onMount(async () => {
+		document.title = 'Explore';
 		collections = await fetchCollections();
 	});
 </script>

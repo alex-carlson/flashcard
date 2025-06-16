@@ -51,7 +51,7 @@ export async function getCollectionMetadataFromId(collectionId) {
 
     const { data, error } = await supabase
         .from('collections')
-        .select('category, author, created_at, author_id')
+        .select('category, author, created_at, author_id, slug')
         .eq('id', collectionId)
         .single();
 

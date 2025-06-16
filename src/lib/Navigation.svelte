@@ -1,7 +1,6 @@
 <script>
 	import { user } from '$stores/user';
 	import UserNav from './UserNav.svelte';
-	import { enhance } from '$app/forms';
 
 	// Navigation links
 	const navLinks = [
@@ -17,14 +16,14 @@
 		<ul>
 			{#each navLinks as { href, label, path }}
 				<li>
-					<a {href} use:enhance>{label}</a>
+					<a {href}>{label}</a>
 				</li>
 			{/each}
 			{#if $user}
 				<UserNav />
 			{:else}
 				<li>
-					<a href="/login" use:enhance>Login</a>
+					<a href="/login">Login</a>
 				</li>
 			{/if}
 		</ul>

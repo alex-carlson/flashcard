@@ -51,7 +51,7 @@
 				<ul>
 					{#each scores.slice((page - 1) * pageSize, page * pageSize) as score}
 						<li>
-							<a href="/{score.author_id}/{score.slug}">
+							<a href="/quiz/{score.author_id}/{score.slug}">
 								<strong>{score.collectionName}</strong>
 							</a>
 							- {score.percentage}%
