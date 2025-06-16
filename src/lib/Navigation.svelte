@@ -1,6 +1,7 @@
 <script>
 	import { user } from '$stores/user';
 	import UserNav from './UserNav.svelte';
+	import { enhance } from '$app/forms';
 
 	// Navigation links
 	const navLinks = [
