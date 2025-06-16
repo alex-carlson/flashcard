@@ -1,4 +1,6 @@
 <script>
+	export const prerender = true;
+
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';

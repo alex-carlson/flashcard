@@ -17,7 +17,6 @@
 
 	async function search(event) {
 		if (!browser) return;
-		console.log('API URL:', import.meta.env.VITE_API_URL);
 		try {
 			const response = await fetch(
 				`${import.meta.env.VITE_API_URL}/collections/search?searchTerm=${event.detail.query}`,
@@ -31,8 +30,6 @@
 			}
 
 			const data = await response.json();
-
-			console.log('Search results:', data);
 
 			// save data to collections
 			searchResults = data;

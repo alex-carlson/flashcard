@@ -1,4 +1,6 @@
 <script>
+	export const prerender = true;
+
 	import { user } from '$stores/user';
 	import { getImageUrl, getSession } from '$lib/supabaseClient';
 	import Collections from '$lib/Collections.svelte';

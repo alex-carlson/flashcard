@@ -1,4 +1,6 @@
 <script>
+	export const prerender = true;
+
 	import { onDestroy } from 'svelte';
 	import { socket, initSocket } from '$stores/socket.js';
 	import { user } from '$stores/user.js';

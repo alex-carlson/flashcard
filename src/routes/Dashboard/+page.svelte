@@ -1,4 +1,6 @@
 <script lang="ts">
+	export const prerender = true;
+
 	import AccountSettings from '$lib/AccountSettings.svelte';
 	import { user, logOutUser } from '$stores/user';
 	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/utils';

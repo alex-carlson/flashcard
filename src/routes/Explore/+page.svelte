@@ -1,4 +1,6 @@
 <script>
+	export const prerender = true;
+
 	import SortAndFilter from '$lib/SortAndFilter.svelte';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
 	import { fetchCollections } from '$lib/collections';

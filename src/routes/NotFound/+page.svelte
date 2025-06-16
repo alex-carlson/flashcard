@@ -1,4 +1,6 @@
 <script>
+	export const prerender = true;
+
 	import { onMount } from 'svelte';
 	console.log('404 page');
 	onMount(() => {
