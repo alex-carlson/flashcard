@@ -1,4 +1,8 @@
 <script>
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+
 	import Search from '$lib/Search.svelte';
 	import Latest from '$lib/Latest.svelte';
 
@@ -14,25 +18,25 @@
 		'0% ABV'
 	];
 
+	let tagline = '';
+
 	function getRandomTagline() {
 		const randomIndex = Math.floor(Math.random() * taglines.length);
 		return taglines[randomIndex];
 	}
 
 	function loadSearchedPage(event) {
-		console.log('Search item clicked:', event);
 		const detail = event.detail;
-		const url = `/${detail.author_id}/${detail.slug}`;
-		window.location.href = url;
+		const url = `/quiz/${detail.author_id}/${detail.slug}`;
+		if (browser) {
+			goto(url);
+		}
 	}
 
-	// on mount, set a random tagline
-	import { onMount } from 'svelte';
 	onMount(() => {
-		document.title = 'Quizzems';
-		const taglineElement = document.getElementById('tagline');
-		if (taglineElement) {
-			taglineElement.textContent = getRandomTagline();
+		if (browser) {
+			document.title = 'Quizzems';
+			tagline = getRandomTagline();
 		}
 	});
 </script>
@@ -41,7 +45,7 @@
 	<div class="image-section">
 		<div class="image-content">
 			<h1>Welcome to Quizzems</h1>
-			<p id="tagline" class="drop-quote"></p>
+			<p id="tagline" class="drop-quote">{tagline}</p>
 		</div>
 	</div>
 	<div class="padding">

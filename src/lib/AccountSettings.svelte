@@ -1,148 +1,139 @@
 <script>
-  import { user, setUserBio } from "$stores/user";
-  import { getSession } from "$lib/supabaseClient";
-  import { updateUsername, updateEmail } from "$lib/auth";
-  import ProfilePicture from "./ProfilePicture.svelte";
-  import { get } from "svelte/store";
+	import { user, setUserBio } from '$stores/user';
+	import { getSession } from '$lib/supabaseClient';
+	import { updateUsername, updateEmail } from '$lib/auth';
+	import ProfilePicture from './ProfilePicture.svelte';
+	import { get } from 'svelte/store';
 
-  let message = "";
-  let file = null;
-  let userId = null;
-  $: userId = get(user)?.id ?? null;
+	let message = '';
+	let file = null;
+	let userId = null;
+	$: userId = get(user)?.id ?? null;
 
-  async function getAuthHeaders() {
-    const { data: sessionData, error: sessionError } = await getSession();
-    if (sessionError || !sessionData?.session) {
-      throw new Error("User session not found");
-    }
-    return {
-      Authorization: `Bearer ${sessionData.session.access_token}`,
-    };
-  }
+	async function getAuthHeaders() {
+		const { data: sessionData, error: sessionError } = await getSession();
+		if (sessionError || !sessionData?.session) {
+			throw new Error('User session not found');
+		}
+		return {
+			Authorization: `Bearer ${sessionData.session.access_token}`
+		};
+	}
 
-  async function convertImageToJPG(file) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+	async function convertImageToJPG(file) {
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			const reader = new FileReader();
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+			reader.onload = (e) => {
+				img.src = e.target.result;
+			};
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
+			img.onload = () => {
+				const canvas = document.createElement('canvas');
+				canvas.width = img.width;
+				canvas.height = img.height;
 
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
+				const ctx = canvas.getContext('2d');
+				ctx.drawImage(img, 0, 0);
 
-        // Convert to JPEG Blob (quality 0.92 is default for good compression vs. quality)
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error("Failed to convert image to JPG"));
-            }
-          },
-          "image/jpeg",
-          0.92,
-        );
-      };
+				// Convert to JPEG Blob (quality 0.92 is default for good compression vs. quality)
+				canvas.toBlob(
+					(blob) => {
+						if (blob) {
+							resolve(blob);
+						} else {
+							reject(new Error('Failed to convert image to JPG'));
+						}
+					},
+					'image/jpeg',
+					0.92
+				);
+			};
 
-      img.onerror = (err) => reject(err);
-      reader.onerror = (err) => reject(err);
+			img.onerror = (err) => reject(err);
+			reader.onerror = (err) => reject(err);
 
-      reader.readAsDataURL(file);
-    });
-  }
+			reader.readAsDataURL(file);
+		});
+	}
 
-  async function uploadProfilePicture(file) {
-    const headers = await getAuthHeaders();
-    if (file) {
-      console.log("File selected:", file);
-      const jpgBlob = await convertImageToJPG(file[0]);
+	async function uploadProfilePicture(file) {
+		const headers = await getAuthHeaders();
+		if (file) {
+			console.log('File selected:', file);
+			const jpgBlob = await convertImageToJPG(file[0]);
 
-      const formData = new FormData();
-      formData.append("file", jpgBlob, "avatar.jpg");
-      formData.append("uuid", $user.id);
-      formData.append("folder", $user.id);
-      formData.append("bucket", "profilepictures");
-      formData.append("fileName", `avatar.jpg`);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}${"/users/uploadAvatar"}`,
-        {
-          method: "POST",
-          headers,
-          body: formData,
-        },
-      );
-    }
-  }
+			const formData = new FormData();
+			formData.append('file', jpgBlob, 'avatar.jpg');
+			formData.append('uuid', $user.id);
+			formData.append('folder', $user.id);
+			formData.append('bucket', 'profilepictures');
+			formData.append('fileName', `avatar.jpg`);
+			const response = await fetch(`${import.meta.env.VITE_API_URL}${'/users/uploadAvatar'}`, {
+				method: 'POST',
+				headers,
+				body: formData
+			});
+		}
+	}
 
-  async function updateBio() {
-    const bio = $user.bio;
-    if (!userId) {
-      message = "User ID not found";
-      return;
-    }
+	async function updateBio() {
+		const bio = $user.bio;
+		if (!userId) {
+			message = 'User ID not found';
+			return;
+		}
 
-    const updated = await setUserBio(userId, bio);
-    if (updated) {
-      message = "Bio updated successfully!";
-    } else {
-      message = "Failed to update bio.";
-    }
-  }
+		const updated = await setUserBio(userId, bio);
+		if (updated) {
+			message = 'Bio updated successfully!';
+		} else {
+			message = 'Failed to update bio.';
+		}
+	}
 </script>
 
 {#if $user}
-  <ProfilePicture userId={$user.id} size="150" />
-  <details class="accountSettings padding">
-    <summary>Account Settings</summary>
-    <div class="form">
-      <div class="profile-picture white padding">
-        <label for="profile-picture-input"
-          ><strong>Update Profile Picture</strong></label
-        >
-        <input
-          id="profile-picture-input"
-          type="file"
-          accept="image/*"
-          bind:files={file}
-          multiple={false}
-        />
-        <button on:click={() => uploadProfilePicture(file)}
-          >Upload Profile Picture</button
-        >
-      </div>
-      <div class="text-field padding">
-        <label>
-          <strong>Email:</strong>
-          <input type="email" bind:value={$user.email} />
-        </label>
-        <button on:click={() => updateEmail($user.email)}>Update Email</button>
-      </div>
-      <div class="text-field padding">
-        <label>
-          <strong>Display Name:</strong>
-          <input type="text" bind:value={$user.username} />
-        </label>
-        <button on:click={() => updateUsername($user.username)}
-          >Update Name</button
-        >
-      </div>
-      <div class="text-field padding">
-        <label>
-          <strong>Bio:</strong>
-          <textarea bind:value={$user.bio}></textarea>
-        </label>
-        <button on:click={() => updateBio()}>Update Bio</button>
-      </div>
-      <p>{message}</p>
-    </div>
-  </details>
+	<ProfilePicture userId={$user.id} size="150" />
+	<details class="accountSettings padding">
+		<summary>Account Settings</summary>
+		<div class="form">
+			<div class="profile-picture white padding">
+				<label for="profile-picture-input"><strong>Update Profile Picture</strong></label>
+				<input
+					id="profile-picture-input"
+					type="file"
+					accept="image/*"
+					bind:files={file}
+					multiple={false}
+				/>
+				<button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
+			</div>
+			<div class="text-field padding">
+				<label>
+					<strong>Email:</strong>
+					<input type="email" bind:value={$user.email} />
+				</label>
+				<button on:click={() => updateEmail($user.email)}>Update Email</button>
+			</div>
+			<div class="text-field padding">
+				<label>
+					<strong>Display Name:</strong>
+					<input type="text" bind:value={$user.username} />
+				</label>
+				<button on:click={() => updateUsername($user.username)}>Update Name</button>
+			</div>
+			<div class="text-field padding">
+				<label>
+					<strong>Bio:</strong>
+					<textarea bind:value={$user.bio}></textarea>
+				</label>
+				<button on:click={() => updateBio()}>Update Bio</button>
+			</div>
+			<p>{message}</p>
+		</div>
+	</details>
 {:else}
-  <p>Loading profile...</p>
+	<p>Loading profile...</p>
 {/if}

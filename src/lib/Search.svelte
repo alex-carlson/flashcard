@@ -1,9 +1,10 @@
 <script>
-	let searchTerm = '';
-	let searchResults = [];
 	import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 	import { createEventDispatcher } from 'svelte';
+	import { browser } from '$app/environment';
+	let searchTerm = '';
+	let searchResults = [];
 	const dispatch = createEventDispatcher();
 
 	function onClicked(event) {
@@ -15,6 +16,8 @@
 	}
 
 	async function search(event) {
+		if (!browser) return;
+		console.log('API URL:', import.meta.env.VITE_API_URL);
 		try {
 			const response = await fetch(
 				`${import.meta.env.VITE_API_URL}/collections/search?searchTerm=${event.detail.query}`,
@@ -28,6 +31,8 @@
 			}
 
 			const data = await response.json();
+
+			console.log('Search results:', data);
 
 			// save data to collections
 			searchResults = data;
@@ -54,10 +59,6 @@
 		<button
 			on:click={(event) => {
 				event.preventDefault();
-				const searchBox = document.getElementById('search');
-				if (searchBox) {
-					searchTerm = searchBox.value;
-				}
 				search({ detail: { query: searchTerm } });
 			}}
 		>
@@ -71,7 +72,7 @@
 				{#each searchResults as result}
 					<li>
 						<a
-							href="/{result.author_id}/{result.category}"
+							href="/quiz/{result.author_id}/{result.category}"
 							on:click|preventDefault={() => onClicked({ detail: result })}
 						>
 							{#if result.items.length > 0}

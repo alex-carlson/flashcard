@@ -13,8 +13,6 @@ async function fetchUserProfile(sessionUser, token = null) {
 
   const userWithProfile = await fetchUser(sessionUser.id);
 
-  console.log('Fetched user profile:', userWithProfile);
-
   if (!userWithProfile) {
     console.error('No user profile found for session user:', sessionUser.id);
     return null;
