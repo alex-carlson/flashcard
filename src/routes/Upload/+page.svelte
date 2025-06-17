@@ -147,7 +147,7 @@
 			await apiFetch('/items/edit', 'POST', {
 				collection: category,
 				id: item.id,
-				author_id: $user.id,
+				author_id: $user.uid,
 				answer: item.answer
 			});
 			editableItemId = null;
