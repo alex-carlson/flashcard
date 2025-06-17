@@ -331,7 +331,7 @@
 		const data = {
 			category,
 			author: $user.username,
-			author_id: $user.id,
+			author_id: $user.uid,
 			visible: event.target.checked
 		};
 
