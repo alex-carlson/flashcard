@@ -93,11 +93,13 @@
 
 	// Create new collection
 	async function createCollection() {
+		console.log($user);
 		try {
 			const username = $user.username;
 			const data = {
 				category: tempCategory,
-				author_id: $user.id,
+				author_id: $user.uid,
+				author_uuid: $user.id,
 				author: username
 			};
 			console.log('Creating collection with data:', data);
@@ -201,12 +203,18 @@
 	async function uploadData(uuid = uuidv4(), forceJpg = false) {
 		// If file is a URL (string), call /upload-url
 		if (typeof localItem.file === 'string') {
+			console.log('Detected URL upload:', localItem.file);
 			try {
 				const data = {
 					uuid,
 					url: localItem.file,
 					folder: `${$user.username}/${category}`,
-					forceJpeg: forceJpg
+					forceJpeg: forceJpg,
+					author_uuid: $user.id,
+					author_id: $user.uid,
+					author: $user.username,
+					category,
+					answer: localItem.answer
 				};
 				console.log('Uploading URL data:', data);
 				const result = await apiFetch('/items/upload-url', 'POST', data);
@@ -232,6 +240,11 @@
 		formData.append('file', localItem.file);
 		formData.append('folder', `${$user.username}/${category}`);
 		formData.append('forceJpeg', forceJpg);
+		formData.append('answer', localItem.answer);
+		formData.append('category', category);
+		formData.append('author', $user.username);
+		formData.append('author_uuid', $user.id);
+		formData.append('author_id', $user.uid);
 
 		// Log all FormData entries
 		for (let [key, value] of formData.entries()) {
@@ -431,20 +444,6 @@
 			</ul>
 		</div>
 
-		{#if errorMessage}
-			<p style="color: red">{errorMessage}</p>
-		{/if}
-		{#if successMessage}
-			<p style="color: green">{successMessage}</p>
-		{/if}
-
-		<select bind:value={collectionType}>
-			<option value="Image">Image</option>
-			<option value="Audio">Audio</option>
-			<option value="Question">Question</option>
-			<option value="Hybrid">Hybrid</option>
-		</select>
-
 		{#if category}
 			<h2>Add item</h2>
 
@@ -477,7 +476,7 @@
 						}}
 						bind:searchTerm={localItem.answer}
 					/>
-					<button type="button" class="" on:click={uploadData}>Add item</button>
+					<button type="button" on:click={() => uploadData(undefined, false)}>Add item</button>
 				</form>
 			{:else if collectionType === 'Audio'}
 				<AudioUploader
@@ -508,6 +507,14 @@
 					</button>
 				</form>
 			{/if}
+
+			{#if errorMessage}
+				<p style="color: red">{errorMessage}</p>
+			{/if}
+			{#if successMessage}
+				<p style="color: green">{successMessage}</p>
+			{/if}
+
 			<div class="button-group">
 				{#if items.length > 1}
 					{#if !isReordering}
