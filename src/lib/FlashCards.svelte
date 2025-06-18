@@ -225,6 +225,8 @@
 			return card;
 		});
 
+		console.log('Setting mode to:', currentMode);
+
 		cards = [...cards];
 	}
 
