@@ -43,3 +43,46 @@
 		</ul>
 	{/if}
 </div>
+
+<style>
+	.placeholder {
+		display: flex;
+		align-items: center;
+		margin-bottom: 1em;
+		gap: 1em;
+	}
+
+	.image-placeholder {
+		border-radius: 4px;
+		background: #eee;
+		flex-shrink: 0;
+	}
+
+	.text-placeholder {
+		flex-grow: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.line {
+		border-radius: 4px;
+		background: #eee;
+		margin-bottom: 0.4em;
+	}
+
+	.shimmer {
+		background: linear-gradient(45deg, #e0e0e0 0%, #cccccc 20%, #e0e0e0 40%, #e0e0e0 100%);
+		background-size: 200% 100%;
+		animation: shimmer 2.4s infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+</style>

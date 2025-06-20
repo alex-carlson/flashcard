@@ -1,27 +1,32 @@
-<script>
-	import { createEventDispatcher, onMount } from 'svelte';
+<script context="module">
+	import { createEventDispatcher } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
 	import Options from './Options.svelte';
 	import ProfilePicture from './ProfilePicture.svelte';
-	import { Modes } from './constants';
-	import YoutubeAudioPlayer from './YoutubeAudioPlayer.svelte';
-	import { areStringsClose } from './utils';
+	import YoutubeAudioPlayer from '$lib/YoutubeAudioPlayer.svelte';
+	import { areStringsClose } from '$lib/utils';
 
-	export let item;
-	export let i;
-	export let cards; // <-- Add this line
-	export let currentMode;
-	export let isPartyMode;
-	export let shuffleTrigger;
-	export let onCardLoad;
-	export let toggleReveal;
-	export let selectOption;
-	export let updateCards;
-	export let onCompleteQuiz;
+	export let item = {
+		type: 'text',
+		question: '',
+		answer: '',
+		userAnswer: '',
+		revealed: false,
+		incorrect: false,
+		hidden: false
+	};
+	export let i = 0;
+	export let cards = [];
+	export let currentMode = 'FLASH_CARDS';
+	export let shuffleTrigger = 0;
+	export let onCardLoad = () => {};
+	export let toggleReveal = () => {};
+	export let updateCards = () => {};
 
 	const dispatch = createEventDispatcher();
 
 	function handleInput(e) {
+		if (!item) return;
 		clearTimeout(item._debounceTimeout);
 		item._debounceTimeout = setTimeout(() => {
 			if (areStringsClose(item.userAnswer, item.answer, 0.9)) {
@@ -73,13 +78,7 @@
 				}}
 			/>
 		{:else if item.type === 'text'}
-			<h2>{item.question}</h2>
-		{/if}
-
-		{#if currentMode === 'MATCHING'}
-			<span class="matching-answer">
-				{item.answer}
-			</span>
+			<h2>{item.question || 'Loading'}</h2>
 		{/if}
 
 		{#if currentMode === 'TRUE_FALSE'}
@@ -101,19 +100,8 @@
 			/>
 		{:else}
 			<span class={item.revealed ? 'revealed' : 'hidden'} style="transform: scale(1);">
-				{item.answer}
+				{item.answer || 'Loading'}
 			</span>
-		{/if}
-
-		{#if !isPartyMode}
-			<div class="card-options">
-				<select name="card-options" id="cardOptions" on:change={(e) => selectOption(e, item)}>
-					<option value="...">...</option>
-					<option value="Hide">Hide</option>
-					<option value="Reveal">Reveal</option>
-					<option value="Reset">Reset Scale</option>
-				</select>
-			</div>
 		{/if}
 	</div>
 {/if}

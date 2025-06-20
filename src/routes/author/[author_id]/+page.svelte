@@ -2,27 +2,22 @@
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { fetchUser, fetchUserCollections } from '$lib/user';
 	import { page } from '$app/stores';
-	import { get } from 'svelte/store';
 
 	let collections = [];
-	let author_id = null;
 	let author = null;
 	let bio = null;
 	let userData = null;
+
+	// This runs whenever $page.params.author_id changes
+	$: if ($page.params.author_id) {
+		init($page.params.author_id);
+	}
 
 	async function init(author_id) {
 		collections = await fetchUserCollections(author_id);
 		userData = await fetchUser(author_id);
 		bio = userData?.bio || null;
-		if (!author) author = userData?.username || null;
-	}
-
-	$: {
-		const params = get(page).params;
-		if (params && params.author_id) {
-			author_id = params.author_id;
-			init(author_id);
-		}
+		author = userData?.username || null;
 	}
 </script>
 

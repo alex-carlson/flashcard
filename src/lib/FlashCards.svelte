@@ -312,13 +312,10 @@
 					{i}
 					{cards}
 					{currentMode}
-					{isPartyMode}
 					{shuffleTrigger}
 					{onCardLoad}
 					{toggleReveal}
-					{selectOption}
 					{updateCards}
-					{onCompleteQuiz}
 					on:correctAnswer={(e) => dispatch('correctAnswer', e.detail)}
 				/>
 			{/each}
