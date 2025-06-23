@@ -2,7 +2,6 @@
 	import { user, setUserBio } from '$stores/user';
 	import { getSession } from '$lib/supabaseClient';
 	import { updateUsername, updateEmail } from '$lib/auth';
-	import ProfilePicture from './ProfilePicture.svelte';
 	import { get } from 'svelte/store';
 
 	let message = '';
@@ -95,45 +94,41 @@
 </script>
 
 {#if $user}
-	<ProfilePicture userId={$user.id} size="150" />
-	<details class="accountSettings padding">
-		<summary>Account Settings</summary>
-		<div class="form">
-			<div class="profile-picture white padding">
-				<label for="profile-picture-input"><strong>Update Profile Picture</strong></label>
-				<input
-					id="profile-picture-input"
-					type="file"
-					accept="image/*"
-					bind:files={file}
-					multiple={false}
-				/>
-				<button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
-			</div>
-			<div class="text-field padding">
-				<label>
-					<strong>Email:</strong>
-					<input type="email" bind:value={$user.email} />
-				</label>
-				<button on:click={() => updateEmail($user.email)}>Update Email</button>
-			</div>
-			<div class="text-field padding">
-				<label>
-					<strong>Display Name:</strong>
-					<input type="text" bind:value={$user.username} />
-				</label>
-				<button on:click={() => updateUsername($user.username)}>Update Name</button>
-			</div>
-			<div class="text-field padding">
-				<label>
-					<strong>Bio:</strong>
-					<textarea bind:value={$user.bio}></textarea>
-				</label>
-				<button on:click={() => updateBio()}>Update Bio</button>
-			</div>
-			<p>{message}</p>
+	<div class="form">
+		<div class="profile-picture white padding">
+			<label for="profile-picture-input"><strong>Update Profile Picture</strong></label>
+			<input
+				id="profile-picture-input"
+				type="file"
+				accept="image/*"
+				bind:files={file}
+				multiple={false}
+			/>
+			<button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
 		</div>
-	</details>
+		<div class="text-field padding">
+			<label>
+				<strong>Email:</strong>
+				<input type="email" bind:value={$user.email} />
+			</label>
+			<button on:click={() => updateEmail($user.email)}>Update Email</button>
+		</div>
+		<div class="text-field padding">
+			<label>
+				<strong>Display Name:</strong>
+				<input type="text" bind:value={$user.username} />
+			</label>
+			<button on:click={() => updateUsername($user.username)}>Update Name</button>
+		</div>
+		<div class="text-field padding">
+			<label>
+				<strong>Bio:</strong>
+				<textarea bind:value={$user.bio}></textarea>
+			</label>
+			<button on:click={() => updateBio()}>Update Bio</button>
+		</div>
+		<p>{message}</p>
+	</div>
 {:else}
 	<p>Loading profile...</p>
 {/if}

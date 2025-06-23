@@ -1,5 +1,4 @@
 <script>
-	export const prerender = true;
 	import { onDestroy, onMount } from 'svelte';
 	import { supabase } from '$lib/supabaseClient';
 	import { socket, initSocket } from '$stores/socket.js';

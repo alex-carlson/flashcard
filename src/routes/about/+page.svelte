@@ -1,6 +1,5 @@
 <script>
 	import { onMount } from 'svelte';
-	export const prerender = true;
 
 	onMount(() => {
 		document.title = 'About Quizzems';

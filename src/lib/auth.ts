@@ -17,6 +17,7 @@ export async function signInWithEmail(email: string, password: string) {
       throw userError;
     }
 
+    localStorage.setItem('user', JSON.stringify(currentUser));
     user.set(currentUser);
     ensureProfileExists(currentUser.id, currentUser.user_metadata?.username || 'New User');
 

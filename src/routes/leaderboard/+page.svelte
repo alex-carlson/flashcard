@@ -1,6 +1,4 @@
 <script>
-	export const prerender = true;
-
 	import { onMount } from 'svelte';
 	import { fetchUsers } from '$lib/user';
 
