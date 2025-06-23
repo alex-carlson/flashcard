@@ -10,8 +10,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"scss": "sass src/scss/custom.scss static/app.css --no-source-map --style=compressed",
-		"scss:watch": "sass --watch src/scss/custom.scss:static/app.css --style=expanded",
+		"scss": "sass --load-path=node_modules src/scss/custom.scss static/app.css --no-source-map --style=compressed",
+		"scss:watch": "sass --watch --load-path=node_modules src/scss/custom.scss:static/app.css --style=expanded",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"test:e2e": "playwright test"

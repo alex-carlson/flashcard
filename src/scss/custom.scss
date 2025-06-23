@@ -19,11 +19,13 @@ $link-color: #FCE343;
 $link-hover-color: #eef3b1;
 
 // 3. Now use Bootstrap with your overrides
-@use "bootstrap/scss/bootstrap" with ($theme-colors: $theme-colors,
-    $body-bg: $body-bg,
-    $body-color: $body-color,
-    $link-color: $link-color,
-    $link-hover-color: $link-hover-color);
+@use "bootstrap/scss/bootstrap" with (
+  $theme-colors: $theme-colors,
+  $body-bg: $body-bg,
+  $body-color: $body-color,
+  $link-color: $link-color,
+  $link-hover-color: $link-hover-color
+);
 
 // 4. Then your component styles
 @use "./typography.scss";
