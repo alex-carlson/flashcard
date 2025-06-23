@@ -13,6 +13,11 @@ ul {
     }
 }
 
+.container,
+.container-fluid {
+    background-color: white;
+}
+
 .container {
     width: 100%;
     max-width: 1200px;
@@ -22,15 +27,6 @@ ul {
     text-align: center;
     box-sizing: border-box;
     border-radius: 0 0 10px 10px;
-}
-
-.white {
-    background-color: white;
-    color: var(--tertiary-color);
-
-    a {
-        color: var(--tertiary-color);
-    }
 }
 
 .row {

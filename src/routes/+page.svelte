@@ -43,13 +43,13 @@
 	});
 </script>
 
-<div class="container white">
-	<div class="image-section">
-		<div class="image-content">
-			<h1>Welcome to Quizzems</h1>
-			<p id="tagline" class="drop-quote">{tagline}</p>
-		</div>
+<div class="image-section content">
+	<div class="image-content">
+		<h1>Welcome to Quizzems</h1>
+		<p id="tagline" class="drop-quote">{tagline}</p>
 	</div>
+</div>
+<div class="container white">
 	<div class="padding">
 		<Search on:SearchItemClicked={loadSearchedPage} />
 		<Latest />

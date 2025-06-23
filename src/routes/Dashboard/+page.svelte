@@ -3,16 +3,13 @@
 
 	import AccountSettings from '$lib/AccountSettings.svelte';
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
-	import { user } from '$stores/user';
+	import { user, logOutUser } from '$stores/user';
 	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/utils';
 	import { fetchUserCollections } from '$lib/user';
 	import { onMount } from 'svelte';
 
 	let scores = [];
 	let activeTab = 'settings';
-	let collections = [];
-	let collectionsPage = 1;
-	let collectionsPageSize = 25;
 
 	async function getQuizScores() {
 		// get quizzescompleted by the user
@@ -53,6 +50,14 @@
 		getQuizScores();
 		getUserCollections();
 	});
+
+	async function logout() {
+		await logOutUser();
+		scores = [];
+		activeTab = 'settings'; // Reset active tab on logout
+		// Optionally, redirect to home or login page
+		window.location.href = '/';
+	}
 
 	let page = 1;
 	const pageSize = 5;
@@ -120,6 +125,7 @@
 					{/if}
 				{/if}
 			</div>
+			<button class="btn btn-danger" on:click={logout}>Log Out</button>
 		</div>
 	{:else}
 		<p>Loading user data...</p>
