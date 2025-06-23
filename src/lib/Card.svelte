@@ -1,4 +1,4 @@
-<script context="module">
+<script>
 	import { createEventDispatcher } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
 	import Options from './Options.svelte';
