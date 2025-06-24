@@ -368,6 +368,11 @@
 
 	function save() {
 		if (tempCategory !== category) {
+			// if tempCategory is null or empty, do not rename
+			if (tempCategory.trim() === '') {
+				showErrorMessage('Category name cannot be empty.');
+				return;
+			}
 			renameCollection();
 		}
 	}
@@ -395,7 +400,7 @@
 			</div>
 		{:else}
 			<div class="collection card mb-4 p-3">
-				<button class="btn btn-secondary save mb-3" on:click={save}>Save Changes</button>
+				<!-- <button class="btn btn-secondary save mb-3" on:click={save}>Save Changes</button> -->
 				<div class="collection-info row g-3 align-items-center">
 					<div
 						class="thumbnail-uploader col-auto d-flex flex-column align-items-center justify-content-center"
@@ -414,7 +419,7 @@
 							type="text"
 							class="form-control mb-2"
 							bind:value={tempCategory}
-							placeholder="Category Name"
+							placeholder={category}
 						/>
 						<textarea
 							class="form-control mb-2"
