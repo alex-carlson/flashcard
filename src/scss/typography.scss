@@ -9,13 +9,25 @@ body {
     font-style: normal;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--header-font-family);
+    color: var(--primary-color);
     font-weight: 400;
     font-style: normal;
 }
 
-p, span, li, button, input, select {
+p,
+span,
+li,
+button,
+input,
+select {
+    color: var(--primary-color);
     font-family: var(--body-font-family);
     font-optical-sizing: auto;
     font-weight: 500;

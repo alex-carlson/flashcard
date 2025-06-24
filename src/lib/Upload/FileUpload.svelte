@@ -1,10 +1,11 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	export let placeholderImage = ''; // Placeholder image input prop
+
 	const dispatch = createEventDispatcher();
 
-	let fileInput; // Reference to the <input type="file"> element
-	let myImg;
-	let imgElement = null; // Reference to the <img> element
+	let fileInput;
+	let myImg = null;
 
 	const convertFileToImage = (e) => {
 		const image = e.target.files[0];
@@ -21,32 +22,9 @@
 
 		reader.onload = (e) => {
 			myImg = e.target.result;
-
-			// If a forced extension is provided, convert the File to a new one with the new type
-			let imageToDispatch = image;
-			dispatch('uploadImage', imageToDispatch);
+			dispatch('uploadImage', image);
 		};
 	};
-
-	const handlePaste = async (e) => {
-		const clipboardItems = e.clipboardData.items;
-		for (let i = 0; i < clipboardItems.length; i++) {
-			const item = clipboardItems[i];
-			if (item.type.startsWith('image')) {
-				const fileObject = item.getAsFile();
-				if (fileObject) {
-					const reader = new FileReader();
-					reader.readAsDataURL(fileObject);
-					reader.onload = (e) => {
-						myImg = e.target.result;
-						dispatch('uploadImage', fileObject);
-					};
-				}
-			}
-		}
-	};
-
-	// window.addEventListener("paste", handlePaste);
 </script>
 
 <div
@@ -61,12 +39,11 @@
 	}}
 >
 	<div class="drop-zone__prompt">
-		<p class={'text ' + (myImg ? 'filled' : 'empty')}>Drop your image or click here</p>
-		<img bind:this={imgElement} class="preview" src={myImg} alt="" key={myImg} />
+		<p class="text">{myImg ? 'Change image' : 'Drop your image or click here'}</p>
+		<img class="preview" src={myImg || placeholderImage} alt="" />
 	</div>
 </div>
 
-<!-- This is the actual file input element to trigger -->
 <input
 	style="display: none"
 	type="file"

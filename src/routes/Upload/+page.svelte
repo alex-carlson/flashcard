@@ -6,12 +6,11 @@
 	import AudioUploader from '$lib/Upload/AudioUploader.svelte';
 	import { onMount } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
-	import Fa from 'svelte-fa';
-	import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 	import ImageSuggestions from '$lib/ImageSuggestions.svelte';
 	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
 	let category = '';
 	let tempCategory = '';
+	let tempDescription = '';
 	let collectionType = 'Image';
 	let items = [];
 	let errorMessage,
@@ -20,8 +19,8 @@
 	let collections = [];
 	let editableItemId = null;
 	let localItem = { id: 1, file: null, answer: '' };
-	let isRenaming = false;
 	let isReordering = false;
+	let thumbnailUrl = '';
 
 	onMount(async () => {
 		const session = await getSession();
@@ -83,7 +82,11 @@
 			category = data.category;
 			items = Array.isArray(data.items) ? data.items : [];
 			isPublic = !data.private;
-			isRenaming = false;
+			if (data.thumbnail) {
+				thumbnailUrl = await getImageUrl(`${$user.username}/${data.category}/thumbnail.jpg`);
+			} else {
+				thumbnailUrl = '';
+			}
 		} catch (error) {
 			console.error('Error fetching collection:', error);
 		}
@@ -112,7 +115,6 @@
 
 	// Rename collection
 	async function renameCollection() {
-		isRenaming = false;
 		try {
 			await apiFetch('/collections/renameCollection', 'POST', {
 				oldCategory: category,
@@ -364,10 +366,9 @@
 		items = [...items];
 	}
 
-	function toggleRenaming() {
-		isRenaming = !isRenaming;
-		if (isRenaming) {
-			tempCategory = category;
+	function save() {
+		if (tempCategory !== category) {
+			renameCollection();
 		}
 	}
 </script>
@@ -377,151 +378,215 @@
 </svelte:head>
 
 <div class="container form padding uploader">
+	<h2 class="mb-4">Quiz Editor</h2>
 	{#if !user}
-		<p><a href="/login">Log in</a> to manager your collections.</p>
+		<p><a href="/login">Log in</a> to manage your collections.</p>
 	{:else}
+		<Collections {collections} on:selectCollection={(e) => fetchCollectionData(e.detail)} />
 		{#if category === ''}
-			{#if collections.length > 0}
-				<Collections {collections} on:selectCollection={(e) => fetchCollectionData(e.detail)} />
-			{/if}
-			<input type="text" bind:value={tempCategory} placeholder="Category Name" />
-			<button on:click={createCollection}>Create</button>
-		{:else if isRenaming}
-			<input
-				type="text"
-				id="categoryName"
-				bind:value={tempCategory}
-				placeholder="Enter a category"
-			/>
-			<button class="secondary" on:click={renameCollection}>Save</button>
-			<button class="warning" on:click={toggleRenaming}>Cancel</button>
-		{:else}
-			<div class="collection-name">
-				{#await getImageUrl(`${$user.username}/${category}/thumbnail.jpg`) then url}
-					<img src={url} alt="Thumbnail" class="thumbnail" />
-				{/await}
-				<h2>{category}</h2>
-				<button class="secondary" on:click={toggleRenaming}>
-					<Fa icon={faPenToSquare} />
-				</button>
-			</div>
-			<div class="row">
-				<h2>{isPublic ? 'Public' : 'Private'}</h2>
-				<label class="switch">
-					<input type="checkbox" bind:checked={isPublic} on:change={setVisible} />
-				</label>
-			</div>
-			<div class="padding">
-				<h2>Thumbnail</h2>
-				<FileUpload
-					on:uploadImage={(event) => {
-						console.log('Thumbnail upload event:', event.detail);
-						localItem.file = event.detail;
-						uploadData('thumbnail', true);
-					}}
+			<div class="create mb-4">
+				<input
+					type="text"
+					class="form-control mb-2"
+					bind:value={tempCategory}
+					placeholder="Category Name"
 				/>
+				<button class="btn btn-primary" on:click={createCollection}>Create</button>
+			</div>
+		{:else}
+			<div class="collection card mb-4 p-3">
+				<button class="btn btn-secondary save mb-3" on:click={save}>Save Changes</button>
+				<div class="collection-info row g-3 align-items-center">
+					<div
+						class="thumbnail-uploader col-auto d-flex flex-column align-items-center justify-content-center"
+						style="width: 180px; height: 180px;"
+					>
+						<FileUpload
+							on:uploadImage={(event) => {
+								console.log('Thumbnail upload event:', event.detail);
+								localItem.file = event.detail;
+								uploadData('thumbnail', true);
+							}}
+						/>
+					</div>
+					<div class="col">
+						<input
+							type="text"
+							class="form-control mb-2"
+							bind:value={tempCategory}
+							placeholder="Category Name"
+						/>
+						<textarea
+							class="form-control mb-2"
+							bind:value={tempDescription}
+							placeholder="Category Description (Optional)"
+						></textarea>
+						<form
+							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
+							on:change={setVisible}
+						>
+							<label for="privacy-toggle" class="form-label me-5 mb-0">Privacy</label>
+							<input
+								id="privacy-toggle"
+								type="checkbox"
+								class="form-check-input"
+								bind:checked={isPublic}
+								aria-label="Privacy"
+							/>
+							<span>{isPublic ? 'Public' : 'Private'}</span>
+							<span class="small-text">({items.length} questions)</span>
+						</form>
+					</div>
+				</div>
 			</div>
 		{/if}
-		<div class="list uploads">
-			<ul class="items-list">
-				{#each items as item, index}
-					<CollectionItem
-						{item}
-						{index}
-						bind:editableItemId
-						on:removeItem={removeItem(item.id)}
-						on:saveEdit={(e) => {
-							console.log('Save edit event:', e.detail);
-							saveEdit(e.detail);
-						}}
-						on:reorderItem={(e) => ReOrder(e.detail.prevIndex, e.detail.newIndex)}
-						{isReordering}
-						{isRenaming}
-					/>
-				{/each}
-			</ul>
-		</div>
-
 		{#if category}
-			<h2>Add item</h2>
+			<div class="list uploads py-2">
+				<h4>Questions</h4>
+				<ul class="items-list list-group mb-4">
+					{#each items as item, index}
+						<CollectionItem
+							{item}
+							{index}
+							bind:editableItemId
+							on:removeItem={removeItem(item.id)}
+							on:saveEdit={(e) => {
+								console.log('Save edit event:', e.detail);
+								saveEdit(e.detail);
+							}}
+							on:reorderItem={(e) => ReOrder(e.detail.prevIndex, e.detail.newIndex)}
+							{isReordering}
+						/>
+					{/each}
+				</ul>
+			</div>
 
-			<select bind:value={collectionType}>
-				<option value="Image">Image</option>
-				<option value="Audio">Audio</option>
-				<option value="Question">Question</option>
-			</select>
-			{#if collectionType === 'Image'}
-				<!-- on submit form, call UploadFile -->
-				<form class="form">
-					<FileUpload on:uploadImage={(event) => (localItem.file = event.detail)} />
-					{#if localItem.file}
-						<img class="preview" src={localItem.file} alt="Preview" style="display: block;" />
-					{/if}
-					<input
-						id="answer"
-						type="text"
-						bind:value={localItem.answer}
-						placeholder="Enter an answer"
-						class="answer"
-					/>
-					<ImageSuggestions
-						bind:category
-						on:addImage={async (e) => {
-							localItem.file = e.detail;
-							uploadData();
-							localItem.file = null;
-							localItem.answer = '';
+			<div class="uploader card p-3 mb-4">
+				<h4 class="mb-3">Add New Question</h4>
+
+				<ul class="nav nav-tabs mb-3">
+					<li class="nav-item">
+						<a
+							class="nav-link {collectionType === 'Image' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (collectionType = 'Image')}>Image</a
+						>
+					</li>
+					<li class="nav-item">
+						<a
+							class="nav-link {collectionType === 'Audio' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (collectionType = 'Audio')}>Audio</a
+						>
+					</li>
+					<li class="nav-item">
+						<a
+							class="nav-link {collectionType === 'Question' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (collectionType = 'Question')}>Question</a
+						>
+					</li>
+				</ul>
+				{#if collectionType === 'Image'}
+					<form class="form row g-2 align-items-center">
+						<div
+							class="col-auto"
+							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
+						>
+							<FileUpload on:uploadImage={(event) => (localItem.file = event.detail)} />
+						</div>
+						<div class="col">
+							{#if localItem.file}
+								<img
+									class="preview img-thumbnail mb-2"
+									src={localItem.file}
+									alt="Preview"
+									style="display: block; max-width: 100px;"
+								/>
+							{/if}
+							<input
+								id="answer"
+								type="text"
+								class="form-control mb-2"
+								bind:value={localItem.answer}
+								placeholder="Enter an answer"
+							/>
+							<ImageSuggestions
+								bind:category
+								on:addImage={async (e) => {
+									localItem.file = e.detail;
+									uploadData();
+									localItem.file = null;
+									localItem.answer = '';
+								}}
+								bind:searchTerm={localItem.answer}
+							/>
+							<button
+								type="button"
+								class="btn btn-success mt-2"
+								on:click={() => uploadData(undefined, false)}>Add item</button
+							>
+						</div>
+					</form>
+				{:else if collectionType === 'Audio'}
+					<AudioUploader
+						on:addSong={(e) => {
+							console.log('AudioUploader addSong event:', e);
+							uploadAudio(e.detail.title, e.detail.id);
 						}}
-						bind:searchTerm={localItem.answer}
 					/>
-					<button type="button" on:click={() => uploadData(undefined, false)}>Add item</button>
-				</form>
-			{:else if collectionType === 'Audio'}
-				<AudioUploader
-					on:addSong={(e) => {
-						console.log('AudioUploader addSong event:', e);
-						uploadAudio(e.detail.title, e.detail.id);
-					}}
-				/>
-			{:else if collectionType === 'Question'}
-				<h2>Question</h2>
-				<form class="form">
-					<input type="text" bind:value={localItem.question} placeholder="Enter a question" />
-					<input type="text" bind:value={localItem.answer} placeholder="Enter the answer" />
-					<button
-						type="button"
-						class=""
-						on:click={() => {
-							if (localItem.answer.trim() === '') {
-								showErrorMessage('Please enter a question.');
-								return;
-							}
-							uploadQuestion();
-							localItem.question = '';
-							localItem.answer = '';
-						}}
-					>
-						Add Question
-					</button>
-				</form>
-			{/if}
+				{:else if collectionType === 'Question'}
+					<h2>Question</h2>
+					<form class="form row g-2 align-items-center">
+						<div class="col">
+							<input
+								type="text"
+								class="form-control mb-2"
+								bind:value={localItem.question}
+								placeholder="Enter a question"
+							/>
+							<input
+								type="text"
+								class="form-control mb-2"
+								bind:value={localItem.answer}
+								placeholder="Enter the answer"
+							/>
+							<button
+								type="button"
+								class="btn btn-success mt-2"
+								on:click={() => {
+									if (localItem.answer.trim() === '') {
+										showErrorMessage('Please enter a question.');
+										return;
+									}
+									uploadQuestion();
+									localItem.question = '';
+									localItem.answer = '';
+								}}>Add Question</button
+							>
+						</div>
+					</form>
+				{/if}
+			</div>
 
 			{#if errorMessage}
-				<p style="color: red">{errorMessage}</p>
+				<p class="alert alert-danger mt-2">{errorMessage}</p>
 			{/if}
 			{#if successMessage}
-				<p style="color: green">{successMessage}</p>
+				<p class="alert alert-success mt-2">{successMessage}</p>
 			{/if}
 
-			<div class="button-group">
+			<div class="button-group mt-3 d-flex gap-2">
 				{#if items.length > 1}
 					{#if !isReordering}
-						<button class="secondary" on:click={() => (isReordering = true)}>Reorder</button>
+						<button class="btn btn-outline-secondary" on:click={() => (isReordering = true)}
+							>Reorder</button
+						>
 					{:else}
-						<button class="secondary" on:click={reorderItems}>Done</button>
+						<button class="btn btn-outline-secondary" on:click={reorderItems}>Done</button>
 					{/if}
 				{/if}
-				<button class="danger" on:click={confirmDelete}>Delete Collection</button>
+				<button class="btn btn-danger" on:click={confirmDelete}>Delete Collection</button>
 			</div>
 		{/if}
 	{/if}

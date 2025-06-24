@@ -5,8 +5,8 @@
 @use "sass:map";
 
 $theme-colors: (
-    "primary": #FCE343,
-    "secondary": #B6802F,
+    "primary": #2b2b2b,
+    "secondary": #5c5c5c,
     "success": #28A745,
     "danger": #DC3545,
     "warning": #FF5733,
@@ -19,13 +19,11 @@ $link-color: #FCE343;
 $link-hover-color: #eef3b1;
 
 // 3. Now use Bootstrap with your overrides
-@use "bootstrap/scss/bootstrap" with (
-  $theme-colors: $theme-colors,
-  $body-bg: $body-bg,
-  $body-color: $body-color,
-  $link-color: $link-color,
-  $link-hover-color: $link-hover-color
-);
+@use "bootstrap/scss/bootstrap" with ($theme-colors: $theme-colors,
+    $body-bg: $body-bg,
+    $body-color: $body-color,
+    $link-color: $link-color,
+    $link-hover-color: $link-hover-color);
 
 // 4. Then your component styles
 @use "./typography.scss";
@@ -45,6 +43,7 @@ $link-hover-color: #eef3b1;
 // 5. Your CSS custom properties and global styles
 :root {
     --bg-color: #6F1D1B;
+    --bg-text-color: #FCE343;
     --text-color: #2b2b2b;
     --button-color: #2b2b2b;
     --button-secondary-color: #b4b4b4;
@@ -54,8 +53,9 @@ $link-hover-color: #eef3b1;
     --form-text-color: #383838;
     --link-color: #6F1D1B;
     --link-hover-color: #eef3b1;
-    --primary-color: #FCE343;
-    --secondary-color: #B6802F;
+    --header-bg-color: #FCE343;
+    --primary-color: #6F1D1B;
+    --secondary-color: #4fad6e;
     --tertiary-color: #6F1D1B;
     --warning-color: #FF5733;
     --success-color: #28A745;
@@ -64,12 +64,12 @@ $link-hover-color: #eef3b1;
 
 body {
     background-color: var(--bg-color);
-    color: var(--primary-color);
+    color: var(--bg-text-color);
 
     .container,
     .container-fluid {
         background-color: var(--form-bg-color);
-        color: var(--text-color);
+        color: var(--bg-text-color);
 
         a {
             color: var(--link-color);
@@ -77,7 +77,7 @@ body {
     }
 
     a {
-        color: var(--primary-color);
+        color: var(--bg-text-color);
     }
 }
 

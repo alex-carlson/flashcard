@@ -1,8 +1,12 @@
 <script>
 	export let imageUrl = '';
+	export let imagePath = '';
 	export let tempSize = ''; // e.g. "200px" or "100%"
 
+	import { getImageUrl } from '$lib/supabaseClient';
+
 	let loaded = false;
+	let finalUrl = '';
 
 	function handleLoad() {
 		loaded = true;
@@ -10,6 +14,21 @@
 
 	function handleError() {
 		console.error('Error loading image');
+	}
+
+	// Reactively update finalUrl when imageUrl or imagePath changes
+	$: if (imageUrl) {
+		finalUrl = imageUrl;
+		loaded = false;
+	} else if (imagePath) {
+		finalUrl = '';
+		loaded = false;
+		getImageUrl(imagePath).then((url) => {
+			if (url) finalUrl = url;
+		});
+	} else {
+		finalUrl = '';
+		loaded = false;
 	}
 </script>
 
@@ -19,15 +38,15 @@
 		<div class="shimmer" />
 	{/if}
 
-	{#if imageUrl}
+	{#if finalUrl}
 		<img
-			src={imageUrl}
+			src={finalUrl}
 			alt="Lazy Loaded Image"
 			loading="lazy"
 			class:loaded
 			on:load={handleLoad}
 			on:error={handleError}
-			style={loaded ? '' : `width: ${tempSize}; height: ${tempSize};`}
+			style={loaded ? '' : tempSize ? `width: ${tempSize}; height: ${tempSize};` : ''}
 		/>
 	{/if}
 </div>

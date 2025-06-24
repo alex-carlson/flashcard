@@ -45,16 +45,18 @@
 </script>
 
 <div class="suggestions">
-	<h6>Search results for: {query}</h6>
-	<div class="scroll-wrapper">
-		<div class="suggestion">
-			{#each suggestions as suggestion}
-				<div class="suggestion-item">
-					<img src={suggestion.thumbnail} alt={suggestion.title} />
-					<p>{suggestion.title}</p>
-					<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
-				</div>
-			{/each}
+	{#if query.length > category.length + 3}
+		<h6>Search results for: {query}</h6>
+		<div class="scroll-wrapper">
+			<div class="suggestion">
+				{#each suggestions as suggestion}
+					<div class="suggestion-item">
+						<img src={suggestion.thumbnail} alt={suggestion.title} />
+						<p>{suggestion.title}</p>
+						<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
+					</div>
+				{/each}
+			</div>
 		</div>
-	</div>
+	{/if}
 </div>

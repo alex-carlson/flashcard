@@ -19,24 +19,32 @@
 
 	async function loadCollections() {
 		const collections = await fetchLatestCollections();
+		collectionsWithImage = collections.map((collection) => {
+			const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
+			return {
+				...collection,
+				imageUrl: null,
+				imagePath: path,
+				fallbackImage: collection.items[0]?.image || null
+			};
+		});
+		loading = false; // Render list immediately
 
-		// For each collection, attempt to fetch a valid image URL
-		const resolved = await Promise.all(
-			collections.map(async (collection) => {
-				const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
-				const imageUrl = await getImageUrl(path);
-				return {
-					...collection,
-					imageUrl: imageUrl || collection.items[0]?.image || null
-				};
+		// Defer image loading in background
+		Promise.all(
+			collectionsWithImage.map(async (collection) => {
+				const url = await getImageUrl(collection.imagePath);
+				if (url) collection.imageUrl = url;
 			})
-		);
-
-		collectionsWithImage = resolved;
-		loading = false;
+		).then(() => {
+			// Force update after all images attempted
+			collectionsWithImage = [...collectionsWithImage];
+		});
 	}
 
-	onMount(loadCollections);
+	onMount(() => {
+		requestIdleCallback(loadCollections);
+	});
 </script>
 
 <div class="list">
@@ -58,12 +66,10 @@
 			{#each collectionsWithImage as collection}
 				<li>
 					<a href="/quiz/{collection.author_id}/{collection.slug}">
-						{#if collection.items.length > 0}
-							<LazyLoadImage
-								imageUrl={collection.imageUrl || collection.items[0].image}
-								tempSize="100px"
-							/>
-						{/if}
+						<LazyLoadImage
+							imageUrl={collection.imageUrl || collection.fallbackImage}
+							tempSize="100px"
+						/>
 
 						<div class="vertical fill align-left">
 							<span>

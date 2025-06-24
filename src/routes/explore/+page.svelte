@@ -5,11 +5,12 @@
 	import { getImageUrl } from '$lib/supabaseClient';
 	import { onMount } from 'svelte';
 
-	let collections = []; // Original collections array
-	let filteredCollections = []; // Array for sorted/filtered collections
+	let collections = [];
+	let filteredCollections = [];
 	let page = 0;
-	let sortOption = 'name'; // Default sort option
-	let itemsPerPage = 10; // Default items per page
+	let sortOption = 'name';
+	let itemsPerPage = 10;
+	let loading = true;
 
 	function nextPage() {
 		if ((page + 1) * itemsPerPage < filteredCollections.length) {
@@ -46,62 +47,64 @@
 	onMount(async () => {
 		document.title = 'Explore';
 		collections = await fetchCollections();
+		filteredCollections = collections;
+		loading = false;
 	});
 </script>
 
 <div class="container white">
 	<h1>Explore</h1>
-	{#if collections.length > 0}
+	{#if loading}
+		<p>Loading collections...</p>
+	{:else}
 		<SortAndFilter
 			collection={collections}
 			bind:sortOption
 			bind:itemsPerPage
 			on:sortAndFilterChange={(event) => {
-				filteredCollections = event.detail; // Update filteredCollections
-				page = 0; // Reset to the first page after sorting/filtering
+				filteredCollections = event.detail;
+				page = 0;
 			}}
 		/>
-	{:else}
-		<p>Loading collections...</p>
-	{/if}
 
-	<div class="list">
-		<ul>
-			{#each paginatedCollections as collection}
-				<li>
-					<a href="/quiz/{collection.author_id}/{collection.slug}">
-						{#if collection.items.length > 0}
-							{#await getImageUrl(`${collection.author}/${collection.category}/thumbnail.jpg`)}
-								<LazyLoadImage imageUrl={collection.items[0].image} tempSize="100px" />
-							{:then imageUrl}
+		<div class="list">
+			<ul>
+				{#each paginatedCollections as collection}
+					<li>
+						<a href="/quiz/{collection.author_id}/{collection.slug}">
+							{#if collection.items.length > 0}
 								<LazyLoadImage
-									imageUrl={imageUrl ? imageUrl : collection.items[0].image}
+									imagePath={`${collection.author}/${collection.category}/thumbnail.jpg`}
+									imageUrl={collection.items[0].image}
 									tempSize="100px"
 								/>
-							{/await}
-						{/if}
-						<p>
-							{collection.category}
-							{#if sortOption === 'date'}
-								{formatTimestamp(collection.created_at)}
-							{:else if sortOption === 'size'}
-								[{collection.items.length}]
 							{/if}
-						</p>
-					</a>
-				</li>
-			{/each}
-		</ul>
-	</div>
+							<p>
+								{collection.category}
+								{#if sortOption === 'date'}
+									{formatTimestamp(collection.created_at)}
+								{:else if sortOption === 'size'}
+									[{collection.items.length}]
+								{/if}
+							</p>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		</div>
 
-	<!-- Pagination controls -->
-	<div class="paginationControls">
-		<button on:click={prevPage} disabled={page === 0}>Previous</button>
-		<span>
-			Page {page + 1} of {Math.ceil(filteredCollections.length / itemsPerPage)}
-		</span>
-		<button on:click={nextPage} disabled={(page + 1) * itemsPerPage >= filteredCollections.length}>
-			Next
-		</button>
-	</div>
+		<!-- Pagination controls -->
+		<div class="paginationControls">
+			<button on:click={prevPage} disabled={page === 0}>Previous</button>
+			<span>
+				Page {page + 1} of {Math.ceil(filteredCollections.length / itemsPerPage)}
+			</span>
+			<button
+				on:click={nextPage}
+				disabled={(page + 1) * itemsPerPage >= filteredCollections.length}
+			>
+				Next
+			</button>
+		</div>
+	{/if}
 </div>
