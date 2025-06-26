@@ -16,14 +16,21 @@
 </script>
 
 <div class="list condensed">
-	<button on:click={() => (isCollapsed = !isCollapsed)}>
+	<button
+		on:click={() => (isCollapsed = !isCollapsed)}
+		on:touchend|preventDefault={() => (isCollapsed = !isCollapsed)}
+	>
 		{isCollapsed ? 'Show Collections' : 'Hide Collections'}
 	</button>
 	{#if !isCollapsed}
 		<ul>
 			{#each collections as collection}
 				<li>
-					<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
+					<a
+						href="#"
+						on:click|preventDefault={() => selectCollection(collection.id)}
+						on:touchend|preventDefault={() => selectCollection(collection.id)}
+					>
 						{#if collection.items.length > 0}
 							{#await getImageUrl(`${collection.author}/${collection.category}/thumbnail.jpg`)}
 								<LazyLoadImage imageUrl={collection.items[0].image} tempSize="50px" />
