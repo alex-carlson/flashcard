@@ -46,9 +46,6 @@
 
 	async function logout() {
 		await logOutUser();
-		scores = [];
-		activeTab = 'settings'; // Reset active tab on logout
-		// Optionally, redirect to home or login page
 		window.location.href = '/';
 	}
 

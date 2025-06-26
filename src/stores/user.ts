@@ -44,7 +44,6 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
 
 // Log out and clear the store
 export async function logOutUser() {
-  console.log('Logging out user...');
   try {
     const { error } = await supabase.auth.signOut();
 
@@ -53,8 +52,14 @@ export async function logOutUser() {
       return;
     }
 
+    // Clear user store
     user.set(null);
-    console.log('User logged out successfully');
+
+    // Optionally clear local/session storage if used
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('supabase.auth.token');
+      window.sessionStorage.removeItem('supabase.auth.token');
+    }
   } catch (err) {
     console.error('Exception during logOutUser:', err);
   }
