@@ -19,7 +19,6 @@
 
 	async function loadCollections() {
 		const collections = await fetchLatestCollections();
-		console.log('Fetched collections:', collections);
 		collectionsWithImage = collections.map((collection) => {
 			const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
 			return {

@@ -34,7 +34,6 @@
 </script>
 
 <div class="container white audio-uploader padding">
-	<h2>Search Youtube</h2>
 	<div class="search-container">
 		<input
 			type="text"

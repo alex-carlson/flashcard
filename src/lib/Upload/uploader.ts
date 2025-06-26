@@ -1,25 +1,23 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getSession } from '$lib/api/supabaseClient';
 import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
+import { on } from 'svelte/events';
 
 const currentUser = get(user);
 
 // Create new collection
-export async function createCollection() {
+export async function createCollection(category) {
+    console.log('Creating collection for category:', category);
     try {
-        const username = currentUser.username;
         const data = {
-            category: tempCategory,
-            author_id: currentUser.uid,
+            category,
+            author_id: currentUser.public_id,
             author_uuid: currentUser.id,
-            author: username
+            author: currentUser.username
         };
-        console.log('Creating collection with data:', data);
         const created = await apiFetch('/collections/createCollection', 'POST', data);
-        collections = [...collections, created];
-        category = tempCategory;
+        return created;
     } catch (error) {
         console.error('Error creating collection:', error);
         errorMessage = 'Create failed. Please try again.';
@@ -55,51 +53,47 @@ export async function removeItem(itemId, category) {
     }
 }
 
-export async function saveEdit(item) {
-    console.log('Saving edit for item:', item);
+export async function saveEdit(data) {
+    console.log('Saving edit for item:', data);
     try {
-        await apiFetch('/items/edit', 'POST', {
-            collection: category,
-            id: item.id,
-            author_id: currentUser.uid,
-            answer: item.answer
-        });
-        editableItemId = null;
+        const result = await apiFetch('/items/edit', 'POST', data);
+        console.log('Edit result:', result);
+        return result;
     } catch (error) {
         console.error('Error editing item:', error);
-        errorMessage = 'Edit failed. Please try again.';
-        // clear error message after 10 seconds
-        setTimeout(() => {
-            errorMessage = ''; // Clear the error message after 10 seconds
-        }, 10000);
     }
 }
 
 // Reorder items
-export async function reorderItems() {
+export async function reorderItems(prevIndex, newIndex, data) {
+    console.log('Reordering items:', { prevIndex, newIndex, data });
     try {
-        const itemAnswers = items.map((item) => item.answer);
-        await apiFetch('/items/reorder', 'POST', { category, itemAnswers });
-        isReordering = false;
+        // Make a shallow copy to avoid mutating original array
+        const items = [...data.items];
+        const [moved] = items.splice(prevIndex, 1);
+        items.splice(newIndex, 0, moved);
+
+        const payload = {
+            category: data.category,
+            items,
+            author_id: currentUser.public_id,
+        };
+
+        const result = await apiFetch('/items/reorder', 'POST', payload);
+        return result;
     } catch (error) {
         console.error('Error reordering items:', error);
-        errorMessage = 'Reorder failed. Please try again.';
+        return null;
     }
 }
 
 // Delete collection
-export async function deleteCollection() {
+export async function deleteCollection(collectionId, onSuccess = () => { }) {
     try {
-        const username = currentUser.username;
-        const data = {
-            collection: category,
-            author_id: currentUser.id,
-            username: username
-        };
-        console.log('Deleting collection:', data);
-        await apiFetch(`/collections/${username}/${category}`, 'DELETE', data);
-        collections = collections.filter((c) => c.category !== category);
-        document.location.reload();
+        const uid = currentUser.public_id;
+        const collection = collectionId;
+        const result = await apiFetch(`/collections/${uid}/${collection}`, 'DELETE');
+        onSuccess(result);
     } catch (error) {
         console.error('Error deleting collection:', error);
         errorMessage = 'Delete failed. Please try again.';
@@ -107,43 +101,36 @@ export async function deleteCollection() {
 }
 
 // show confirm delete popup
-export function confirmDelete() {
+export function confirmDelete(id, onSuccess = () => { }) {
     if (confirm('Are you sure you want to delete this collection?')) {
-        deleteCollection();
+        deleteCollection(id, onSuccess);
     }
 }
 
 // Upload data
-export async function uploadData(uuid = uuidv4(), forceJpg = false) {
+export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
+    console.log('Uploading data for item:', item);
     // If file is a URL (string), call /upload-url
-    if (typeof localItem.file === 'string') {
-        console.log('Detected URL upload:', localItem.file);
+    if (typeof item.file === 'string') {
+        console.log('Detected URL upload:', item.file);
         try {
             const data = {
                 uuid,
-                url: localItem.file,
-                folder: `${currentUser.username}/${category}`,
+                url: item.file,
+                folder: `${currentUser.username}/${item.category}`,
                 forceJpeg: forceJpg,
                 author_uuid: currentUser.id,
                 author_id: currentUser.uid,
                 author: currentUser.username,
-                category,
-                answer: localItem.answer
+                category: item.category,
+                answer: item.answer
             };
             console.log('Uploading URL data:', data);
             const result = await apiFetch('/items/upload-url', 'POST', data);
-            showSuccessMessage('Upload successful!');
-            const preview = document.querySelector('.preview');
-            if (preview) preview.src = null;
-
-            localItem.answer = '';
-            document.getElementById('answer').value = '';
-            items = result[0]?.items || [];
-            localItem.file = null;
-            if (preview) preview.scrollIntoView({ behavior: 'smooth' });
+            return result;
         } catch (error) {
             console.error('Error uploading URL data:', error);
-            showErrorMessage('Upload failed. Please try again.');
+            return error;
         }
         return;
     }
@@ -151,14 +138,14 @@ export async function uploadData(uuid = uuidv4(), forceJpg = false) {
     // Otherwise, upload as file
     const formData = new FormData();
     formData.append('uuid', uuid);
-    formData.append('file', localItem.file);
-    formData.append('folder', `${currentUser.username}/${category}`);
+    formData.append('file', item.file);
+    formData.append('folder', `${currentUser.username}/${item.category}`);
     formData.append('forceJpeg', forceJpg);
-    formData.append('answer', localItem.answer);
-    formData.append('category', category);
+    formData.append('answer', item.answer);
+    formData.append('category', item.category);
     formData.append('author', currentUser.username);
     formData.append('author_uuid', currentUser.id);
-    formData.append('author_id', currentUser.uid);
+    formData.append('author_id', currentUser.public_id);
 
     // Log all FormData entries
     for (let [key, value] of formData.entries()) {
@@ -167,31 +154,22 @@ export async function uploadData(uuid = uuidv4(), forceJpg = false) {
 
     try {
         const result = await apiFetch('/items/upload', 'POST', formData, true);
-        showSuccessMessage('Upload successful!');
-        const preview = document.querySelector('.preview');
-        if (preview) preview.src = null;
-
-        localItem.answer = '';
-        document.getElementById('answer').value = '';
-        items = result[0]?.items || [];
-        localItem.file = null;
-        if (preview) preview.scrollIntoView({ behavior: 'smooth' });
+        return result;
     } catch (error) {
-        console.error('Error uploading data:', error);
-        showErrorMessage('Upload failed. Please try again.');
+        return error;
     }
 }
 
-export async function uploadAudio(answer, url) {
+export async function uploadAudio(item) {
     const username = currentUser.username;
-    const author_id = currentUser.id;
+    const author_id = currentUser.public_id;
 
     const formData = new FormData();
     formData.append('uuid', uuidv4());
-    formData.append('url', url);
-    formData.append('folder', `${username}/${category}`);
-    formData.append('answer', answer);
-    formData.append('category', category);
+    formData.append('url', item.url);
+    formData.append('folder', `${username}/${item.category}`);
+    formData.append('answer', item.answer);
+    formData.append('category', item.category);
     formData.append('author', username);
     formData.append('author_id', author_id);
     formData.append('type', 'audio');
@@ -205,11 +183,10 @@ export async function uploadAudio(answer, url) {
 
     try {
         const result = await apiFetch('/items/add-audio', 'POST', formData, true);
-        showSuccessMessage('Audio upload successful!');
-        items = result[0]?.items || [];
+        return result;
     } catch (error) {
         console.error('Error uploading audio data:', error);
-        showErrorMessage('Audio upload failed. Please try again.');
+        return error;
     }
 }
 

@@ -57,10 +57,7 @@ input[type="number"],
 input[type="file"],
 textarea,
 select {
-    // background-color: #fff;
-    // color: var(--form-text-color);
     border: 1px solid #ccc;
-    // border-bottom: solid 3px #ccc;
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 1.2em;
@@ -68,6 +65,11 @@ select {
     width: 100%;
     height: var(--form-element-height);
     vertical-align: baseline;
+    color: var(--form-text-color);
+
+    &:focus {
+        color: var(--form-text-color);
+    }
 }
 
 label {

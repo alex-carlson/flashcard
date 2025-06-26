@@ -1,5 +1,4 @@
 <script>
-	import { onMount } from 'svelte';
 	import { user } from '$stores/user';
 	import Collections from '$lib/Collections.svelte';
 	import FileUpload from '$lib/Upload/FileUpload.svelte';
@@ -12,7 +11,11 @@
 		uploadQuestion,
 		uploadAudio,
 		uploadData,
-		removeItem
+		removeItem,
+		createCollection,
+		confirmDelete,
+		saveEdit,
+		reorderItems
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 
@@ -65,6 +68,11 @@
 		isPublic = !collection?.private || false;
 	}
 
+	function handleCollectionDeleted(newCollection) {
+		collection = null;
+		showSuccessMessage('Collection deleted successfully!');
+	}
+
 	async function setVisible(event) {
 		const data = {
 			category: collection.category,
@@ -88,6 +96,12 @@
 </svelte:head>
 
 <div class="container form padding uploader">
+	{#if errorMessage}
+		<p class="alert alert-danger mt-2">{errorMessage}</p>
+	{/if}
+	{#if successMessage}
+		<p class="alert alert-success mt-2">{successMessage}</p>
+	{/if}
 	{#if !user}
 		<p><a href="/login">Log in</a> to manage your collections.</p>
 	{:else}
@@ -104,7 +118,17 @@
 					bind:value={tempCategory}
 					placeholder="Category Name"
 				/>
-				<button class="btn btn-primary" on:click={createCollection}>Create</button>
+				<button
+					class="btn btn-primary"
+					on:click={async () => {
+						const result = await createCollection(tempCategory);
+						if (result && result.length > 0) {
+							collection = result[0];
+						}
+					}}
+				>
+					Create
+				</button>
 			</div>
 		{:else}
 			<div class="collection card mb-4 p-3">
@@ -169,11 +193,30 @@
 										collection.items = updatedItems.items;
 									}
 								}}
-								on:saveEdit={(e) => {
+								on:saveEdit={async (e) => {
 									console.log('Save edit event:', e.detail);
-									saveEdit(e.detail);
+									const d = {
+										collection: collection.category,
+										id: e.detail.id,
+										answer: e.detail.answer,
+										author_id: $user.public_id
+									};
+									const result = await saveEdit(d);
+									if (result) {
+										collections = result;
+									}
 								}}
-								on:reorderItem={(e) => ReOrder(e.detail.prevIndex, e.detail.newIndex)}
+								on:reorderItem={async (e) => {
+									const result = await reorderItems(
+										e.detail.prevIndex,
+										e.detail.newIndex,
+										collection
+									);
+									if (result) {
+										console.log('Reordered items:', result);
+										collection.items = result[0].items;
+									}
+								}}
 								{isReordering}
 							/>
 						{/each}
@@ -216,14 +259,6 @@
 							<FileUpload on:uploadImage={(event) => (item.file = event.detail)} />
 						</div>
 						<div class="col">
-							{#if item.file}
-								<img
-									class="preview img-thumbnail mb-2"
-									src={item.file}
-									alt="Preview"
-									style="display: block; max-width: 100px;"
-								/>
-							{/if}
 							<input
 								id="answer"
 								type="text"
@@ -235,7 +270,7 @@
 								bind:category={collection}
 								on:addImage={async (e) => {
 									item.file = e.detail;
-									uploadData();
+									uploadData(item);
 									item.file = null;
 									item.answer = '';
 								}}
@@ -244,7 +279,15 @@
 							<button
 								type="button"
 								class="btn btn-success mt-2"
-								on:click={() => uploadData(undefined, false)}>Add item</button
+								on:click={async () => {
+									const newItems = await uploadData(item, undefined, false);
+									if (newItems) {
+										collection.items = newItems[0].items;
+										showSuccessMessage('Item added successfully!');
+									}
+									item.file = null;
+									item.answer = '';
+								}}>Add item</button
 							>
 						</div>
 					</form>
@@ -252,11 +295,21 @@
 					<AudioUploader
 						on:addSong={(e) => {
 							console.log('AudioUploader addSong event:', e);
-							uploadAudio(e.detail.title, e.detail.id);
+							const audioData = {
+								url: e.detail.id,
+								category: collection.category,
+								answer: e.detail.title
+							};
+							// uploadAudio(e.detail.title, e.detail.id);
+							uploadAudio(audioData).then((newItems) => {
+								if (newItems) {
+									collection.items = newItems[0].items;
+									showSuccessMessage('Audio added successfully!');
+								}
+							});
 						}}
 					/>
 				{:else if questionType === 'Question'}
-					<h2>Question</h2>
 					<form class="form row g-2 align-items-center">
 						<div class="col">
 							<input
@@ -294,13 +347,6 @@
 				{/if}
 			</div>
 
-			{#if errorMessage}
-				<p class="alert alert-danger mt-2">{errorMessage}</p>
-			{/if}
-			{#if successMessage}
-				<p class="alert alert-success mt-2">{successMessage}</p>
-			{/if}
-
 			<div class="button-group mt-3 d-flex gap-2">
 				{#if collection.items.length > 1}
 					{#if !isReordering}
@@ -308,10 +354,16 @@
 							>Reorder</button
 						>
 					{:else}
-						<button class="btn btn-outline-secondary" on:click={reorderItems}>Done</button>
+						<button class="btn btn-outline-secondary" on:click={() => (isReordering = false)}
+							>Done</button
+						>
 					{/if}
 				{/if}
-				<button class="btn btn-danger" on:click={confirmDelete}>Delete Collection</button>
+				<button
+					class="btn btn-danger"
+					on:click={() => confirmDelete(collection.id, handleCollectionDeleted)}
+					>Delete Collection</button
+				>
 			</div>
 		{/if}
 	{/if}
