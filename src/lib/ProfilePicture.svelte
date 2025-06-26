@@ -9,7 +9,7 @@
 		: '/avatar.png';
 
 	// export a function to refresh the image
-	export let refreshImage = () => {
+	export const refreshImage = () => {
 		const img = document.querySelector('.profile-picture img');
 		if (img) {
 			img.src = userId
@@ -27,7 +27,7 @@
 <div class="profile-picture">
 	<img
 		src={imageUrl}
-		alt="Profile Picture"
+		alt="Profile"
 		class={isRound ? 'rounded' : ''}
 		style="width: {size}px; height: {size}px; object-fit: cover;"
 		on:error={handleError}

@@ -1,21 +1,16 @@
 <script lang="ts">
-	export const prerender = true;
-
 	import AccountSettings from '$lib/AccountSettings.svelte';
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { user, logOutUser } from '$stores/user';
-	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/utils';
-	import { fetchUserCollections } from '$lib/user';
-	import { onMount } from 'svelte';
+	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/api/utils';
+	import { fetchUserCollections } from '$lib/api/user';
 
 	let scores = [];
 	let activeTab = 'settings';
 
 	async function getQuizScores() {
-		// get quizzescompleted by the user
 		if ($user) {
 			const data = await getUserQuizScores($user.id);
-			// For each score, resolve the collection name
 			scores = await Promise.all(
 				data.map(async (score) => {
 					const metadata = await getCollectionMetadataFromId(score.quiz_id);
@@ -34,7 +29,7 @@
 
 	async function getUserCollections() {
 		if ($user) {
-			const data = await fetchUserCollections($user.uid);
+			const data = await fetchUserCollections($user.public_id);
 			console.log(data);
 			collections = data.map((collection) => ({
 				id: collection.id,
@@ -45,11 +40,9 @@
 		}
 	}
 
-	onMount(() => {
+	$: if ($user) {
 		document.title = 'User Dashboard';
-		getQuizScores();
-		getUserCollections();
-	});
+	}
 
 	async function logout() {
 		await logOutUser();
@@ -73,7 +66,9 @@
 				<li class="nav-item">
 					<a
 						class="nav-link {activeTab === 'settings' ? 'active' : ''}"
-						on:click={() => (activeTab = 'settings')}
+						on:click={() => {
+							activeTab = 'settings';
+						}}
 					>
 						Account Settings
 					</a>
@@ -81,7 +76,10 @@
 				<li class="nav-item">
 					<a
 						class="nav-link {activeTab === 'scores' ? 'active' : ''}"
-						on:click={() => (activeTab = 'scores')}
+						on:click={async () => {
+							activeTab = 'scores';
+							await getQuizScores();
+						}}
 					>
 						Scores
 					</a>

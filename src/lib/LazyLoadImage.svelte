@@ -3,7 +3,7 @@
 	export let imagePath = '';
 	export let tempSize = ''; // e.g. "200px" or "100%"
 
-	import { getImageUrl } from '$lib/supabaseClient';
+	import { getImageUrl } from '$lib/api/supabaseClient';
 
 	let loaded = false;
 	let finalUrl = '';
@@ -35,13 +35,13 @@
 <div class="lazy-load" style={tempSize ? `width: ${tempSize}; height: ${tempSize};` : ''}>
 	{#if !loaded}
 		<!-- Shimmer placeholder -->
-		<div class="shimmer" />
+		<div class="shimmer"></div>
 	{/if}
 
 	{#if finalUrl}
 		<img
 			src={finalUrl}
-			alt="Lazy Loaded Image"
+			alt="Placeholder"
 			loading="lazy"
 			class:loaded
 			on:load={handleLoad}

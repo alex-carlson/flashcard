@@ -1,8 +1,8 @@
 <script>
 	import SortAndFilter from '$lib/SortAndFilter.svelte';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
-	import { fetchCollections } from '$lib/collections';
-	import { getImageUrl } from '$lib/supabaseClient';
+	import { fetchCollections } from '$lib/api/collections';
+	import { getImageUrl } from '$lib/api/supabaseClient';
 	import { onMount } from 'svelte';
 
 	let collections = [];

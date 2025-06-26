@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { fetchUsers } from '$lib/user';
+	import { fetchUsers } from '$lib/api/user';
 
 	let users = [];
 

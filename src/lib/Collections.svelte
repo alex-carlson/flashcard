@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
-	import { getImageUrl } from './supabaseClient';
+	import { getImageUrl } from './api/supabaseClient';
 	export let collections = [];
 	let isCollapsed = true;
 

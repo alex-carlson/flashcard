@@ -1,4 +1,4 @@
-import { supabase } from '$lib/supabaseClient';
+import { supabase } from '$lib/api/supabaseClient';
 
 /**
  * Gets the user's name from the Supabase `profiles` table by their ID.
@@ -51,7 +51,7 @@ export async function getCollectionMetadataFromId(collectionId) {
 
     const { data, error } = await supabase
         .from('collections')
-        .select('category, author, created_at, author_id, slug')
+        .select('category, author, created_at, author_public_id, slug')
         .eq('id', collectionId)
         .single();
 

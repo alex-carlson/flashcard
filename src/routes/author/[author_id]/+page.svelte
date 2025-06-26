@@ -1,6 +1,6 @@
 <script>
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
-	import { fetchUser, fetchUserCollections } from '$lib/user';
+	import { fetchUser, fetchUserCollections } from '$lib/api/user';
 	import { page } from '$app/stores';
 
 	let collections = [];

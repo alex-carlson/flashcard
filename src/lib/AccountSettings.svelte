@@ -1,7 +1,7 @@
 <script>
 	import { user, setUserBio } from '$stores/user';
-	import { getSession } from '$lib/supabaseClient';
-	import { updateUsername, updateEmail } from '$lib/auth';
+	import { getSession } from '$lib/api/supabaseClient';
+	import { updateUsername, updateEmail } from '$lib/api/auth';
 	import { get } from 'svelte/store';
 
 	let message = '';

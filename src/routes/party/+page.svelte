@@ -1,6 +1,6 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
-	import { supabase } from '$lib/supabaseClient';
+	import { supabase } from '$lib/api/supabaseClient';
 	import { socket, initSocket } from '$stores/socket.js';
 	import { user } from '$stores/user.js';
 	import { get } from 'svelte/store';

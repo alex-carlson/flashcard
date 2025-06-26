@@ -6,8 +6,8 @@
 		signUpWithEmail,
 		createProfileIfMissing,
 		signInWithGoogle
-	} from '$lib/auth';
-	import { supabase } from '$lib/supabaseClient';
+	} from '$lib/api/auth';
+	import { supabase } from '$lib/api/supabaseClient';
 	import { goto } from '$app/navigation';
 
 	let email = '';

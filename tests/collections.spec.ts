@@ -1,7 +1,7 @@
 // write playwright tests for fetching data using the function in /lib/collections.js
 
 import { test, expect } from '@playwright/test';
-import { fetchCollections } from '../src/lib/collections.js';
+import { fetchCollections } from '../src/lib/api/collections.js';
 
 test.describe('Collections API', () => {
     test('fetches collections successfully', async ({ request }) => {

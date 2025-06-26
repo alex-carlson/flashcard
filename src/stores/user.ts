@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
-import { supabase } from '$lib/supabaseClient';
-import { fetchUser } from '$lib/user';
+import { supabase } from '$lib/api/supabaseClient';
+import { fetchUser } from '$lib/api/user';
 
 export const user = writable(null);
 
@@ -24,7 +24,7 @@ async function fetchUserProfile(sessionUser, token = null) {
     username: userWithProfile.username || '',
     token,
     id: userWithProfile.id || sessionUser.id,
-    uid: userWithProfile.uid || sessionUser.id,
+    public_id: userWithProfile.public_id || sessionUser.public_id,
   };
 }
 

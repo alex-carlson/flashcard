@@ -1,8 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
-	import { getImageUrl } from './supabaseClient';
-	import { fetchLatestCollections } from './collections';
+	import { getImageUrl } from './api/supabaseClient';
+	import { fetchLatestCollections } from './api/collections';
 
 	let collectionsWithImage = [];
 	let loading = true;
@@ -19,6 +19,7 @@
 
 	async function loadCollections() {
 		const collections = await fetchLatestCollections();
+		console.log('Fetched collections:', collections);
 		collectionsWithImage = collections.map((collection) => {
 			const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
 			return {
@@ -65,7 +66,7 @@
 		<ul>
 			{#each collectionsWithImage as collection}
 				<li>
-					<a href="/quiz/{collection.author_id}/{collection.slug}">
+					<a href="/quiz/{collection.author_public_id}/{collection.slug}">
 						<LazyLoadImage
 							imageUrl={collection.imageUrl || collection.fallbackImage}
 							tempSize="100px"

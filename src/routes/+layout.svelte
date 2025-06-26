@@ -2,7 +2,6 @@
 	import '../scss/custom.scss';
 	import Header from '$lib/Header.svelte';
 	import Footer from '$lib/Footer.svelte';
-	export let data;
 </script>
 
 <svelte:head>

@@ -4,7 +4,7 @@
 	import Options from './Options.svelte';
 	import ProfilePicture from './ProfilePicture.svelte';
 	import YoutubeAudioPlayer from '$lib/YoutubeAudioPlayer.svelte';
-	import { areStringsClose } from '$lib/utils';
+	import { areStringsClose } from '$lib/api/utils';
 
 	export let item = {
 		type: 'text',

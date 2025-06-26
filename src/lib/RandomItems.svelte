@@ -1,6 +1,6 @@
 <script>
 	import LazyLoadImage from './LazyLoadImage.svelte';
-	import { fetchRandomCollections } from './collections';
+	import { fetchRandomCollections } from './api/collections';
 	import Fa from 'svelte-fa';
 	import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';

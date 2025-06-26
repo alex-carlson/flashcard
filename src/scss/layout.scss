@@ -137,6 +137,16 @@ ul {
     }
 }
 
+.list-group {
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+
+    .list-group-item {
+        background-color: transparent;
+        color: var(--form-text-color);
+    }
+}
+
 .toolbar {
     // align children horizontally and fill the space
     display: flex;

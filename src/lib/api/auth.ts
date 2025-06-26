@@ -1,4 +1,4 @@
-import { supabase } from '$lib/supabaseClient';
+import { supabase } from '$lib/api/supabaseClient';
 import { user } from '$stores/user';
 
 export async function signInWithEmail(email: string, password: string) {
