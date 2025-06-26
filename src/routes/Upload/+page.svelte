@@ -14,7 +14,7 @@
 		uploadData,
 		removeItem
 	} from '$lib/Upload/uploader';
-	import { apiFetch } from '$lib/api/fetchData';
+	import { apiFetch } from '$lib/api/fetchdata';
 
 	let collection = null;
 	let questionType = 'Image';

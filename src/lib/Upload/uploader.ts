@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getSession } from '$lib/api/supabaseClient';
-import { apiFetch } from '$lib/api/fetchData';
+import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
 
