@@ -30,6 +30,7 @@ async function fetchUserProfile(sessionUser, token = null) {
 
 // Listen for Supabase auth state changes
 supabase.auth.onAuthStateChange(async (_event, session) => {
+  console.log('Auth state changed:', _event);
   const sessionUser = session?.user ?? null;
   const token = session?.access_token ?? null;
 
@@ -45,21 +46,41 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
 // Log out and clear the store
 export async function logOutUser() {
   try {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error('Error during sign out:', error.message);
-      return;
-    }
-
-    // Clear user store
+    // Always clear the user store immediately
     user.set(null);
 
-    // Optionally clear local/session storage if used
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('supabase.auth.token');
-      window.sessionStorage.removeItem('supabase.auth.token');
+    // Always remove 'user' and Supabase-related keys from storage
+    const clearAuthStorage = () => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+
+        Object.keys(localStorage).forEach((key) => {
+          if (key.toLowerCase().includes('supabase') || key.toLowerCase().includes('auth')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.toLowerCase().includes('supabase') || key.toLowerCase().includes('auth')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
+    };
+
+    // Try to sign out if there's a session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error during sign out:', error.message);
+      }
+    } else {
+      console.warn('No Supabase session found — skipping signOut');
     }
+
+    // Clear auth-related storage regardless
+    clearAuthStorage();
   } catch (err) {
     console.error('Exception during logOutUser:', err);
   }

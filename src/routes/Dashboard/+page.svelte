@@ -46,7 +46,6 @@
 
 	async function logout() {
 		await logOutUser();
-		window.location.href = '/';
 	}
 
 	let page = 1;
