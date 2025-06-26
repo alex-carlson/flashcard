@@ -7,7 +7,13 @@
 	import ImageSuggestions from '$lib/ImageSuggestions.svelte';
 	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
 	import { fetchUserCollections } from '$lib/api/collections';
-	import { uploadThumbnail } from './uploader';
+	import {
+		uploadThumbnail,
+		uploadQuestion,
+		uploadAudio,
+		uploadData,
+		removeItem
+	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchData';
 
 	let collection = null;
@@ -20,7 +26,7 @@
 		successMessage = '';
 
 	// things to move to uploader.ts
-	let localItem = { id: 1, file: null, answer: '' };
+	let item = {};
 	let tempCategory = '';
 	let tempDescription = '';
 
@@ -55,6 +61,7 @@
 		const selectedCollection = collections.find((c) => c.id === collectionId);
 		console.log('Selected collection:', selectedCollection);
 		collection = selectedCollection || '';
+		item.category = collection?.category || '';
 		isPublic = !collection?.private || false;
 	}
 
@@ -149,20 +156,28 @@
 			<div class="list uploads py-2">
 				<h4>Questions</h4>
 				<ul class="items-list list-group mb-4">
-					{#each collection.items as item, index}
-						<CollectionItem
-							{item}
-							{index}
-							bind:editableItemId
-							on:removeItem={removeItem(item.id)}
-							on:saveEdit={(e) => {
-								console.log('Save edit event:', e.detail);
-								saveEdit(e.detail);
-							}}
-							on:reorderItem={(e) => ReOrder(e.detail.prevIndex, e.detail.newIndex)}
-							{isReordering}
-						/>
-					{/each}
+					{#key collection.items}
+						{#each collection.items as item, index}
+							<CollectionItem
+								{item}
+								{index}
+								bind:editableItemId
+								on:removeItem={async () => {
+									const updatedItems = await removeItem(item.id, collection.category);
+									if (updatedItems) {
+										console.log('updatedItems:', updatedItems);
+										collection.items = updatedItems.items;
+									}
+								}}
+								on:saveEdit={(e) => {
+									console.log('Save edit event:', e.detail);
+									saveEdit(e.detail);
+								}}
+								on:reorderItem={(e) => ReOrder(e.detail.prevIndex, e.detail.newIndex)}
+								{isReordering}
+							/>
+						{/each}
+					{/key}
 				</ul>
 			</div>
 
@@ -198,13 +213,13 @@
 							class="col-auto"
 							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
 						>
-							<FileUpload on:uploadImage={(event) => (localItem.file = event.detail)} />
+							<FileUpload on:uploadImage={(event) => (item.file = event.detail)} />
 						</div>
 						<div class="col">
-							{#if localItem.file}
+							{#if item.file}
 								<img
 									class="preview img-thumbnail mb-2"
-									src={localItem.file}
+									src={item.file}
 									alt="Preview"
 									style="display: block; max-width: 100px;"
 								/>
@@ -213,18 +228,18 @@
 								id="answer"
 								type="text"
 								class="form-control mb-2"
-								bind:value={localItem.answer}
+								bind:value={item.answer}
 								placeholder="Enter an answer"
 							/>
 							<ImageSuggestions
 								bind:category={collection}
 								on:addImage={async (e) => {
-									localItem.file = e.detail;
+									item.file = e.detail;
 									uploadData();
-									localItem.file = null;
-									localItem.answer = '';
+									item.file = null;
+									item.answer = '';
 								}}
-								bind:searchTerm={localItem.answer}
+								bind:searchTerm={item.answer}
 							/>
 							<button
 								type="button"
@@ -247,26 +262,31 @@
 							<input
 								type="text"
 								class="form-control mb-2"
-								bind:value={localItem.question}
+								bind:value={item.question}
 								placeholder="Enter a question"
 							/>
 							<input
 								type="text"
 								class="form-control mb-2"
-								bind:value={localItem.answer}
+								bind:value={item.answer}
 								placeholder="Enter the answer"
 							/>
 							<button
 								type="button"
 								class="btn btn-success mt-2"
-								on:click={() => {
-									if (localItem.answer.trim() === '') {
+								on:click={async () => {
+									if ((item.question ?? '').trim() === '') {
 										showErrorMessage('Please enter a question.');
 										return;
 									}
-									uploadQuestion();
-									localItem.question = '';
-									localItem.answer = '';
+									const newItems = await uploadQuestion(item);
+									if (newItems) {
+										console.log('New item added:', newItems);
+										collection.items = newItems[0].items;
+										showSuccessMessage('Question added successfully!');
+									}
+									item.question = '';
+									item.answer = '';
 								}}>Add Question</button
 							>
 						</div>

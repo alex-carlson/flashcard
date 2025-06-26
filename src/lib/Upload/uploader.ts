@@ -7,7 +7,7 @@ import { user } from '$stores/user';
 const currentUser = get(user);
 
 // Create new collection
-async function createCollection() {
+export async function createCollection() {
     try {
         const username = currentUser.username;
         const data = {
@@ -27,7 +27,7 @@ async function createCollection() {
 }
 
 // Rename collection
-async function renameCollection() {
+export async function renameCollection() {
     try {
         await apiFetch('/collections/renameCollection', 'POST', {
             oldCategory: category,
@@ -41,20 +41,21 @@ async function renameCollection() {
 }
 
 // Remove item
-async function removeItem(itemId) {
+export async function removeItem(itemId, category) {
     try {
-        await apiFetch('/items/remove', 'POST', {
+        const result = await apiFetch('/items/remove', 'POST', {
             category,
             itemId
         });
-        items = items.filter((item) => item.id !== itemId);
+        return result;
     } catch (error) {
         console.error('Error removing item:', error);
         errorMessage = 'Remove failed. Please try again.';
+        return [];
     }
 }
 
-async function saveEdit(item) {
+export async function saveEdit(item) {
     console.log('Saving edit for item:', item);
     try {
         await apiFetch('/items/edit', 'POST', {
@@ -75,7 +76,7 @@ async function saveEdit(item) {
 }
 
 // Reorder items
-async function reorderItems() {
+export async function reorderItems() {
     try {
         const itemAnswers = items.map((item) => item.answer);
         await apiFetch('/items/reorder', 'POST', { category, itemAnswers });
@@ -87,7 +88,7 @@ async function reorderItems() {
 }
 
 // Delete collection
-async function deleteCollection() {
+export async function deleteCollection() {
     try {
         const username = currentUser.username;
         const data = {
@@ -106,14 +107,14 @@ async function deleteCollection() {
 }
 
 // show confirm delete popup
-function confirmDelete() {
+export function confirmDelete() {
     if (confirm('Are you sure you want to delete this collection?')) {
         deleteCollection();
     }
 }
 
 // Upload data
-async function uploadData(uuid = uuidv4(), forceJpg = false) {
+export async function uploadData(uuid = uuidv4(), forceJpg = false) {
     // If file is a URL (string), call /upload-url
     if (typeof localItem.file === 'string') {
         console.log('Detected URL upload:', localItem.file);
@@ -181,7 +182,7 @@ async function uploadData(uuid = uuidv4(), forceJpg = false) {
     }
 }
 
-async function uploadAudio(answer, url) {
+export async function uploadAudio(answer, url) {
     const username = currentUser.username;
     const author_id = currentUser.id;
 
@@ -212,32 +213,30 @@ async function uploadAudio(answer, url) {
     }
 }
 
-async function uploadQuestion() {
+export async function uploadQuestion(data) {
     const username = currentUser.username;
     const author_id = currentUser.id;
 
-    const data = {
+    console.log(data);
+
+    const d = {
         uuid: uuidv4(),
-        question: localItem.question,
-        folder: `${username}/${category}`,
-        answer: localItem.answer,
-        category,
+        question: data.question,
+        folder: `${username}/${data.category}`,
+        answer: data.answer,
+        category: data.category,
         author: username,
         author_id: currentUser.uid,
         author_uuid: currentUser.id
     };
 
-    console.log('Uploading question data:', data);
+    console.log('Uploading question data:', d);
 
     try {
-        const result = await apiFetch('/items/add-question', 'POST', data);
-        showSuccessMessage('Question upload successful!');
-        items = result[0]?.items || [];
-        localItem.question = '';
-        localItem.answer = '';
+        const result = await apiFetch('/items/add-question', 'POST', d);
+        return result;
     } catch (error) {
         console.error('Error uploading question data:', error);
-        showErrorMessage('Question upload failed. Please try again.');
     }
 }
 
