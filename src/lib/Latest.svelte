@@ -53,7 +53,7 @@
 		<ul>
 			{#each Array(5) as _, i}
 				<li class="placeholder" key={i}>
-					<div class="image-placeholder shimmer" style="width:100px; height:100px;"></div>
+					<div class="image-placeholder shimmer" style="width:80px; height:80px;"></div>
 					<div class="text-placeholder">
 						<div class="line shimmer" style="width: 60%; height: 1em; margin-bottom: 0.3em;"></div>
 						<div class="line shimmer" style="width: 40%; height: 0.8em;"></div>
