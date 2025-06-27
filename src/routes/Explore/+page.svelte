@@ -43,12 +43,27 @@
 	$: {
 		page = 0;
 	}
-
 	onMount(async () => {
 		document.title = 'Explore';
-		collections = await fetchCollections();
-		filteredCollections = collections;
-		loading = false;
+		console.log('Starting to fetch collections...');
+		try {
+			collections = await fetchCollections();
+			console.log('Collections fetched:', collections?.length || 0);
+			if (collections) {
+				filteredCollections = collections;
+			} else {
+				console.warn('No collections returned');
+				collections = [];
+				filteredCollections = [];
+			}
+		} catch (error) {
+			console.error('Error fetching collections:', error);
+			collections = [];
+			filteredCollections = [];
+		} finally {
+			loading = false;
+			console.log('Loading complete');
+		}
 	});
 </script>
 

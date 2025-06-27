@@ -16,34 +16,55 @@
 			day: '2-digit'
 		});
 	}
-
 	async function loadCollections() {
-		const collections = await fetchLatestCollections();
-		collectionsWithImage = collections.map((collection) => {
-			const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
-			return {
-				...collection,
-				imageUrl: null,
-				imagePath: path,
-				fallbackImage: collection.items[0]?.image || null
-			};
-		});
-		loading = false; // Render list immediately
+		try {
+			console.log('Latest: Starting to fetch collections...');
+			const collections = await fetchLatestCollections();
+			console.log('Latest: Collections fetched:', collections?.length || 0);
 
-		// Defer image loading in background
-		Promise.all(
-			collectionsWithImage.map(async (collection) => {
-				const url = await getImageUrl(collection.imagePath);
-				if (url) collection.imageUrl = url;
-			})
-		).then(() => {
-			// Force update after all images attempted
-			collectionsWithImage = [...collectionsWithImage];
-		});
+			if (!collections || collections.length === 0) {
+				console.warn('Latest: No collections returned');
+				collectionsWithImage = [];
+				loading = false;
+				return;
+			}
+
+			collectionsWithImage = collections.map((collection) => {
+				const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
+				return {
+					...collection,
+					imageUrl: null,
+					imagePath: path,
+					fallbackImage: collection.items[0]?.image || null
+				};
+			});
+			loading = false; // Render list immediately
+			console.log('Latest: UI rendered, loading images in background...');
+
+			// Defer image loading in background
+			Promise.all(
+				collectionsWithImage.map(async (collection) => {
+					try {
+						const url = await getImageUrl(collection.imagePath);
+						if (url) collection.imageUrl = url;
+					} catch (error) {
+						console.warn('Latest: Failed to load image for:', collection.category, error);
+					}
+				})
+			).then(() => {
+				// Force update after all images attempted
+				collectionsWithImage = [...collectionsWithImage];
+				console.log('Latest: Background image loading complete');
+			});
+		} catch (error) {
+			console.error('Latest: Error loading collections:', error);
+			collectionsWithImage = [];
+			loading = false;
+		}
 	}
-
 	onMount(() => {
-		requestIdleCallback(loadCollections);
+		// Use immediate execution instead of requestIdleCallback for faster loading
+		loadCollections();
 	});
 </script>
 
