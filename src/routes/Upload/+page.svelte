@@ -95,7 +95,7 @@
 	<title>Manage Collections</title>
 </svelte:head>
 
-<div class="container form padding uploader">
+<div class="container form white padding uploader">
 	{#if errorMessage}
 		<p class="alert alert-danger mt-2">{errorMessage}</p>
 	{/if}
@@ -177,7 +177,7 @@
 			</div>
 		{/if}
 		{#if collection}
-			<div class="list uploads py-2">
+			<div class="uploads py-2">
 				<h4>Questions</h4>
 				<ul class="items-list list-group mb-4">
 					{#key collection.items}
