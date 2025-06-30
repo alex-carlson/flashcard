@@ -66,10 +66,20 @@ body {
     background-color: var(--bg-color);
     color: var(--bg-text-color);
 
-    .container,
-    .container-fluid {
+    .white {
         background-color: var(--form-bg-color);
-        color: var(--bg-text-color);
+        color: var(--form-text-color);
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        span {
+            color: var(--text-color);
+        }
 
         a {
             color: var(--link-color);

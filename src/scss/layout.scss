@@ -13,20 +13,13 @@ ul {
     }
 }
 
-.container,
-.container-fluid {
-    background-color: white;
-}
-
 .container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    text-align: center;
     box-sizing: border-box;
-    border-radius: 0 0 10px 10px;
 }
 
 .row {
@@ -42,42 +35,114 @@ ul {
     padding: 1rem;
 }
 
+.radius {
+    border-radius: 8px;
+}
+
+.radius-bottom {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
 .list {
     ul {
         list-style: none;
         padding: 0;
         margin: 0;
-    }
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
 
-    li {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        border-bottom: 3px solid #d8d8d8;
-        min-height: 90px;
-    }
+        // Mobile: single column, full width
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
 
-    li a {
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-        color: inherit;
-        width: 100%;
-    }
+        li {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-bottom: none; // Remove old border
+            min-height: auto; // Remove fixed height
+            padding: 0; // Remove padding, let content handle it
 
-    img {
-        width: 80px;
-        height: 80px;
-        object-fit: contain;
-        margin-right: 1rem;
-    }
+            // remove border bottom fro last item - no longer needed
+            &:last-child {
+                border-bottom: none;
+            }
 
-    span {
-        font-size: 16px;
-        font-weight: 500;
+            a {
+                display: block; // Change to block for card layout
+                text-decoration: none;
+                color: inherit;
+                width: 100%;
+                height: 100%;
 
-        &.sm {
-            font-size: 12px;
+                .lazy-load {
+                    width: 100%;
+                    height: 120px; // Updated from 200px to 120px
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                }
+
+                p {
+                    padding: 1rem;
+                    margin: 0;
+                    font-weight: 500;
+                    color: #333;
+                }
+
+                h2 {
+                    color: var(--bg-color);
+                }
+
+                p,
+                span {
+                    color: var(--form-text-color)
+                }
+            }
+
+            .card-content {
+                padding: 1rem;
+                text-align: left; // Ensure left alignment
+
+                h2 {
+                    margin: 0 0 0.5rem 0;
+                    font-size: 1.25rem;
+                }
+
+                p {
+                    margin: 0 0 0.5rem 0;
+                    color: #666;
+                }
+
+                .card-meta {
+                    font-size: 0.875rem;
+                    color: #888;
+                    margin-bottom: 1rem;
+                }
+
+                .start-quiz-btn {
+                    background: var(--primary-color, #007bff);
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background-color 0.2s ease;
+
+                    &:hover {
+                        background: var(--primary-hover-color, #0056b3);
+                    }
+                }
+            }
         }
     }
 
@@ -133,6 +198,101 @@ ul {
                     height: 44px;
                 }
             }
+        }
+    }
+}
+
+// Specific styles for explore page collection cards
+.collection-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .card-image-container {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            margin: auto;
+        }
+
+        .placeholder {
+            width: 100%;
+            height: 100%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 0.875rem;
+
+            &::after {
+                content: 'No image';
+            }
+        }
+    }
+
+    .card-content {
+        padding: 1rem;
+        text-align: left;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+
+        .card-title {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--bg-color);
+        }
+
+        .card-description {
+            margin: 0 0 0.75rem 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            font-size: 0.875rem;
+            color: #888;
+            margin-bottom: 1rem;
+            margin-top: auto; // Push to bottom
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .card-questions {
+                text-align: left;
+                margin-bottom: 0;
+                flex: 1;
+            }
+
+            .card-date {
+                text-align: right;
+                margin-bottom: 0;
+                flex-shrink: 0;
+                margin-left: 1rem;
+                white-space: nowrap;
+            }
+        }
+
+        .start-quiz-btn {
+            display: flex;
+            flex-grow: 0;
+            text-align: center;
+            height: 44px;
         }
     }
 }

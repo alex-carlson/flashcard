@@ -50,8 +50,8 @@ export async function fetchUserCollections(uid): Promise<Collection[] | undefine
 
 
 // Fetch latest collections
-export async function fetchLatestCollections(): Promise<Collection[] | undefined> {
-    const url = `${import.meta.env.VITE_API_URL}/collections/latest`;
+export async function fetchLatestCollections(limit = 12): Promise<Collection[] | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/latest?limit=${limit}`;
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch latest collections");

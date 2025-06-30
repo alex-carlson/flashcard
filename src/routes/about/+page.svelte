@@ -7,8 +7,8 @@
 </script>
 
 <div class="about">
-	<div class="container white padding align-left">
-		<h1>About Quizzems</h1>
+	<div class="container align-left">
+		<h1 class="mt-5">About Quizzems</h1>
 		<p>
 			Quizzems is a platform designed to help study for bar trivia. With the design pillars to load
 			quickly so that if you are on the train or otherwise lose connection, you don't have to wait

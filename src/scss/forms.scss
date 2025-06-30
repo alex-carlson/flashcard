@@ -225,26 +225,6 @@ button {
     }
 }
 
-.paginationControls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem;
-
-    >* {
-        flex: 1 1 0;
-    }
-
-    button {
-        padding: 0.5rem 1rem;
-        width: auto;
-    }
-}
-
 .drop-zone {
     border: 2px dashed #ccc;
     border-radius: 0.5rem;

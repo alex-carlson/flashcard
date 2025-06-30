@@ -1,8 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import LazyLoadImage from './LazyLoadImage.svelte';
 	import { getImageUrl } from './api/supabaseClient';
 	import { fetchLatestCollections } from './api/collections';
+	import CollectionCard from '$lib/components/CollectionCard.svelte';
+	export let count = 12;
 
 	let collectionsWithImage = [];
 	let loading = true;
@@ -19,7 +20,7 @@
 	async function loadCollections() {
 		try {
 			console.log('Latest: Starting to fetch collections...');
-			const collections = await fetchLatestCollections();
+			const collections = await fetchLatestCollections(12);
 			console.log('Latest: Collections fetched:', collections?.length || 0);
 
 			if (!collections || collections.length === 0) {
@@ -84,23 +85,7 @@
 	{:else if collectionsWithImage.length > 0}
 		<ul>
 			{#each collectionsWithImage as collection}
-				<li>
-					<a href="/quiz/{collection.author_public_id}/{collection.slug}">
-						<LazyLoadImage
-							imageUrl={collection.imageUrl || collection.fallbackImage}
-							tempSize="100px"
-						/>
-
-						<div class="vertical fill align-left">
-							<span>
-								{collection.category} [{collection.items.length}]
-							</span>
-							<span class="sm">
-								{collection.author} - {formatDate(collection.created_at)}
-							</span>
-						</div>
-					</a>
-				</li>
+				<CollectionCard {collection} />
 			{/each}
 		</ul>
 	{:else}

@@ -47,12 +47,10 @@
 		<p id="tagline" class="drop-quote">{tagline}</p>
 	</div>
 </div>
-<div class="container white">
-	<div class="padding">
-		<Search on:SearchItemClicked={loadSearchedPage} />
-		<Latest />
-	</div>
-	<div class="padding">
+<div class="container">
+	<Search on:SearchItemClicked={loadSearchedPage} />
+	<Latest />
+	<div class="mt-3">
 		<a href="/explore">See More...</a>
 	</div>
 </div>

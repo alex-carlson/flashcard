@@ -289,7 +289,7 @@
 	{/if}
 
 	{#if cards.length > 0}
-		<div class="headline padding">
+		<div class="headline mb-3">
 			<h1>{collectionName}</h1>
 			<p>
 				by <a href={`/author/${author_id}`}>{author}</a>
@@ -305,7 +305,7 @@
 			{/if}
 		</div>
 
-		<div class={'flashcards padding ' + (isGrid ? 'grid' : 'vertical')}>
+		<div class={'flashcards ' + (isGrid ? 'grid' : 'vertical')}>
 			{#each cards as item, i}
 				<Card
 					{item}
