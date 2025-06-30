@@ -70,7 +70,6 @@
 
 <div class="list">
 	{#if loading}
-		<!-- Placeholder UI: show shimmer boxes or skeletons -->
 		<ul>
 			{#each Array(5) as _, i}
 				<li class="placeholder" key={i}>
