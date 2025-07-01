@@ -60,8 +60,8 @@
 			<iframe
 				title="YouTube audio player"
 				class="audio"
-				width="120"
-				height="120"
+				width="320"
+				height="100"
 				src={`https://www.youtube.com/embed/${item.audio}`}
 				frameborder="0"
 			></iframe>

@@ -5,62 +5,55 @@
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 	export let count = 12;
 
-	let collectionsWithImage = [];
 	let collections = [];
 	let loading = true;
 
-	// Convert timestamptz to mm/dd/yyyy format
-	function formatDate(timestamp) {
-		const date = new Date(timestamp);
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit'
-		});
+	// Helper: prepare collection for UI
+	function prepareCollection(collection) {
+		const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
+		return {
+			...collection,
+			imageUrl: null,
+			imagePath: path,
+			fallbackImage: collection.items[0]?.image || null
+		};
 	}
+
 	async function loadCollections() {
 		try {
 			console.log('Latest: Starting to fetch collections...');
-			collections = await fetchLatestCollections(12);
-			console.log('Latest: Collections fetched:', collections?.length || 0);
+			const raw = await fetchLatestCollections(12);
+			console.log('Latest: Collections fetched:', raw?.length || 0);
 
-			if (!collections || collections.length === 0) {
+			if (!raw || raw.length === 0) {
 				console.warn('Latest: No collections returned');
-				collectionsWithImage = [];
+				collections = [];
 				loading = false;
 				return;
 			}
 
-			collectionsWithImage = collections.map((collection) => {
-				const path = `${collection.author}/${collection.category}/thumbnail.jpg`;
-				return {
-					...collection,
-					imageUrl: null,
-					imagePath: path,
-					fallbackImage: collection.items[0]?.image || null
-				};
-			});
-			loading = false; // Render list immediately
+			// Render immediately with fallback images
+			collections = raw.map(prepareCollection);
+			loading = false;
 			console.log('Latest: UI rendered, loading images in background...');
 
 			// Defer image loading in background
 			Promise.all(
-				collectionsWithImage.map(async (collection) => {
+				collections.map(async (collection, i) => {
 					try {
 						const url = await getImageUrl(collection.imagePath);
-						if (url) collection.imageUrl = url;
+						if (url) collections[i].imageUrl = url;
 					} catch (error) {
 						console.warn('Latest: Failed to load image for:', collection.category, error);
 					}
 				})
 			).then(() => {
-				// Force update after all images attempted
-				collectionsWithImage = [...collectionsWithImage];
+				collections = [...collections];
 				console.log('Latest: Background image loading complete');
 			});
 		} catch (error) {
 			console.error('Latest: Error loading collections:', error);
-			collectionsWithImage = [];
+			collections = [];
 			loading = false;
 		}
 	}
