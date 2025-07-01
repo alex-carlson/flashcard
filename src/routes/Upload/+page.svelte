@@ -132,7 +132,6 @@
 			</div>
 		{:else}
 			<div class="collection card mb-4 p-3">
-				<!-- <button class="btn btn-secondary save mb-3" on:click={save}>Save Changes</button> -->
 				<div class="collection-info row g-3 align-items-center">
 					<div
 						class="thumbnail-uploader col-auto d-flex flex-column align-items-center justify-content-center"

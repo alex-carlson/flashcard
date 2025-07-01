@@ -153,40 +153,6 @@ ul {
         color: #888;
     }
 
-
-    &.uploads {
-
-        >* {
-            margin: 2px;
-        }
-
-        ul li {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            row-gap: 4px;
-            column-gap: 4px;
-            padding: 4px;
-
-            img {
-                width: 100px;
-                height: 100px;
-            }
-
-            span,
-            input[type="text"] {
-                // fill the space
-                flex: 1;
-            }
-
-            button {
-                width: 44px;
-                height: 44px;
-            }
-        }
-
-    }
-
     &.condensed {
         ul {
             display: grid;
