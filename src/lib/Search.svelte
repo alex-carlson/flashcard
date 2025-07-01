@@ -64,7 +64,7 @@
 	</div>
 
 	{#if searchResults.length > 0}
-		<div class="searchResults list condensed">
+		<div class="searchResults white list condensed rounded">
 			<ul>
 				{#each searchResults as result}
 					<li>
@@ -75,7 +75,9 @@
 							{#if result.items.length > 0}
 								<img src={result.items[0].image} alt={result.category} />
 							{/if}
-							{result.category} by: {result.author}
+							<p>
+								{result.category} by: {result.author}
+							</p>
 						</a>
 					</li>
 				{/each}

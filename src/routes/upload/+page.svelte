@@ -89,6 +89,26 @@
 			errorMessage = 'Visibility change failed. Please try again.';
 		}
 	}
+
+	async function updateCollection() {
+		const data = {
+			private: collection.private,
+			tags: collection.tags || [],
+			category: collection.category,
+			description: collection.description || ''
+		};
+
+		try {
+			const result = await apiFetch(`/collections/update/${collection.id}`, 'POST', data, false);
+			if (result) {
+				showSuccessMessage('Collection updated successfully!');
+				loadCollections();
+			}
+		} catch (error) {
+			console.error('Error updating collection:', error);
+			showErrorMessage('Failed to update collection. Please try again.');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -134,7 +154,7 @@
 			<div class="collection card mb-4 p-3">
 				<div class="collection-info row g-3 align-items-center">
 					<div
-						class="thumbnail-uploader col-auto d-flex flex-column align-items-center justify-content-center"
+						class="thumbnail-uploader col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
 						style="width: 180px; height: 180px;"
 					>
 						<FileUpload
@@ -144,7 +164,7 @@
 							}}
 						/>
 					</div>
-					<div class="col">
+					<div class="col-12 col-md">
 						<input
 							type="text"
 							class="form-control mb-2"
@@ -156,6 +176,15 @@
 							bind:value={tempDescription}
 							placeholder="Category Description (Optional)"
 						></textarea>
+						<!-- add tags field -->
+						<input
+							type="text"
+							class="form-control mb-2"
+							placeholder="Add tags (comma-separated)"
+							on:change={(e) => {
+								collection.tags = e.target.value.split(',').map((tag) => tag.trim());
+							}}
+						/>
 						<form
 							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
 							on:change={setVisible}
@@ -167,10 +196,12 @@
 								class="form-check-input"
 								bind:checked={isPublic}
 								aria-label="Privacy"
-							/>
-							<span>{isPublic ? 'Public' : 'Private'}</span>
+							/> <span>{isPublic ? 'Public' : 'Private'}</span>
 							<span class="small-text">({collection.items.length} questions)</span>
 						</form>
+						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
+							Save Changes
+						</button>
 					</div>
 				</div>
 			</div>
@@ -252,12 +283,12 @@
 				{#if questionType === 'Image'}
 					<form class="form row g-2 align-items-center">
 						<div
-							class="col-auto"
+							class="col-12 col-md-auto"
 							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
 						>
 							<FileUpload on:uploadImage={(event) => (item.file = event.detail)} />
 						</div>
-						<div class="col">
+						<div class="col-12 col-md">
 							<input
 								id="answer"
 								type="text"
@@ -314,7 +345,7 @@
 					/>
 				{:else if questionType === 'Question'}
 					<form class="form row g-2 align-items-center">
-						<div class="col">
+						<div class="col-12">
 							<input
 								type="text"
 								class="form-control mb-2"

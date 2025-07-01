@@ -48,7 +48,9 @@
 	</div>
 </div>
 <div class="container">
+	<h2>Search</h2>
 	<Search on:SearchItemClicked={loadSearchedPage} />
+	<h2 class="mt-3">Latest Collections</h2>
 	<Latest />
 	<div class="mt-3">
 		<a href="/explore">See More...</a>

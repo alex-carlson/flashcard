@@ -69,10 +69,10 @@
 	});
 </script>
 
-<div class="list">
+<div class="list grid">
 	{#if loading}
 		<ul>
-			{#each Array(5) as _, i}
+			{#each Array(12) as _, i}
 				<li class="placeholder" key={i}>
 					<div class="image-placeholder shimmer" style="width:80px; height:80px;"></div>
 					<div class="text-placeholder">

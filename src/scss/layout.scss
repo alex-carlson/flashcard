@@ -45,19 +45,28 @@ ul {
 }
 
 .list {
+    &.grid ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+
+        li {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 4px;
+
+            a {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    }
+
     ul {
         list-style: none;
         padding: 0;
         margin: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1rem;
-
-        // Mobile: single column, full width
-        @media (max-width: 768px) {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-        }
 
         li {
             background: white;
@@ -65,17 +74,10 @@ ul {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-bottom: none; // Remove old border
-            min-height: auto; // Remove fixed height
-            padding: 0; // Remove padding, let content handle it
-
-            // remove border bottom fro last item - no longer needed
-            &:last-child {
-                border-bottom: none;
-            }
+            padding: 0;
 
             a {
-                display: block; // Change to block for card layout
+                display: block;
                 text-decoration: none;
                 color: inherit;
                 width: 100%;
@@ -83,7 +85,7 @@ ul {
 
                 .lazy-load {
                     width: 100%;
-                    height: 120px; // Updated from 200px to 120px
+                    height: 120px;
 
                     img {
                         width: 100%;
@@ -105,42 +107,7 @@ ul {
 
                 p,
                 span {
-                    color: var(--form-text-color)
-                }
-            }
-
-            .card-content {
-                padding: 1rem;
-                text-align: left; // Ensure left alignment
-
-                h2 {
-                    margin: 0 0 0.5rem 0;
-                    font-size: 1.25rem;
-                }
-
-                p {
-                    margin: 0 0 0.5rem 0;
-                    color: #666;
-                }
-
-                .card-meta {
-                    font-size: 0.875rem;
-                    color: #888;
-                    margin-bottom: 1rem;
-                }
-
-                .start-quiz-btn {
-                    background: var(--primary-color, #007bff);
-                    color: white;
-                    border: none;
-                    padding: 0.5rem 1rem;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    transition: background-color 0.2s ease;
-
-                    &:hover {
-                        background: var(--primary-hover-color, #0056b3);
-                    }
+                    color: var(--form-text-color);
                 }
             }
         }
@@ -153,43 +120,36 @@ ul {
         color: #888;
     }
 
-    &.condensed {
-        ul {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-            gap: 4px;
-            
-            li {
-                padding: 4px;
-                font-size: 14px;
-                display: flex;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 4px;
-                
-                a{
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-decoration: none;
-                    color: inherit;
-                    width: 100%;
-                    height: 100%;
-                    
-                    div {
-                        width: 44px;
-                        height: 44px;
-                        margin-bottom: 2px;
-                        align-self: center;
-                    }
-    
-                    span {
-                        flex: 1;
-                        font-size: 14px;
-                        text-align: center;
-                    }
-                }
+    &.condensed ul li {
+        padding: 4px;
+        font-size: 14px;
+        width: 100%;
 
+
+        a {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+
+            img {
+                width: 60px;
+                height: 60px;
+                object-fit: contain;
+            }
+
+            div {
+                width: 44px;
+                height: 44px;
+                margin-bottom: 2px;
+                align-self: center;
+            }
+
+            span {
+                flex: 1;
+                font-size: 14px;
+                text-align: center;
             }
         }
     }
@@ -282,10 +242,27 @@ ul {
         }
 
         .start-quiz-btn {
-            display: flex;
-            flex-grow: 0;
-            text-align: center;
+            background: var(--primary-color, #007bff);
+            color: white;
+            border: none;
+            padding: 0;
             height: 44px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: auto;
+
+            &:hover {
+                background: var(--primary-hover-color, #0056b3);
+                color: white;
+                text-decoration: none;
+            }
         }
     }
 }
