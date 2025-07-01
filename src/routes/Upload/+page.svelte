@@ -94,8 +94,8 @@
 		const data = {
 			private: collection.private,
 			tags: collection.tags || [],
-			category: collection.category,
-			description: collection.description || ''
+			category: tempCategory || collection.category || '',
+			description: tempDescription || collection.description || ''
 		};
 
 		try {

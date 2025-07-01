@@ -64,17 +64,16 @@ export async function getCollectionMetadataFromId(collectionId) {
 }
 
 export function areStringsClose(a, b, threshold = 0.8) {
-    a = a
-        .replace(/\bthe\b/gi, "") // remove "the"
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ""); // remove all spaces
+    const preprocess = (str) =>
+        str
+            .replace(/\bthe\b/gi, "") // remove "the"
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "") // remove all spaces
+            .replace(/([^s])s\b/g, "$1"); // remove trailing 's' if not 'ss'
 
-    b = b
-        .replace(/\bthe\b/gi, "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "");
+    a = preprocess(a);
+    b = preprocess(b);
 
     if (!a || !b) return false;
 
@@ -84,7 +83,6 @@ export function areStringsClose(a, b, threshold = 0.8) {
     const lenB = b.length;
     const matrix = [];
 
-    // Initialize the matrix
     for (let i = 0; i <= lenB; i++) {
         matrix[i] = [i];
     }
@@ -92,16 +90,15 @@ export function areStringsClose(a, b, threshold = 0.8) {
         matrix[0][j] = j;
     }
 
-    // Fill in the matrix
     for (let i = 1; i <= lenB; i++) {
         for (let j = 1; j <= lenA; j++) {
             if (b[i - 1] === a[j - 1]) {
                 matrix[i][j] = matrix[i - 1][j - 1];
             } else {
                 matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1, // substitution
-                    matrix[i][j - 1] + 1, // insertion
-                    matrix[i - 1][j] + 1, // deletion
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1,
                 );
             }
         }

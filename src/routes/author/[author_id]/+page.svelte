@@ -2,6 +2,7 @@
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { fetchUser, fetchUserCollections } from '$lib/api/user';
 	import { page } from '$app/stores';
+	import CollectionCard from '$lib/components/CollectionCard.svelte';
 
 	let collections = [];
 	let author = null;
@@ -16,40 +17,38 @@
 	async function init(author_id) {
 		collections = await fetchUserCollections(author_id);
 		userData = await fetchUser(author_id);
+		console.log('User data fetched:', userData);
 		bio = userData?.bio || null;
 		author = userData?.username || null;
 	}
 </script>
 
-<div class="container padding list white">
-	{#if author}
-		<div class="profile">
-			<div class="left">
-				<ProfilePicture userId={author_id} size={150} isRound={true} />
+{#if author}
+	<div class="container py-4 bg-white white rounded mb-4">
+		<div class="row align-items-center">
+			<div class="col-auto">
+				<ProfilePicture userId={userData.id} size={150} isRound={true} />
 			</div>
-			<div class="right">
-				<h2>{author}</h2>
-				<p>{collections.length} quizzes published</p>
-			</div>
-			<div class="clear">
+			<div class="col">
+				<h2 class="mb-1">{author}</h2>
+				<p class="mb-2">{collections.length} quizzes published</p>
 				{#if bio && bio.length > 0}
-					<p>{bio}</p>
+					<p class="mb-0" style="border: 1px solid #ddd; padding: 0.75rem; border-radius: 0.5rem;">
+						{bio}
+					</p>
 				{/if}
 			</div>
 		</div>
+	</div>
+	<div class="container list grid pt-3 px-0">
 		<ul>
 			{#each collections as item}
-				<li>
-					<a href={`/${item.author_id}/${item.category}`}>
-						{#if item.items.length > 0}
-							<img src={item.items[0].image} alt={item.category} />
-						{/if}
-						<span>{item.category} - {item.items.length}</span>
-					</a>
-				</li>
+				<CollectionCard collection={item} />
 			{/each}
 		</ul>
-	{:else}
+	</div>
+{:else}
+	<div class="white padding rounded">
 		<p>Loading...</p>
-	{/if}
-</div>
+	</div>
+{/if}

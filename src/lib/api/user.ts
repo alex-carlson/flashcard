@@ -1,4 +1,5 @@
 export async function fetchUser(author_id) {
+    console.log("Fetching user with ID:", author_id);
     const url = `${import.meta.env.VITE_API_URL}/users/${author_id}`;
     return fetch(url)
         .then((response) => {

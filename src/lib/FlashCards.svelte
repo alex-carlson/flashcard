@@ -29,6 +29,7 @@
 	let author = null;
 	let collectionId = null;
 	let collectionName = null;
+	let collectionDescription = null;
 	let cards = [];
 	let isGrid = false;
 	let isFullscreen = false;
@@ -48,6 +49,17 @@
 			author = data.author;
 			collectionId = data.id;
 			collectionName = data.category;
+			collectionDescription = data.description;
+
+			console.log('Fetched collection:', {
+				author,
+				collectionId,
+				collectionName,
+				collectionDescription
+			});
+
+			// set page tab title to collectionName
+			document.title = `${collectionName} - ${author}`;
 
 			// if items length is 0, or is undefined, return
 			if (!data.items || data.items.length === 0) {
@@ -294,6 +306,9 @@
 			<p>
 				by <a href={`/author/${author_id}`}>{author}</a>
 			</p>
+			{#if collectionDescription && collectionDescription.length > 0}
+				<p class="description">{collectionDescription}</p>
+			{/if}
 			{#if !isPartyMode}
 				<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
 					{#each Object.keys(Modes) as mode}

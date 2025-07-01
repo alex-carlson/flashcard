@@ -13,13 +13,14 @@
 		const img = document.querySelector('.profile-picture img');
 		if (img) {
 			img.src = userId
-				? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg?${new Date().getTime()}`
+				? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg`
 				: '/avatar.png';
 		}
 	};
 
 	// fallback if image fails to load
 	function handleError(event) {
+		console.log('Error loading profile picture:', event);
 		event.target.src = '/avatar.png';
 	}
 </script>
