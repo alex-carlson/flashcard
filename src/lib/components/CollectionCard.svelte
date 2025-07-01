@@ -2,9 +2,6 @@
 	export let collection;
 	import { formatTimestamp } from '$lib/api/utils.js';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
-
-	// on start, console log collection data
-	console.log('CollectionCard: collection data', collection);
 </script>
 
 <li>
