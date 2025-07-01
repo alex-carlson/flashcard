@@ -92,7 +92,7 @@
 
 	async function updateCollection() {
 		const data = {
-			private: collection.private,
+			private: !isPublic || collection.private,
 			tags: collection.tags || [],
 			category: tempCategory || collection.category || '',
 			description: tempDescription || collection.description || ''
@@ -302,6 +302,7 @@
 								on:click={async () => {
 									const newItems = await uploadData(item, undefined, false);
 									if (newItems) {
+										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
 										showSuccessMessage('Item added successfully!');
 										item.file = null;
