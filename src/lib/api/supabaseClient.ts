@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         persistSession: true, // Ensure session persistence
         autoRefreshToken: true, // Automatically refresh tokens
         detectSessionInUrl: true, // Detect session in URL
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined, // SSR safe storage
     }
 });
 
@@ -15,11 +16,25 @@ export async function getSession() {
     try {
         const { data, error } = await supabase.auth.getSession();
 
-        if (error) console.error('Session error:', error);
+        if (error) {
+            console.error('Session error:', error);
+            return null;
+        }
 
-        return data.session; // ✅ Return the session directly
+        return data.session;
     } catch (e) {
         console.error('Supabase getSession threw:', e);
+        return null;
+    }
+}
+
+// Get current user from session
+export async function getCurrentUser() {
+    try {
+        const session = await getSession();
+        return session?.user ?? null;
+    } catch (error) {
+        console.error('Error getting current user:', error);
         return null;
     }
 }

@@ -4,37 +4,30 @@ import { get } from 'svelte/store';
 import { user } from '$stores/user';
 import { on } from 'svelte/events';
 
-const currentUser = get(user);
+// Helper function to safely get current user
+function getCurrentUser() {
+    const usr = get(user);
+    if (!usr?.public_id) {
+        throw new Error('User not authenticated');
+    }
+    return usr;
+}
 
 // Create new collection
 export async function createCollection(category) {
-    console.log('Creating collection for category:', category);
+    const usr = getCurrentUser();
     try {
         const data = {
             category,
-            author_id: currentUser.public_id,
-            author_uuid: currentUser.id,
-            author: currentUser.username
+            author_id: usr.public_id,
+            author_uuid: usr.id,
+            author: usr.username
         };
         const created = await apiFetch('/collections/createCollection', 'POST', data);
         return created;
     } catch (error) {
         console.error('Error creating collection:', error);
-        errorMessage = 'Create failed. Please try again.';
-    }
-}
-
-// Rename collection
-export async function renameCollection() {
-    try {
-        await apiFetch('/collections/renameCollection', 'POST', {
-            oldCategory: category,
-            newCategory: tempCategory
-        });
-        category = tempCategory;
-    } catch (error) {
-        console.error('Error renaming collection:', error);
-        errorMessage = 'Rename failed. Please try again.';
+        throw new Error('Create failed. Please try again.');
     }
 }
 
@@ -48,8 +41,7 @@ export async function removeItem(itemId, category) {
         return result;
     } catch (error) {
         console.error('Error removing item:', error);
-        errorMessage = 'Remove failed. Please try again.';
-        return [];
+        throw new Error('Remove failed. Please try again.');
     }
 }
 
@@ -68,6 +60,7 @@ export async function saveEdit(data) {
 export async function reorderItems(prevIndex, newIndex, data) {
     console.log('Reordering items:', { prevIndex, newIndex, data });
     try {
+        const currentUser = getCurrentUser();
         // Make a shallow copy to avoid mutating original array
         const items = [...data.items];
         const [moved] = items.splice(prevIndex, 1);
@@ -90,13 +83,14 @@ export async function reorderItems(prevIndex, newIndex, data) {
 // Delete collection
 export async function deleteCollection(collectionId, onSuccess = () => { }) {
     try {
+        const currentUser = getCurrentUser();
         const uid = currentUser.public_id;
         const collection = collectionId;
         const result = await apiFetch(`/collections/${uid}/${collection}`, 'DELETE');
         onSuccess(result);
     } catch (error) {
         console.error('Error deleting collection:', error);
-        errorMessage = 'Delete failed. Please try again.';
+        throw new Error('Delete failed. Please try again.');
     }
 }
 
@@ -109,7 +103,8 @@ export function confirmDelete(id, onSuccess = () => { }) {
 
 // Upload data
 export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
-    console.log('Uploading data for item:', item);
+    const usr = getCurrentUser();
+
     // If file is a URL (string), call /upload-url
     if (typeof item.file === 'string') {
         console.log('Detected URL upload:', item.file);
@@ -117,14 +112,15 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
             const data = {
                 uuid,
                 url: item.file,
-                folder: `${currentUser.username}/${item.category}`,
+                folder: `${usr.username}/${item.category}`,
                 forceJpeg: forceJpg,
-                author_uuid: currentUser.id,
-                author_id: currentUser.uid,
-                author: currentUser.username,
+                author_uuid: usr.id,
+                author_id: usr.uid,
+                author: usr.username,
                 category: item.category,
                 answer: item.answer
             };
+            console.log("usr:", usr);
             console.log('Uploading URL data:', data);
             const result = await apiFetch('/items/upload-url', 'POST', data);
             return result;
@@ -139,16 +135,16 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
     const formData = new FormData();
     formData.append('uuid', uuid);
     formData.append('file', item.file);
-    formData.append('folder', `${currentUser.username}/${item.category}`);
-    formData.append('forceJpeg', forceJpg);
+    formData.append('folder', `${usr.username}/${item.category}`);
+    formData.append('forceJpeg', forceJpg.toString());
     formData.append('answer', item.answer);
     formData.append('category', item.category);
-    formData.append('author', currentUser.username);
-    formData.append('author_uuid', currentUser.id);
-    formData.append('author_id', currentUser.public_id);
+    formData.append('author', usr.username);
+    formData.append('author_uuid', usr.id);
+    formData.append('author_id', usr.public_id);
 
     // Log all FormData entries
-    for (let [key, value] of formData.entries()) {
+    for (const [key, value] of formData.entries()) {
         console.log(`formData[${key}] =`, value);
     }
 
@@ -161,8 +157,9 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
 }
 
 export async function uploadAudio(item) {
-    const username = currentUser.username;
-    const author_id = currentUser.public_id;
+    const usr = getCurrentUser();
+    const username = usr.username;
+    const author_id = usr.public_id;
 
     const formData = new FormData();
     formData.append('uuid', uuidv4());
@@ -191,8 +188,8 @@ export async function uploadAudio(item) {
 }
 
 export async function uploadQuestion(data) {
-    const username = currentUser.username;
-    const author_id = currentUser.id;
+    const usr = getCurrentUser();
+    const username = usr.username;
 
     console.log(data);
 
@@ -203,8 +200,8 @@ export async function uploadQuestion(data) {
         answer: data.answer,
         category: data.category,
         author: username,
-        author_id: currentUser.uid,
-        author_uuid: currentUser.id
+        author_id: usr.uid,
+        author_uuid: usr.id
     };
 
     console.log('Uploading question data:', d);
@@ -218,14 +215,15 @@ export async function uploadQuestion(data) {
 }
 
 export async function uploadThumbnail(data, category) {
+    const usr = getCurrentUser();
     const formData = new FormData();
     formData.append('uuid', 'thumbnail');
     formData.append('file', data);
-    formData.append('folder', `${currentUser.username}/${category}`);
-    formData.append('forceJpeg', true);
+    formData.append('folder', `${usr.username}/${category}`);
+    formData.append('forceJpeg', 'true');
 
     // log form data
-    for (let [key, value] of formData.entries()) {
+    for (const [key, value] of formData.entries()) {
         console.log(`formData[${key}] =`, value);
     }
 
