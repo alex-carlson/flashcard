@@ -78,7 +78,7 @@
 				}}
 			/>
 		{:else if item.type === 'text'}
-			<h2>{item.question || 'Loading'}</h2>
+			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
 		{#if currentMode === 'TRUE_FALSE'}
@@ -93,6 +93,7 @@
 				{item.answer}
 			</span>
 			<input
+				style="box-sizing: border-box;"
 				type="text"
 				placeholder="Type your answer here..."
 				bind:value={item.userAnswer}

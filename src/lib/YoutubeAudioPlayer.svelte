@@ -156,7 +156,7 @@
     }
 </script>
 
-<div class="player-container">
+<div class="player-container p-3">
     {#if !playerReady}
         <span>Loading...</span>
     {:else}

@@ -48,7 +48,8 @@
         border-radius: 8px;
         width: 100%;
         box-sizing: border-box;
-        // padding: 1rem;
+        padding: 0;
+        gap: 0;
 
         &.revealed {
             img {
@@ -133,10 +134,14 @@
 
             &.revealed {
                 opacity: 1;
+                height: auto;
             }
 
             &.hidden {
                 opacity: 0;
+                height: 0;
+                margin: 0;
+                padding: 0;
             }
         }
 

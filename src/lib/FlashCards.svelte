@@ -256,7 +256,7 @@
 	});
 </script>
 
-<div class="container">
+<div class="container white pt-3">
 	{#if !isPartyMode}
 		<div class="toolbar">
 			<button on:click={shuffleCards}>
@@ -289,13 +289,13 @@
 	{/if}
 
 	{#if cards.length > 0}
-		<div class="headline mb-3">
+		<div class="headline my-3">
 			<h1>{collectionName}</h1>
 			<p>
 				by <a href={`/author/${author_id}`}>{author}</a>
 			</p>
 			{#if !isPartyMode}
-				<select name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
+				<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
 					{#each Object.keys(Modes) as mode}
 						<option value={mode}>
 							{Modes[mode]}
@@ -323,7 +323,7 @@
 	{/if}
 
 	{#if !isPartyMode && !isComplete}
-		<div class="padding">
+		<div class="py-3">
 			<button class="give-up" on:click={onCompleteQuiz}>
 				<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
 			</button>
