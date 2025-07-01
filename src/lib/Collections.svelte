@@ -52,13 +52,12 @@
 		{isCollapsed ? 'Show Collections' : 'Hide Collections'}
 	</button>
 	{#if !isCollapsed}
-		<ul>
+		<ul class="py-3">
 			{#each collectionsWithImages as collection}
 				<li>
 					<a
 						href="#"
 						on:click|preventDefault={() => selectCollection(collection.id)}
-						on:touchend|preventDefault={() => selectCollection(collection.id)}
 					>
 						{#if collection.items.length > 0}
 							<LazyLoadImage

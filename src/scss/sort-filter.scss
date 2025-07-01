@@ -1,6 +1,24 @@
 .sort-and-filter {
     display: flex;
     gap: 4px;
+
+    .controls-wrapper {
+        width: 100%;
+
+        .controls-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+
+            @media (min-width: 768px) {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+
+            .control-group {
+                width: 100%;
+            }
+        }
+    }
 }
 
 // Pagination controls
