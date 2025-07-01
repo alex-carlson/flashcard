@@ -6,6 +6,7 @@
 	export let count = 12;
 
 	let collectionsWithImage = [];
+	let collections = [];
 	let loading = true;
 
 	// Convert timestamptz to mm/dd/yyyy format
@@ -20,7 +21,7 @@
 	async function loadCollections() {
 		try {
 			console.log('Latest: Starting to fetch collections...');
-			const collections = await fetchLatestCollections(12);
+			collections = await fetchLatestCollections(12);
 			console.log('Latest: Collections fetched:', collections?.length || 0);
 
 			if (!collections || collections.length === 0) {
@@ -70,21 +71,9 @@
 </script>
 
 <div class="list grid">
-	{#if loading}
+	{#if collections.length > 0}
 		<ul>
-			{#each Array(12) as _, i}
-				<li class="placeholder" key={i}>
-					<div class="image-placeholder shimmer" style="width:80px; height:80px;"></div>
-					<div class="text-placeholder">
-						<div class="line shimmer" style="width: 60%; height: 1em; margin-bottom: 0.3em;"></div>
-						<div class="line shimmer" style="width: 40%; height: 0.8em;"></div>
-					</div>
-				</li>
-			{/each}
-		</ul>
-	{:else if collectionsWithImage.length > 0}
-		<ul>
-			{#each collectionsWithImage as collection}
+			{#each collections as collection}
 				<CollectionCard {collection} />
 			{/each}
 		</ul>
