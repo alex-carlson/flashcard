@@ -12,8 +12,12 @@
 	// Update query when category or searchTerm changes
 	$: query = [category, searchTerm].filter(Boolean).join(' ');
 
+	// Log when category or searchTerm changes
+	$: console.log('Category:', category, 'SearchTerm:', searchTerm);
+
 	// Reactively fetch suggestions when query length is greater than category.length + 3
 	$: if (query.length > category.length + 3) {
+		console.log('Fetching suggestions for:', query);
 		fetchSuggestions();
 	}
 

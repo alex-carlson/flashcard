@@ -265,16 +265,6 @@
 								bind:value={item.answer}
 								placeholder="Enter an answer"
 							/>
-							<ImageSuggestions
-								bind:category={collection}
-								on:addImage={async (e) => {
-									item.file = e.detail;
-									uploadData(item);
-									item.file = null;
-									item.answer = '';
-								}}
-								bind:searchTerm={item.answer}
-							/>
 							<button
 								type="button"
 								class="btn btn-success mt-2"
@@ -283,12 +273,26 @@
 									if (newItems) {
 										collection.items = newItems[0].items;
 										showSuccessMessage('Item added successfully!');
+										item.file = null;
+										item.answer = '';
 									}
-									item.file = null;
-									item.answer = '';
 								}}>Add item</button
 							>
 						</div>
+						<ImageSuggestions
+							bind:category={collection.category}
+							bind:searchTerm={item.answer}
+							on:addImage={async (e) => {
+								item.file = e.detail;
+								const newItem = await uploadData(item, undefined, false);
+								if (newItem) {
+									collection.items = newItem[0].items;
+									showSuccessMessage('Image added successfully!');
+									item.file = null;
+									item.answer = '';
+								}
+							}}
+						/>
 					</form>
 				{:else if questionType === 'Audio'}
 					<AudioUploader
