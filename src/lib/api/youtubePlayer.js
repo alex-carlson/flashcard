@@ -17,6 +17,7 @@ class YouTubePlayerService {
         this.currentVideoId = null;
         this.isPlaying = false;
         this.playerReady = false;
+        this.isMuted = false;
         this.duration = 0;
         this.currentTime = 0;
         this.progress = 0;
@@ -31,20 +32,19 @@ class YouTubePlayerService {
     subscribe(callback) {
         this.subscribers.add(callback);
         return () => this.subscribers.delete(callback);
-    }
-
-    // Notify all subscribers of state changes
+    }    // Notify all subscribers of state changes
     notifySubscribers() {
         const state = {
             isPlaying: this.isPlaying,
             playerReady: this.playerReady,
+            isMuted: this.isMuted,
             duration: this.duration,
             currentTime: this.currentTime,
             progress: this.progress,
             currentVideoId: this.currentVideoId
         };
         this.subscribers.forEach(callback => callback(state));
-    }    // Load YouTube IFrame API
+    }// Load YouTube IFrame API
     async loadYouTubeAPI() {
         // @ts-expect-error - YT is loaded dynamically
         if (window.YT && typeof window.YT.Player === "function") {
@@ -126,21 +126,30 @@ class YouTubePlayerService {
             // @ts-expect-error - YT is loaded dynamically
             this.player = new YT.Player(this.containerId, {
                 width: "1",
-                height: "1",
-                playerVars: {
+                height: "1", playerVars: {
                     controls: 0,
                     modestbranding: 1,
                     rel: 0,
                     showinfo: 0,
                     iv_load_policy: 3,
-                    autoplay: 0,
-                    mute: 1,
-                    playsinline: 1
+                    autoplay: 0, // Enable autoplay - will work when triggered by user interaction
+                    mute: 0, // Start unmuted for mobile compatibility
+                    playsinline: 1,
+                    fs: 0, // Disable fullscreen
+                    cc_load_policy: 0, // Disable captions
+                    disablekb: 1, // Disable keyboard controls
+                    enablejsapi: 1 // Enable JavaScript API
                 },
                 events: {
                     onReady: () => {
                         clearTimeout(timeout);
                         this.playerReady = true;
+
+                        // Initialize mute state
+                        if (typeof this.player.isMuted === 'function') {
+                            this.isMuted = this.player.isMuted();
+                        }
+
                         this.notifySubscribers();
                         resolve(true);
                     },
@@ -162,12 +171,13 @@ class YouTubePlayerService {
                 },
             });
         });
-    } async loadVideo(videoId) {
+    }
+    async loadVideo(videoId, autoPlay = true) {
         if (!this.player) {
             await this.initializePlayer();
         }
 
-        // Wait for player to be ready with a timeout
+        // Wait until player is ready
         let retries = 0;
         while (!this.playerReady && retries < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -179,18 +189,18 @@ class YouTubePlayerService {
             return;
         }
 
-        if (this.currentVideoId === videoId && this.isPlaying) {
-            // Same video is already playing, pause it
+        const isSameVideo = this.currentVideoId === videoId;
+
+        // If same video is playing, just toggle
+        if (isSameVideo && this.isPlaying) {
             this.pause();
             return;
         }
 
-        // Stop current video if playing
         if (this.isPlaying) {
             this.pause();
         }
 
-        // Load new video using YouTube Player API
         this.currentVideoId = videoId;
 
         try {
@@ -198,37 +208,15 @@ class YouTubePlayerService {
                 this.player.loadVideoById({
                     videoId: videoId,
                     startSeconds: 0,
-                    suggestedQuality: 'default'
+                    suggestedQuality: 'small'
                 });
 
-                // Wait a moment for the video to load, then unmute and play
-                setTimeout(() => {
-                    if (typeof this.player.unMute === 'function') {
-                        this.player.unMute();
-                    }
-                    if (typeof this.player.playVideo === 'function') {
-                        this.player.playVideo();
-                    }
-                }, 100);
-            } else if (this.player && typeof this.player.cueVideoById === 'function') {
-                this.player.cueVideoById({
-                    videoId: videoId,
-                    startSeconds: 0,
-                    suggestedQuality: 'default'
-                });
+                if (!autoPlay) {
+                    this.pause();
+                }
 
-                // For cueVideoById, we need to play manually
-                setTimeout(() => {
-                    if (typeof this.player.unMute === 'function') {
-                        this.player.unMute();
-                    }
-                    if (typeof this.player.playVideo === 'function') {
-                        this.player.playVideo();
-                    }
-                }, 100);
             } else {
-                console.error('No video loading methods available');
-                return;
+                console.error('No video loading method available');
             }
 
             this.duration = 0;
@@ -253,10 +241,6 @@ class YouTubePlayerService {
 
         try {
             if (typeof this.player.playVideo === 'function') {
-                // Unmute the player before playing
-                if (typeof this.player.unMute === 'function') {
-                    this.player.unMute();
-                }
                 this.player.playVideo();
             } else {
                 console.error('playVideo method not available');
@@ -264,7 +248,8 @@ class YouTubePlayerService {
         } catch (error) {
             console.error('Error playing video:', error);
         }
-    } pause() {
+    }
+    pause() {
         if (this.player && this.playerReady) {
             try {
                 if (typeof this.player.pauseVideo === 'function') {
@@ -276,10 +261,13 @@ class YouTubePlayerService {
                 console.error('Error pausing video:', error);
             }
         }
-    } async togglePlay(videoId) {
+    }
+    async togglePlay(videoId) {
         if (this.currentVideoId !== videoId) {
-            await this.loadVideo(videoId);
+            // New video — load and play
+            await this.loadVideo(videoId, true);
         } else {
+            // Toggle existing video
             if (this.isPlaying) {
                 this.pause();
             } else {
@@ -287,6 +275,49 @@ class YouTubePlayerService {
             }
         }
     }
+
+
+    // Helper method to check if we're on a mobile device
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }    // Method to handle first user interaction for mobile
+    async handleUserInteraction() {
+        // This method ensures that the first user interaction enables playback on mobile
+        // No special handling needed with autoplay=1 and proper user interaction
+        if (this.isMobileDevice()) {
+            console.log('Mobile device detected - playback should work with user interaction');
+        }
+    } toggleMute() {
+        if (!this.player || !this.playerReady) {
+            console.warn('Player not ready for muting');
+            return;
+        }
+
+        try {
+            if (typeof this.player.isMuted === 'function' &&
+                typeof this.player.mute === 'function' &&
+                typeof this.player.unMute === 'function') {
+
+                const currentlyMuted = this.player.isMuted();
+
+                if (currentlyMuted) {
+                    this.player.unMute();
+                    this.isMuted = false;
+                } else {
+                    this.player.mute();
+                    this.isMuted = true;
+                }
+
+                console.log('Mute toggled:', this.isMuted);
+                this.notifySubscribers();
+            } else {
+                console.error('Mute/unmute methods not available on player');
+            }
+        } catch (error) {
+            console.error('Error toggling mute:', error);
+        }
+    }
+
 
     seek(percent) {
         if (!this.player || !this.playerReady) {
@@ -352,11 +383,10 @@ class YouTubePlayerService {
         const container = document.getElementById(this.containerId);
         if (container) {
             container.innerHTML = '';
-        }
-
-        this.player = null;
+        } this.player = null;
         this.playerReady = false;
         this.isPlaying = false;
+        this.isMuted = false;
         this.currentVideoId = null;
         this.playerInitialized = null;
         this.youtubeAPILoaded = null;

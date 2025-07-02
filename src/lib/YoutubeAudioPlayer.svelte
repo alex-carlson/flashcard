@@ -1,23 +1,37 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import Fa from 'svelte-fa';
-	import { faPlayCircle, faPauseCircle } from '@fortawesome/free-solid-svg-icons';
+	import {
+		faPlayCircle,
+		faPauseCircle,
+		faVolumeMute,
+		faVolumeHigh
+	} from '@fortawesome/free-solid-svg-icons';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
 
 	export let videoId;
 	export let id;
-
 	let isPlaying = false;
 	let playerReady = false;
+	let isMuted = false;
 	let duration = 0;
 	let currentTime = 0;
 	let progress = 0;
 	let isCurrentVideo = false;
-
 	let unsubscribe;
+	let hasUserInteracted = false;
 
-	function togglePlay() {
+	async function togglePlay() {
+		// Handle first user interaction for mobile
+		if (!hasUserInteracted) {
+			await youtubePlayerService.handleUserInteraction();
+			hasUserInteracted = true;
+		}
+
 		youtubePlayerService.togglePlay(videoId);
+	}
+	function toggleMute() {
+		youtubePlayerService.toggleMute();
 	}
 
 	function seek(e) {
@@ -40,6 +54,7 @@
 		// Subscribe to player state changes first
 		unsubscribe = youtubePlayerService.subscribe((state) => {
 			playerReady = state.playerReady;
+			isMuted = state.isMuted;
 			isCurrentVideo = state.currentVideoId === videoId;
 
 			if (isCurrentVideo) {
@@ -72,11 +87,18 @@
 		<span>Loading...</span>
 	{:else}
 		<div class="controls">
-			<button on:click={togglePlay} disabled={!playerReady}>
+			<button on:click={togglePlay} on:touchend|preventDefault={togglePlay} disabled={!playerReady}>
 				{#if isCurrentVideo && isPlaying}
 					<Fa icon={faPauseCircle} />
 				{:else}
 					<Fa icon={faPlayCircle} />
+				{/if}
+			</button>
+			<button on:click={toggleMute} disabled={!playerReady}>
+				{#if isMuted}
+					<Fa icon={faVolumeMute} />
+				{:else}
+					<Fa icon={faVolumeHigh} />
 				{/if}
 			</button>
 			<div class="progress-bar-container" on:click={seek}>
