@@ -346,16 +346,14 @@
 	{/if}
 	<!-- Hidden iframe for youtube embed - used by audio players -->
 	<iframe
+		id="youtube-player"
 		width="1"
 		height="1"
-		id="youtube-player"
 		src="about:blank"
-		title="YouTube video player"
 		frameborder="0"
-		allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+		allow="autoplay"
 		style="position: fixed; top: -1000px; left: -1000px; opacity: 0; pointer-events: none;"
-	>
-	</iframe>
+	></iframe>
 
 	<Modal
 		bind:show={showModal}

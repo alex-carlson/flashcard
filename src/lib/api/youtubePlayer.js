@@ -61,7 +61,9 @@ class YouTubePlayerService {
             console.error(`Iframe with id "${this.iframeId}" not found`);
             return Promise.reject(new Error('Iframe not found'));
         }
-    } async loadVideo(videoId) {
+    }
+
+    async loadVideo(videoId) {
         const iframe = this.getIframe();
         if (!iframe) {
             console.error('YouTube iframe not found');
@@ -79,12 +81,12 @@ class YouTubePlayerService {
             this.pause();
         }
 
-        // Load new video by changing iframe src
+        // Load new video by changing iframe src with autoplay for audio
         this.currentVideoId = videoId;
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0`;
-        // Cast to HTMLIFrameElement to access src property
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1`;
         /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
 
+        // Set playing state and start progress tracking
         this.isPlaying = true;
         this.duration = 0;
         this.currentTime = 0;
@@ -99,8 +101,8 @@ class YouTubePlayerService {
         }
 
         if (!this.isPlaying) {
-            // Reload the video with autoplay to simulate play
-            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0`;
+            // Reload iframe with autoplay to resume playback
+            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1`;
             /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
             this.isPlaying = true;
             this.startProgressInterval();
@@ -115,8 +117,8 @@ class YouTubePlayerService {
         }
 
         if (this.isPlaying) {
-            // Remove autoplay to simulate pause
-            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=0&mute=0&controls=1&modestbranding=1&rel=0`;
+            // Reload iframe without autoplay to pause playback
+            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=0&mute=0&controls=0&modestbranding=1&rel=0&playsinline=1`;
             /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
             this.isPlaying = false;
             this.stopProgressInterval();
