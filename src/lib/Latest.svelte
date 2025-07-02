@@ -10,15 +10,7 @@
 
 	async function loadCollections() {
 		try {
-			console.log('Latest: Starting to fetch collections...');
 			collections = await fetchLatestCollections(count);
-			console.log('Latest: Collections fetched:', collections?.length || 0);
-			console.log('Latest: Collections:', collections);
-
-			if (!raw || raw.length === 0) {
-				console.warn('Latest: No collections returned');
-				collections = [];
-			}
 		} catch (error) {
 			console.error('Latest: Error loading collections:', error);
 			collections = [];
