@@ -1,6 +1,5 @@
 <script>
 	export let imageUrl = '';
-	export let imagePath = '';
 	export let tempSize = ''; // e.g. "200px" or "100%"
 
 	import { getImageUrl } from '$lib/api/supabaseClient';
@@ -20,12 +19,6 @@
 	$: if (imageUrl) {
 		finalUrl = imageUrl;
 		loaded = false;
-	} else if (imagePath) {
-		finalUrl = '';
-		loaded = false;
-		getImageUrl(imagePath).then((url) => {
-			if (url) finalUrl = url;
-		});
 	} else {
 		finalUrl = '';
 		loaded = false;

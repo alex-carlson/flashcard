@@ -1,61 +1,139 @@
 <script>
 	import SortAndFilter from '$lib/SortAndFilter.svelte';
-	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
-	import { fetchCollections } from '$lib/api/collections';
+	import { apiFetch } from '$lib/api/fetchdata';
 	import { onMount } from 'svelte';
-	import { formatTimestamp } from '$lib/api/utils.js';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
-
 	let collections = [];
 	let filteredCollections = [];
-	let page = 0;
+	let page = 1;
 	let sortOption = 'date';
+	let sortOrder = 'desc';
+	let filterText = '';
 	let itemsPerPage = 20;
-	let loading = true;
+	let totalPages = 0;
+	let totalCount = 0;
+	async function fetchPaginatedCollections(
+		pageNum = 1,
+		limit = 20,
+		sortMode = 'date',
+		sortOrder = 'desc',
+		filterText = ''
+	) {
+		try {
+			const url = `/collections/page/${pageNum}/${limit}`;
 
-	function nextPage() {
-		if ((page + 1) * itemsPerPage < filteredCollections.length) {
-			page++;
+			// Pass sort and filter parameters in the request body
+			const requestBody = {
+				sortMode,
+				sortOrder,
+				filter: filterText
+			};
+
+			const response = await apiFetch(url, 'POST', requestBody);
+
+			console.log(response);
+
+			if (response && response.collections) {
+				collections = response.collections;
+				filteredCollections = response.collections;
+				totalCount = response.totalCount || 0;
+				totalPages = response.totalPages || 0;
+			} else {
+				console.warn('No collections in response');
+				collections = [];
+				filteredCollections = [];
+				totalCount = 0;
+				totalPages = 0;
+			}
+		} catch (error) {
+			console.error('Error fetching paginated collections:', error);
+			collections = [];
+			filteredCollections = [];
+			totalCount = 0;
+			totalPages = 0;
 		}
 	}
 
-	function prevPage() {
-		if (page > 0) {
-			page--;
+	function goToPage(pageNum) {
+		if (pageNum >= 1 && pageNum <= totalPages && pageNum !== page) {
+			page = pageNum;
+			fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
 		}
 	}
 
-	// Reactive statement for paginated collections
-	$: paginatedCollections = filteredCollections.slice(
-		page * itemsPerPage,
-		(page + 1) * itemsPerPage
-	);
+	// Generate array of page numbers to show
+	$: pageNumbers = (() => {
+		if (totalPages <= 7) {
+			// Show all pages if 7 or fewer
+			return Array.from({ length: totalPages }, (_, i) => i + 1);
+		}
 
-	// Reset page to 0 when itemsPerPage changes
-	$: {
-		page = 0;
+		const pages = [];
+		const current = page;
+		const total = totalPages;
+
+		// Always show first page
+		pages.push(1);
+
+		if (current <= 4) {
+			// Near beginning: 1, 2, 3, 4, 5, ..., last
+			for (let i = 2; i <= Math.min(5, total - 1); i++) {
+				pages.push(i);
+			}
+			if (total > 5) {
+				pages.push('...');
+				pages.push(total);
+			}
+		} else if (current >= total - 3) {
+			// Near end: 1, ..., last-4, last-3, last-2, last-1, last
+			if (total > 5) {
+				pages.push('...');
+			}
+			for (let i = Math.max(total - 4, 2); i <= total; i++) {
+				pages.push(i);
+			}
+		} else {
+			// Middle: 1, ..., current-1, current, current+1, ..., last
+			pages.push('...');
+			for (let i = current - 1; i <= current + 1; i++) {
+				pages.push(i);
+			}
+			pages.push('...');
+			pages.push(total);
+		}
+
+		return pages;
+	})();
+	// Handle items per page change
+	async function handleItemsPerPageChange(event) {
+		const newItemsPerPage = event.detail;
+		if (newItemsPerPage !== itemsPerPage) {
+			itemsPerPage = newItemsPerPage;
+			page = 1; // Reset to first page
+			await fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
+		}
+	}
+
+	// Handle server-side filter changes
+	async function handleServerFilterChange(event) {
+		const {
+			sortMode,
+			sortOrder: newOrder,
+			filterText: newFilter,
+			itemsPerPage: newLimit
+		} = event.detail;
+		// Update current values
+		sortOption = sortMode;
+		sortOrder = newOrder;
+		filterText = newFilter;
+		itemsPerPage = newLimit;
+
+		page = 1; // Reset to first page when filters change
+		await fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
 	}
 	onMount(async () => {
 		document.title = 'Explore';
-		console.log('Starting to fetch collections...');
-		try {
-			collections = await fetchCollections();
-			console.log('Collections fetched:', collections?.length || 0);
-			if (collections) {
-				filteredCollections = collections;
-			} else {
-				console.warn('No collections returned');
-				collections = [];
-				filteredCollections = [];
-			}
-		} catch (error) {
-			console.error('Error fetching collections:', error);
-			collections = [];
-			filteredCollections = [];
-		} finally {
-			loading = false;
-			console.log('Loading complete');
-		}
+		await fetchPaginatedCollections(1, itemsPerPage, sortOption, sortOrder, filterText);
 	});
 </script>
 
@@ -63,36 +141,43 @@
 	<h1>Explore</h1>
 	<p>Discover a new quiz, practice up!</p>
 </div>
-{#if loading}
-	<p>Loading collections...</p>
-{:else}
-	<SortAndFilter
-		collection={collections}
-		bind:sortOption
-		bind:itemsPerPage
-		on:sortAndFilterChange={(event) => {
-			filteredCollections = event.detail;
-			page = 0;
-		}}
-	/>
-	<div class="container">
-		<div class="list">
-			<ul>
-				{#each paginatedCollections as collection}
-					<CollectionCard {collection} />
-				{/each}
-			</ul>
-		</div>
-	</div>
 
-	<!-- Pagination controls -->
-	<div class="paginationControls container margin-auto">
-		<button on:click={prevPage} disabled={page === 0}>Previous</button>
-		<span>
-			Page {page + 1} of {Math.ceil(filteredCollections.length / itemsPerPage)}
-		</span>
-		<button on:click={nextPage} disabled={(page + 1) * itemsPerPage >= filteredCollections.length}>
-			Next
-		</button>
+<SortAndFilter
+	collection={collections}
+	bind:sortOption
+	bind:sortOrder
+	bind:itemsPerPage
+	on:itemsPerPageChanged={handleItemsPerPageChange}
+	on:serverFilterChange={handleServerFilterChange}
+/>
+
+<div class="container">
+	<div class="list grid">
+		<!-- show # of collections -->
+		<p class="collection-count">
+			Showing {filteredCollections.length} of {totalCount} collections
+		</p>
+		<ul>
+			{#each filteredCollections as collection}
+				<CollectionCard {collection} />
+			{/each}
+		</ul>
 	</div>
-{/if}
+</div>
+
+<!-- Pagination controls -->
+<div class="paginationControls container margin-auto">
+	{#each pageNumbers as pageNum}
+		{#if pageNum === '...'}
+			<span class="ellipsis">...</span>
+		{:else}
+			<button
+				on:click|preventDefault={() => goToPage(pageNum)}
+				class:active={pageNum === page}
+				type="button"
+			>
+				{pageNum}
+			</button>
+		{/if}
+	{/each}
+</div>

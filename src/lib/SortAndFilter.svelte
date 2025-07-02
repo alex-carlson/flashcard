@@ -4,37 +4,37 @@
 
 	export let collection = [];
 	export let sortOption = 'date';
-	export let sortOrder = 'desc'; // Default to ascending order
-	export let itemsPerPage = 20; // Default items per page
-	export let sortedAndFilteredCollection = [];
-	let filterText = '';
-	let itemsPerPageOptions = [10, 20, 50]; // Options for items per page
+	export let sortOrder = 'desc';
+	export let itemsPerPage = 20;
 
-	$: {
-		// Sort and filter the collection based on user input
-		sortedAndFilteredCollection = collection
-			.filter((item) => item.category.toLowerCase().includes(filterText.toLowerCase()))
-			.sort((a, b) => {
-				let comparison = 0;
-				if (sortOption === 'name') {
-					comparison = a.category.localeCompare(b.category);
-				} else if (sortOption === 'date') {
-					comparison = new Date(a.created_at) - new Date(b.created_at);
-				} else if (sortOption === 'size') {
-					comparison = a.items.length - b.items.length;
-				}
-				return sortOrder === 'asc' ? comparison : -comparison;
-			});
+	let itemsPerPageOptions = [20, 40, 80];
+
+	// Local state for pending changes (before apply)
+	let pendingSortOption = sortOption;
+	let pendingSortOrder = sortOrder;
+	let pendingFilterText = '';
+
+	// Update pending values when props change
+	$: pendingSortOption = sortOption;
+	$: pendingSortOrder = sortOrder;
+
+	// Handle itemsPerPage changes with explicit function (immediate effect)
+	function handleItemsPerPageChange() {
+		dispatch('itemsPerPageChanged', itemsPerPage);
 	}
 
-	// Watch for changes in sortOption, sortOrder, or filterText
-	$: if (sortedAndFilteredCollection.length > 0) {
-		sendSortAndFilterChange();
-	}
+	// Apply filters and sorting (for server-side)
+	function applyFilters() {
+		// Update the actual values
+		sortOption = pendingSortOption;
+		sortOrder = pendingSortOrder;
 
-	// Send sortAndFilterChange event to parent component
-	function sendSortAndFilterChange() {
-		dispatch('sortAndFilterChange', sortedAndFilteredCollection);
+		dispatch('serverFilterChange', {
+			sortMode: sortOption,
+			sortOrder,
+			filterText: pendingFilterText,
+			itemsPerPage
+		});
 	}
 </script>
 
@@ -44,15 +44,15 @@
 			<div class="controls-row">
 				<div class="control-group">
 					<label for="itemsPerPage">Items per page:</label>
-					<select id="itemsPerPage" bind:value={itemsPerPage}>
-						{#each itemsPerPageOptions as option}
-							<option value={option}>{option}</option>
+					<select id="itemsPerPage" bind:value={itemsPerPage} on:change={handleItemsPerPageChange}>
+						{#each itemsPerPageOptions as option, i}
+							<option value={option} selected={i === 0}>{option}</option>
 						{/each}
 					</select>
 				</div>
 				<div class="control-group">
 					<label for="sort">Sort by:</label>
-					<select id="sort" bind:value={sortOption}>
+					<select id="sort" bind:value={pendingSortOption}>
 						<option value="name">Alphabetical</option>
 						<option value="date">Creation Date</option>
 						<option value="size">Size</option>
@@ -60,16 +60,26 @@
 				</div>
 				<div class="control-group">
 					<label for="order">Order:</label>
-					<select id="order" bind:value={sortOrder}>
+					<select id="order" bind:value={pendingSortOrder}>
 						<option value="asc">Ascending</option>
 						<option value="desc">Descending</option>
 					</select>
 				</div>
+				<div class="control-group">
+					<label for="filter">Filter by:</label>
+					<input
+						type="text"
+						id="filter"
+						bind:value={pendingFilterText}
+						placeholder="Type to filter..."
+					/>
+				</div>
 			</div>
 
-			<div class="filter-options">
-				<label for="filter">Filter by:</label>
-				<input type="text" id="filter" bind:value={filterText} placeholder="Type to filter..." />
+			<div class="apply-section">
+				<button type="button" class="btn btn-primary" on:click={applyFilters}>
+					Apply Filters
+				</button>
 			</div>
 		</div>
 	</div>
