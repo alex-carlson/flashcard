@@ -20,15 +20,21 @@
 	let isCurrentVideo = false;
 	let unsubscribe;
 	let hasUserInteracted = false;
-
 	async function togglePlay() {
+		console.log('togglePlay called for video:', videoId);
+
 		// Handle first user interaction for mobile
 		if (!hasUserInteracted) {
+			console.log('First user interaction detected');
 			await youtubePlayerService.handleUserInteraction();
 			hasUserInteracted = true;
 		}
 
-		youtubePlayerService.togglePlay(videoId);
+		try {
+			await youtubePlayerService.togglePlay(videoId);
+		} catch (error) {
+			console.error('Error in togglePlay:', error);
+		}
 	}
 	function toggleMute() {
 		youtubePlayerService.toggleMute();
@@ -87,7 +93,13 @@
 		<span>Loading...</span>
 	{:else}
 		<div class="controls">
-			<button on:click={togglePlay} on:touchend|preventDefault={togglePlay} disabled={!playerReady}>
+			<button
+				on:click={togglePlay}
+				on:touchstart|preventDefault={togglePlay}
+				on:touchend|preventDefault
+				disabled={!playerReady}
+				style="touch-action: manipulation;"
+			>
 				{#if isCurrentVideo && isPlaying}
 					<Fa icon={faPauseCircle} />
 				{:else}

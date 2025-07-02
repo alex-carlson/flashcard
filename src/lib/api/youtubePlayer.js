@@ -132,7 +132,7 @@ class YouTubePlayerService {
                     rel: 0,
                     showinfo: 0,
                     iv_load_policy: 3,
-                    autoplay: 0, // Enable autoplay - will work when triggered by user interaction
+                    autoplay: 1, // Enable autoplay - will work when triggered by user interaction
                     mute: 0, // Start unmuted for mobile compatibility
                     playsinline: 1,
                     fs: 0, // Disable fullscreen
@@ -171,8 +171,7 @@ class YouTubePlayerService {
                 },
             });
         });
-    }
-    async loadVideo(videoId, autoPlay = true) {
+    } async loadVideo(videoId, autoPlay = true) {
         if (!this.player) {
             await this.initializePlayer();
         }
@@ -205,16 +204,19 @@ class YouTubePlayerService {
 
         try {
             if (this.player && typeof this.player.loadVideoById === 'function') {
+                // Use loadVideoById which automatically plays with autoplay: 1
                 this.player.loadVideoById({
                     videoId: videoId,
                     startSeconds: 0,
                     suggestedQuality: 'small'
                 });
 
+                // If autoPlay is false, pause after a short delay
                 if (!autoPlay) {
-                    this.pause();
+                    setTimeout(() => {
+                        this.pause();
+                    }, 100);
                 }
-
             } else {
                 console.error('No video loading method available');
             }
@@ -226,9 +228,9 @@ class YouTubePlayerService {
         } catch (error) {
             console.error('Error loading video:', error);
         }
-    }
+    } play() {
+        console.log('play() called - player:', !!this.player, 'ready:', this.playerReady);
 
-    play() {
         if (!this.player) {
             console.error('No player available');
             return;
@@ -241,6 +243,7 @@ class YouTubePlayerService {
 
         try {
             if (typeof this.player.playVideo === 'function') {
+                console.log('Calling player.playVideo()');
                 this.player.playVideo();
             } else {
                 console.error('playVideo method not available');
@@ -261,16 +264,20 @@ class YouTubePlayerService {
                 console.error('Error pausing video:', error);
             }
         }
-    }
-    async togglePlay(videoId) {
+    } async togglePlay(videoId) {
+        console.log('togglePlay called with videoId:', videoId, 'current:', this.currentVideoId, 'isPlaying:', this.isPlaying);
+
         if (this.currentVideoId !== videoId) {
             // New video — load and play
+            console.log('Loading new video:', videoId);
             await this.loadVideo(videoId, true);
         } else {
             // Toggle existing video
             if (this.isPlaying) {
+                console.log('Pausing current video');
                 this.pause();
             } else {
+                console.log('Playing current video');
                 this.play();
             }
         }
@@ -282,9 +289,31 @@ class YouTubePlayerService {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }    // Method to handle first user interaction for mobile
     async handleUserInteraction() {
-        // This method ensures that the first user interaction enables playback on mobile
-        // No special handling needed with autoplay=1 and proper user interaction
-        if (this.isMobileDevice()) {
+        if (this.isMobileDevice() && this.player && this.playerReady) {
+            try {
+                console.log('Handling first user interaction for mobile...');
+
+                // Try to create an audio context or play a silent moment to unlock audio
+                // This is required for mobile devices to enable audio playback
+                if (typeof this.player.setVolume === 'function') {
+                    const currentVolume = this.player.getVolume ? this.player.getVolume() : 50;
+                    this.player.setVolume(1);
+
+                    // Try a quick play/pause to unlock audio context
+                    if (typeof this.player.playVideo === 'function' && typeof this.player.pauseVideo === 'function') {
+                        this.player.playVideo();
+                        setTimeout(() => {
+                            this.player.pauseVideo();
+                            this.player.setVolume(currentVolume);
+                        }, 50);
+                    }
+                }
+
+                console.log('Mobile user interaction handled successfully');
+            } catch (error) {
+                console.warn('Mobile user interaction handling failed:', error);
+            }
+        } else {
             console.log('Mobile device detected - playback should work with user interaction');
         }
     } toggleMute() {
