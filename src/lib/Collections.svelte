@@ -6,11 +6,11 @@
 
 	const dispatch = createEventDispatcher();
 
-	function selectCollection(collectionId) {
+	function selectCollection(slug) {
 		// Dispatch collection ID to parent
 		// close the collection list
 		isCollapsed = true;
-		dispatch('selectCollection', collectionId);
+		dispatch('selectCollection', slug);
 	}
 </script>
 
@@ -25,7 +25,7 @@
 		<ul class="py-3">
 			{#each collections as collection}
 				<li>
-					<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
+					<a href="#" on:click|preventDefault={() => selectCollection(collection.slug)}>
 						<LazyLoadImage imageUrl={collection.thumbnail} tempSize="50px" />
 						<span>
 							{collection.category}
