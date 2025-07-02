@@ -29,7 +29,7 @@
 				filter: filterText
 			};
 
-			const response = await apiFetch(url, 'POST', requestBody);
+			const response = await apiFetch(url, 'POST', requestBody, false, false);
 
 			console.log(response);
 

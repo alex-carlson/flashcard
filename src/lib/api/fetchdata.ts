@@ -1,9 +1,12 @@
 import { getSession } from "$lib/api/supabaseClient";
 
-async function getAuthHeaders() {
+async function getAuthHeaders(requireAuth = true): Promise<Record<string, string>> {
     const session = await getSession();
     if (!session) {
-        throw new Error('User session not found');
+        if (requireAuth) {
+            throw new Error('User session not found');
+        }
+        return {};
     }
 
     return {
@@ -11,9 +14,11 @@ async function getAuthHeaders() {
     };
 }
 
-export async function apiFetch(endpoint, method = 'GET', body = null, isFormData = false) {
-    const headers = await getAuthHeaders();
+export async function apiFetch(endpoint, method = 'GET', body = null, isFormData = false, requireAuth = true) {
+    const authHeaders = await getAuthHeaders(requireAuth);
+    const headers: Record<string, string> = { ...authHeaders };
     if (!isFormData) headers['Content-Type'] = 'application/json';
+
     const url = import.meta.env.VITE_API_URL + endpoint;
     const response = await fetch(url, {
         method,
