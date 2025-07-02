@@ -5,7 +5,7 @@
 	import AudioUploader from '$lib/Upload/AudioUploader.svelte';
 	import ImageSuggestions from '$lib/ImageSuggestions.svelte';
 	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
-	import { fetchUserCollections } from '$lib/api/collections';
+	import { fetchUserCollections, fetchCollectionById } from '$lib/api/collections';
 	import {
 		uploadThumbnail,
 		uploadQuestion,
@@ -40,6 +40,7 @@
 	async function loadCollections() {
 		try {
 			const result = await fetchUserCollections($user.public_id);
+			console.log('Fetched collections:', result);
 			collections = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 		} catch (error) {
 			console.error('Error fetching user collections:', error);
@@ -59,13 +60,38 @@
 			errorMessage = ''; // Clear the error message after 10 seconds
 		}, 10000);
 	}
+	async function setCollection(collectionId) {
+		try {
+			const newCollection = await fetchCollectionById($user.public_id, collectionId);
+			console.log('Fetched collection details:', newCollection);
 
-	function setCollection(collectionId) {
-		const selectedCollection = collections.find((c) => c.id === collectionId);
-		console.log('Selected collection:', selectedCollection);
-		collection = selectedCollection || '';
-		item.category = collection?.category || '';
-		isPublic = !collection?.private || false;
+			if (newCollection) {
+				// Set the collection with all its data
+				collection = newCollection;
+
+				// Set form values
+				item.category = collection.category || '';
+				tempCategory = collection.category || '';
+				tempDescription = collection.description || '';
+				isPublic = !collection.private || false;
+
+				// Initialize items array if it doesn't exist
+				if (!collection.items) {
+					collection.items = [];
+				}
+
+				// Set items length
+				collection.itemsLength = collection.items ? collection.items.length : 0;
+
+				console.log('Collection set with', collection.itemsLength, 'items');
+			} else {
+				console.error('No collection data received');
+				showErrorMessage('Failed to load collection data');
+			}
+		} catch (error) {
+			console.error('Error fetching collection:', error);
+			showErrorMessage('Failed to load collection. Please try again.');
+		}
 	}
 
 	function handleCollectionDeleted(newCollection) {
@@ -197,7 +223,7 @@
 								bind:checked={isPublic}
 								aria-label="Privacy"
 							/> <span>{isPublic ? 'Public' : 'Private'}</span>
-							<span class="small-text">({collection.items.length} questions)</span>
+							<span class="small-text">({collection.itemsLength} questions)</span>
 						</form>
 						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
 							Save Changes
@@ -210,47 +236,53 @@
 			<div class="uploads py-2">
 				<h4>Questions</h4>
 				<ul class="items-list list-group mb-4">
-					{#key collection.items}
-						{#each collection.items as item, index}
-							<CollectionItem
-								{item}
-								{index}
-								bind:editableItemId
-								on:removeItem={async () => {
-									const updatedItems = await removeItem(item.id, collection.category);
-									if (updatedItems) {
-										console.log('updatedItems:', updatedItems);
-										collection.items = updatedItems.items;
-									}
-								}}
-								on:saveEdit={async (e) => {
-									console.log('Save edit event:', e.detail);
-									const d = {
-										collection: collection.category,
-										id: e.detail.id,
-										answer: e.detail.answer,
-										author_id: $user.public_id
-									};
-									const result = await saveEdit(d);
-									if (result) {
-										collections = result;
-									}
-								}}
-								on:reorderItem={async (e) => {
-									const result = await reorderItems(
-										e.detail.prevIndex,
-										e.detail.newIndex,
-										collection
-									);
-									if (result) {
-										console.log('Reordered items:', result);
-										collection.items = result[0].items;
-									}
-								}}
-								{isReordering}
-							/>
-						{/each}
-					{/key}
+					{#if collection.items && collection.items.length > 0}
+						{#key collection.items}
+							{#each collection.items as item, index}
+								<CollectionItem
+									{item}
+									{index}
+									bind:editableItemId
+									on:removeItem={async () => {
+										const updatedItems = await removeItem(item.id, collection.category);
+										if (updatedItems) {
+											console.log('updatedItems:', updatedItems);
+											collection.items = updatedItems.items;
+											collection.itemsLength = updatedItems.items.length;
+										}
+									}}
+									on:saveEdit={async (e) => {
+										console.log('Save edit event:', e.detail);
+										const d = {
+											collection: collection.category,
+											id: e.detail.id,
+											answer: e.detail.answer,
+											author_id: $user.public_id
+										};
+										const result = await saveEdit(d);
+										if (result) {
+											collections = result;
+										}
+									}}
+									on:reorderItem={async (e) => {
+										const result = await reorderItems(
+											e.detail.prevIndex,
+											e.detail.newIndex,
+											collection
+										);
+										if (result) {
+											console.log('Reordered items:', result);
+											collection.items = result[0].items;
+											collection.itemsLength = result[0].items.length;
+										}
+									}}
+									{isReordering}
+								/>
+							{/each}
+						{/key}
+					{:else}
+						<li class="list-group-item text-muted">No questions yet. Add some below!</li>
+					{/if}
 				</ul>
 			</div>
 
@@ -304,6 +336,7 @@
 									if (newItems) {
 										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
+										collection.itemsLength = newItems[0].items.length;
 										showSuccessMessage('Item added successfully!');
 										item.file = null;
 										item.answer = '';
@@ -319,6 +352,7 @@
 								const newItem = await uploadData(item, undefined, false);
 								if (newItem) {
 									collection.items = newItem[0].items;
+									collection.itemsLength = newItem[0].items.length;
 									showSuccessMessage('Image added successfully!');
 									item.file = null;
 									item.answer = '';
@@ -328,20 +362,19 @@
 					</form>
 				{:else if questionType === 'Audio'}
 					<AudioUploader
-						on:addSong={(e) => {
+						on:addSong={async (e) => {
 							console.log('AudioUploader addSong event:', e);
 							const audioData = {
 								url: e.detail.id,
 								category: collection.category,
 								answer: e.detail.title
 							};
-							// uploadAudio(e.detail.title, e.detail.id);
-							uploadAudio(audioData).then((newItems) => {
-								if (newItems) {
-									collection.items = newItems[0].items;
-									showSuccessMessage('Audio added successfully!');
-								}
-							});
+							const newItems = await uploadAudio(audioData);
+							if (newItems) {
+								collection.items = newItems[0].items;
+								collection.itemsLength = newItems[0].items.length;
+								showSuccessMessage('Audio added successfully!');
+							}
 						}}
 					/>
 				{:else if questionType === 'Question'}
@@ -371,6 +404,7 @@
 									if (newItems) {
 										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
+										collection.itemsLength = newItems[0].items.length;
 										showSuccessMessage('Question added successfully!');
 									}
 									item.question = '';
@@ -381,9 +415,8 @@
 					</form>
 				{/if}
 			</div>
-
 			<div class="button-group mt-3 d-flex gap-2">
-				{#if collection.items.length > 1}
+				{#if collection.itemsLength && collection.itemsLength > 1}
 					{#if !isReordering}
 						<button class="btn btn-outline-secondary" on:click={() => (isReordering = true)}
 							>Reorder</button

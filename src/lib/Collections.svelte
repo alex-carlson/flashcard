@@ -1,10 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
-	import { getImageUrl } from './api/supabaseClient';
 	export let collections = [];
 	let isCollapsed = true;
-	let collectionsWithImages = [];
 
 	const dispatch = createEventDispatcher();
 
@@ -13,34 +11,6 @@
 		// close the collection list
 		isCollapsed = true;
 		dispatch('selectCollection', collectionId);
-	}
-
-	// Reactively process collections when they change
-	$: if (collections.length > 0) {
-		// Immediately set up collections with fallback images
-		collectionsWithImages = collections.map((collection) => ({
-			...collection,
-			imageUrl: null,
-			imagePath: `${collection.author}/${collection.category}/thumbnail.jpg`,
-			fallbackImage: collection.items[0]?.image || null
-		}));
-
-		// Load thumbnail images in background
-		Promise.all(
-			collectionsWithImages.map(async (collection) => {
-				try {
-					const url = await getImageUrl(collection.imagePath);
-					if (url) collection.imageUrl = url;
-				} catch (error) {
-					console.warn('Failed to load thumbnail for:', collection.category);
-				}
-			})
-		).then(() => {
-			// Force reactive update
-			collectionsWithImages = [...collectionsWithImages];
-		});
-	} else {
-		collectionsWithImages = [];
 	}
 </script>
 
@@ -53,19 +23,10 @@
 	</button>
 	{#if !isCollapsed}
 		<ul class="py-3">
-			{#each collectionsWithImages as collection}
+			{#each collections as collection}
 				<li>
-					<a
-						href="#"
-						on:click|preventDefault={() => selectCollection(collection.id)}
-					>
-						{#if collection.items.length > 0}
-							<LazyLoadImage
-								imagePath={collection.imagePath}
-								imageUrl={collection.imageUrl || collection.fallbackImage}
-								tempSize="50px"
-							/>
-						{/if}
+					<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
+						<LazyLoadImage imageUrl={collection.thumbnail} tempSize="50px" />
 						<span>
 							{collection.category}
 						</span>
