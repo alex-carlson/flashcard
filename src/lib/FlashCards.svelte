@@ -344,16 +344,7 @@
 			</button>
 		</div>
 	{/if}
-	<div class="youtube-wrapper">
-		<!-- YouTube player for audio - small but interactive for mobile -->
-		<iframe
-			id="youtube-player"
-			src="about:blank"
-			frameborder="0"
-			allow="autoplay; encrypted-media"
-			allowfullscreen
-		></iframe>
-	</div>
+	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>
 
 	<Modal
 		bind:show={showModal}

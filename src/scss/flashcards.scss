@@ -340,20 +340,11 @@
 }
 
 .youtube-wrapper {
-    width: 60px;
-    height: 40px;
-    overflow: hidden;
     position: relative;
-    opacity: 0.1;
+    height: 100px;
+    width: 100px;
 
     iframe {
         position: absolute;
-        top: -275px;
-        /* Pull iframe up so only control bar shows */
-        left: -250px;
-        /* Adjust to center the play button */
-        width: 560px;
-        height: 315px;
-        pointer-events: auto;
     }
 }

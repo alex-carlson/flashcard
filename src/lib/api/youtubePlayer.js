@@ -13,7 +13,7 @@
 
 class YouTubePlayerService {
     constructor() {
-        this.iframe = null;
+        this.player = null;
         this.currentVideoId = null;
         this.isPlaying = false;
         this.playerReady = false;
@@ -22,7 +22,9 @@ class YouTubePlayerService {
         this.progress = 0;
         this.progressInterval = null;
         this.subscribers = new Set();
-        this.iframeId = 'youtube-player';
+        this.containerId = 'player';
+        this.youtubeAPILoaded = null;
+        this.playerInitialized = null;
     }
 
     // Subscribe to player state changes
@@ -42,33 +44,138 @@ class YouTubePlayerService {
             currentVideoId: this.currentVideoId
         };
         this.subscribers.forEach(callback => callback(state));
-    }    // Get the iframe element
-    getIframe() {
-        // Always try to get fresh reference in case DOM changed
-        this.iframe = document.getElementById(this.iframeId);
-        if (!this.iframe) {
-            console.warn(`YouTube iframe with id "${this.iframeId}" not found in DOM`);
-        }
-        return this.iframe;
-    }
-
-    // Initialize the iframe (just check if it exists)
-    async initializePlayer() {
-        const iframe = this.getIframe();
-        if (iframe) {
-            this.playerReady = true;
-            this.notifySubscribers();
+    }    // Load YouTube IFrame API
+    async loadYouTubeAPI() {
+        // @ts-expect-error - YT is loaded dynamically
+        if (window.YT && typeof window.YT.Player === "function") {
             return Promise.resolve();
-        } else {
-            console.error(`Iframe with id "${this.iframeId}" not found`);
-            return Promise.reject(new Error('Iframe not found'));
         }
+
+        if (this.youtubeAPILoaded) return this.youtubeAPILoaded;
+
+        this.youtubeAPILoaded = new Promise((resolve) => {
+            const existingScript = document.querySelector(
+                "script[src='https://www.youtube.com/iframe_api']",
+            );
+            if (!existingScript) {
+                const tag = document.createElement("script");
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.body.appendChild(tag);
+            }
+
+            const checkYT = () => {
+                // @ts-expect-error - YT is loaded dynamically
+                if (window.YT && typeof window.YT.Player === "function") {
+                    resolve(true);
+                } else {
+                    setTimeout(checkYT, 50);
+                }
+            };
+
+            // @ts-expect-error - onYouTubeIframeAPIReady is a YouTube API callback
+            window.onYouTubeIframeAPIReady = () => resolve(true);
+            checkYT();
+        });
+
+        return this.youtubeAPILoaded;
     }
 
-    async loadVideo(videoId) {
-        const iframe = this.getIframe();
-        if (!iframe) {
-            console.error('YouTube iframe not found');
+    // Initialize the YouTube player
+    async initializePlayer() {
+        // Return existing initialization promise if already in progress
+        if (this.playerInitialized) {
+            return this.playerInitialized;
+        }
+
+        // If player already exists and is ready, return immediately
+        if (this.player && this.playerReady) {
+            return Promise.resolve();
+        }
+
+        // Create initialization promise
+        this.playerInitialized = this._createPlayer();
+
+        try {
+            await this.playerInitialized;
+        } catch (error) {
+            console.error('Failed to initialize player:', error);
+            // Reset initialization promise on failure so we can retry
+            this.playerInitialized = null;
+            throw error;
+        }
+
+        return this.playerInitialized;
+    } async _createPlayer() {
+        await this.loadYouTubeAPI();
+
+        // Create container if it doesn't exist
+        let container = document.getElementById(this.containerId);
+        if (!container) {
+            container = document.createElement('div');
+            container.id = this.containerId;
+            container.style.cssText = 'width: 1px; height: 1px; overflow: hidden;';
+            document.body.appendChild(container);
+        }
+
+        return new Promise((resolve, reject) => {
+            // Set a timeout to prevent infinite loading
+            const timeout = setTimeout(() => {
+                reject(new Error('YouTube player initialization timeout'));
+            }, 10000); // 10 second timeout
+
+            // @ts-expect-error - YT is loaded dynamically
+            this.player = new YT.Player(this.containerId, {
+                width: "1",
+                height: "1",
+                playerVars: {
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    showinfo: 0,
+                    iv_load_policy: 3,
+                    autoplay: 0,
+                    mute: 1,
+                    playsinline: 1
+                },
+                events: {
+                    onReady: () => {
+                        clearTimeout(timeout);
+                        this.playerReady = true;
+                        this.notifySubscribers();
+                        resolve(true);
+                    },
+                    onStateChange: (event) => {
+                        // @ts-expect-error - YT is loaded dynamically
+                        this.isPlaying = event.data === YT.PlayerState.PLAYING;
+                        if (this.isPlaying) {
+                            this.startProgressInterval();
+                        } else {
+                            this.stopProgressInterval();
+                        }
+                        this.notifySubscribers();
+                    },
+                    onError: (event) => {
+                        clearTimeout(timeout);
+                        console.error('YouTube player error:', event);
+                        reject(new Error(`YouTube player error: ${event.data}`));
+                    }
+                },
+            });
+        });
+    } async loadVideo(videoId) {
+        if (!this.player) {
+            await this.initializePlayer();
+        }
+
+        // Wait for player to be ready with a timeout
+        let retries = 0;
+        while (!this.playerReady && retries < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+        }
+
+        if (!this.playerReady) {
+            console.error('YouTube player not ready after timeout');
             return;
         }
 
@@ -81,62 +188,95 @@ class YouTubePlayerService {
         // Stop current video if playing
         if (this.isPlaying) {
             this.pause();
-        }        // Load new video by changing iframe src with autoplay for audio
+        }
+
+        // Load new video using YouTube Player API
         this.currentVideoId = videoId;
-        // Start muted for mobile compatibility, then unmute
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0&playsinline=1&showinfo=0&iv_load_policy=3`;
-        /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
 
-        // Try to unmute after a short delay for mobile
-        setTimeout(() => {
-            const newUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0&playsinline=1&showinfo=0&iv_load_policy=3`;
-            /** @type {HTMLIFrameElement} */ (iframe).src = newUrl;
-        }, 500);
+        try {
+            if (this.player && typeof this.player.loadVideoById === 'function') {
+                this.player.loadVideoById({
+                    videoId: videoId,
+                    startSeconds: 0,
+                    suggestedQuality: 'default'
+                });
 
-        // Set playing state and start progress tracking
-        this.isPlaying = true;
-        this.duration = 0;
-        this.currentTime = 0;
-        this.progress = 0;
-        this.startProgressInterval();
-        this.notifySubscribers();
-    } play() {
-        const iframe = this.getIframe();
-        if (!iframe || !this.currentVideoId) {
-            console.error('No iframe or video available to play');
-            return;
-        } if (!this.isPlaying) {
-            // Reload iframe with autoplay to resume playback (start muted for mobile)
-            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1&showinfo=0&iv_load_policy=3`;
-            /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
+                // Wait a moment for the video to load, then unmute and play
+                setTimeout(() => {
+                    if (typeof this.player.unMute === 'function') {
+                        this.player.unMute();
+                    }
+                    if (typeof this.player.playVideo === 'function') {
+                        this.player.playVideo();
+                    }
+                }, 100);
+            } else if (this.player && typeof this.player.cueVideoById === 'function') {
+                this.player.cueVideoById({
+                    videoId: videoId,
+                    startSeconds: 0,
+                    suggestedQuality: 'default'
+                });
 
-            // Try to unmute after a short delay for mobile
-            setTimeout(() => {
-                const newUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0&playsinline=1&showinfo=0&iv_load_policy=3`;
-                /** @type {HTMLIFrameElement} */ (iframe).src = newUrl;
-            }, 500);
+                // For cueVideoById, we need to play manually
+                setTimeout(() => {
+                    if (typeof this.player.unMute === 'function') {
+                        this.player.unMute();
+                    }
+                    if (typeof this.player.playVideo === 'function') {
+                        this.player.playVideo();
+                    }
+                }, 100);
+            } else {
+                console.error('No video loading methods available');
+                return;
+            }
 
-            this.isPlaying = true;
-            this.startProgressInterval();
+            this.duration = 0;
+            this.currentTime = 0;
+            this.progress = 0;
             this.notifySubscribers();
+        } catch (error) {
+            console.error('Error loading video:', error);
         }
     }
 
-    pause() {
-        const iframe = this.getIframe();
-        if (!iframe || !this.currentVideoId) {
+    play() {
+        if (!this.player) {
+            console.error('No player available');
             return;
-        } if (this.isPlaying) {
-            // Reload iframe without autoplay to pause playback
-            const embedUrl = `https://www.youtube.com/embed/${this.currentVideoId}?autoplay=0&mute=0&controls=1&modestbranding=1&rel=0&playsinline=1&showinfo=0&iv_load_policy=3`;
-            /** @type {HTMLIFrameElement} */ (iframe).src = embedUrl;
-            this.isPlaying = false;
-            this.stopProgressInterval();
-            this.notifySubscribers();
         }
-    }
 
-    async togglePlay(videoId) {
+        if (!this.playerReady) {
+            console.error('Player not ready');
+            return;
+        }
+
+        try {
+            if (typeof this.player.playVideo === 'function') {
+                // Unmute the player before playing
+                if (typeof this.player.unMute === 'function') {
+                    this.player.unMute();
+                }
+                this.player.playVideo();
+            } else {
+                console.error('playVideo method not available');
+            }
+        } catch (error) {
+            console.error('Error playing video:', error);
+        }
+    } pause() {
+        if (this.player && this.playerReady) {
+            try {
+                if (typeof this.player.pauseVideo === 'function') {
+                    this.player.pauseVideo();
+                } else {
+                    console.error('pauseVideo method not available');
+                }
+            } catch (error) {
+                console.error('Error pausing video:', error);
+            }
+        }
+    } async togglePlay(videoId) {
         if (this.currentVideoId !== videoId) {
             await this.loadVideo(videoId);
         } else {
@@ -146,28 +286,39 @@ class YouTubePlayerService {
                 this.play();
             }
         }
-    } seek(percent) {
-        // Note: Seeking is not easily implemented with iframe approach
-        // This would require YouTube Player API for precise control
-        console.warn('Seeking not supported with iframe approach', percent);
+    }
+
+    seek(percent) {
+        if (!this.player || !this.playerReady) {
+            console.warn('Player not ready for seeking');
+            return;
+        }
+
+        try {
+            if (typeof this.player.getDuration === 'function' && typeof this.player.seekTo === 'function') {
+                const duration = this.player.getDuration();
+                const seekTime = (percent / 100) * duration;
+                this.player.seekTo(seekTime, true);
+            }
+        } catch (error) {
+            console.error('Error seeking:', error);
+        }
     }
 
     updateProgress() {
-        // Note: Progress tracking is not easily implemented with iframe approach
-        // This would require YouTube Player API for precise control
-        if (this.isPlaying) {
-            // Simulate progress for basic functionality
-            this.currentTime += 0.2; // Assume 200ms intervals
-            this.duration = 60; // Assume 60 seconds max
-            const maxTime = Math.min(this.duration, 60);
-            this.progress = maxTime ? (this.currentTime / maxTime) * 100 : 0;
+        if (!this.player || !this.playerReady || !this.isPlaying) {
+            return;
+        }
 
-            // Stop after 60 seconds
-            if (this.currentTime >= 60) {
-                this.pause();
+        try {
+            if (typeof this.player.getCurrentTime === 'function' && typeof this.player.getDuration === 'function') {
+                this.currentTime = this.player.getCurrentTime();
+                this.duration = this.player.getDuration();
+                this.progress = this.duration ? (this.currentTime / this.duration) * 100 : 0;
+                this.notifySubscribers();
             }
-
-            this.notifySubscribers();
+        } catch (error) {
+            console.error('Error updating progress:', error);
         }
     }
 
@@ -188,16 +339,27 @@ class YouTubePlayerService {
     } destroy() {
         this.stopProgressInterval();
 
-        // Clear the iframe src to stop video
-        const iframe = this.getIframe();
-        if (iframe) {
-            /** @type {HTMLIFrameElement} */ (iframe).src = 'about:blank';
+        // Properly destroy the YouTube player
+        if (this.player && typeof this.player.destroy === 'function') {
+            try {
+                this.player.destroy();
+            } catch (error) {
+                console.error('Error destroying YouTube player:', error);
+            }
         }
 
-        this.iframe = null;
+        // Clean up the container
+        const container = document.getElementById(this.containerId);
+        if (container) {
+            container.innerHTML = '';
+        }
+
+        this.player = null;
         this.playerReady = false;
         this.isPlaying = false;
         this.currentVideoId = null;
+        this.playerInitialized = null;
+        this.youtubeAPILoaded = null;
         this.subscribers.clear();
     }
 }
