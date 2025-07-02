@@ -344,15 +344,15 @@
 			</button>
 		</div>
 	{/if}
-	<!-- Hidden iframe for youtube embed - used by audio players -->
+	<!-- YouTube player for audio - controls only -->
 	<iframe
 		id="youtube-player"
-		width="1"
-		height="1"
+		width="320"
+		height="60"
 		src="about:blank"
 		frameborder="0"
-		allow="autoplay"
-		style="position: fixed; top: -1000px; left: -1000px; opacity: 0; pointer-events: none;"
+		allow="autoplay; encrypted-media"
+		style="opacity: 0;"
 	></iframe>
 
 	<Modal
