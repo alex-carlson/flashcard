@@ -18,6 +18,7 @@ class YouTubePlayerService {
         this.isPlaying = false;
         this.playerReady = false;
         this.isMuted = false;
+        this.isLoading = false;
         this.duration = 0;
         this.currentTime = 0;
         this.progress = 0;
@@ -38,6 +39,7 @@ class YouTubePlayerService {
             isPlaying: this.isPlaying,
             playerReady: this.playerReady,
             isMuted: this.isMuted,
+            isLoading: this.isLoading,
             duration: this.duration,
             currentTime: this.currentTime,
             progress: this.progress,
@@ -200,7 +202,10 @@ class YouTubePlayerService {
             this.pause();
         }
 
+        // Set loading state
+        this.isLoading = true;
         this.currentVideoId = videoId;
+        this.notifySubscribers();
 
         try {
             if (this.player && typeof this.player.loadVideoById === 'function') {
@@ -211,7 +216,13 @@ class YouTubePlayerService {
                     suggestedQuality: 'small'
                 });
 
-                // If autoPlay is false, pause after a short delay
+                // Wait for video to be loaded
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Clear loading state
+                this.isLoading = false;
+
+                // If autoPlay is false, pause after loading
                 if (!autoPlay) {
                     setTimeout(() => {
                         this.pause();
@@ -219,6 +230,7 @@ class YouTubePlayerService {
                 }
             } else {
                 console.error('No video loading method available');
+                this.isLoading = false;
             }
 
             this.duration = 0;
@@ -227,6 +239,8 @@ class YouTubePlayerService {
             this.notifySubscribers();
         } catch (error) {
             console.error('Error loading video:', error);
+            this.isLoading = false;
+            this.notifySubscribers();
         }
     } play() {
         console.log('play() called - player:', !!this.player, 'ready:', this.playerReady);
@@ -242,6 +256,16 @@ class YouTubePlayerService {
         }
 
         try {
+            // Unmute the video when playing (important for mobile and user experience)
+            if (typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
+                if (this.player.isMuted()) {
+                    console.log('Unmuting video during play');
+                    this.player.unMute();
+                    this.isMuted = false;
+                    // Note: notifySubscribers will be called by the state change event
+                }
+            }
+
             if (typeof this.player.playVideo === 'function') {
                 console.log('Calling player.playVideo()');
                 this.player.playVideo();
@@ -281,6 +305,12 @@ class YouTubePlayerService {
                 this.play();
             }
         }
+    }
+
+    // New method to just load a video without playing
+    async loadVideoOnly(videoId) {
+        console.log('loadVideoOnly called for videoId:', videoId);
+        await this.loadVideo(videoId, false);
     }
 
 
@@ -416,6 +446,7 @@ class YouTubePlayerService {
         this.playerReady = false;
         this.isPlaying = false;
         this.isMuted = false;
+        this.isLoading = false;
         this.currentVideoId = null;
         this.playerInitialized = null;
         this.youtubeAPILoaded = null;

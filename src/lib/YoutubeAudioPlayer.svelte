@@ -5,7 +5,9 @@
 		faPlayCircle,
 		faPauseCircle,
 		faVolumeMute,
-		faVolumeHigh
+		faVolumeHigh,
+		faDownload,
+		faSpinner
 	} from '@fortawesome/free-solid-svg-icons';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
 
@@ -14,14 +16,15 @@
 	let isPlaying = false;
 	let playerReady = false;
 	let isMuted = false;
+	let isLoading = false;
 	let duration = 0;
 	let currentTime = 0;
 	let progress = 0;
 	let isCurrentVideo = false;
 	let unsubscribe;
 	let hasUserInteracted = false;
-	async function togglePlay() {
-		console.log('togglePlay called for video:', videoId);
+	async function handleButtonClick() {
+		console.log('Button clicked for video:', videoId);
 
 		// Handle first user interaction for mobile
 		if (!hasUserInteracted) {
@@ -31,9 +34,15 @@
 		}
 
 		try {
-			await youtubePlayerService.togglePlay(videoId);
+			// If this video isn't loaded yet, load it first
+			if (!isCurrentVideo) {
+				await youtubePlayerService.loadVideoOnly(videoId);
+			} else {
+				// If loaded, toggle play/pause
+				await youtubePlayerService.togglePlay(videoId);
+			}
 		} catch (error) {
-			console.error('Error in togglePlay:', error);
+			console.error('Error in handleButtonClick:', error);
 		}
 	}
 	function toggleMute() {
@@ -61,6 +70,7 @@
 		unsubscribe = youtubePlayerService.subscribe((state) => {
 			playerReady = state.playerReady;
 			isMuted = state.isMuted;
+			isLoading = state.isLoading;
 			isCurrentVideo = state.currentVideoId === videoId;
 
 			if (isCurrentVideo) {
@@ -94,25 +104,29 @@
 	{:else}
 		<div class="controls">
 			<button
-				on:click={togglePlay}
-				on:touchstart|preventDefault={togglePlay}
+				on:click={handleButtonClick}
+				on:touchstart|preventDefault={handleButtonClick}
 				on:touchend|preventDefault
 				disabled={!playerReady}
 				style="touch-action: manipulation;"
 			>
-				{#if isCurrentVideo && isPlaying}
+				{#if isLoading && isCurrentVideo}
+					<Fa icon={faSpinner} spin />
+				{:else if !isCurrentVideo}
+					<Fa icon={faDownload} />
+				{:else if isCurrentVideo && isPlaying}
 					<Fa icon={faPauseCircle} />
 				{:else}
 					<Fa icon={faPlayCircle} />
 				{/if}
 			</button>
-			<button on:click={toggleMute} disabled={!playerReady}>
+			<!-- <button on:click={toggleMute} disabled={!playerReady}>
 				{#if isMuted}
 					<Fa icon={faVolumeMute} />
 				{:else}
 					<Fa icon={faVolumeHigh} />
 				{/if}
-			</button>
+			</button> -->
 			<div class="progress-bar-container" on:click={seek}>
 				<div class="progress-bar-bg">
 					<div class="progress-bar-fill" style="width: {isCurrentVideo ? progress : 0}%"></div>
