@@ -344,16 +344,16 @@
 			</button>
 		</div>
 	{/if}
-	<!-- YouTube player for audio - controls only -->
-	<iframe
-		id="youtube-player"
-		width="320"
-		height="60"
-		src="about:blank"
-		frameborder="0"
-		allow="autoplay; encrypted-media"
-		style="opacity: 0;"
-	></iframe>
+	<div class="youtube-wrapper">
+		<!-- YouTube player for audio - small but interactive for mobile -->
+		<iframe
+			id="youtube-player"
+			src="about:blank"
+			frameborder="0"
+			allow="autoplay; encrypted-media"
+			allowfullscreen
+		></iframe>
+	</div>
 
 	<Modal
 		bind:show={showModal}
