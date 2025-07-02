@@ -15,17 +15,12 @@ export async function fetchUser(author_id) {
 }
 
 export async function fetchUserCollections(author_id) {
-    return fetch(`${import.meta.env.VITE_API_URL}/collections/user/${author_id}/all`)
+    return fetch(`${import.meta.env.VITE_API_URL}/collections/user/all/${author_id}`)
         .then((response) => {
             if (!response.ok) {
                 throw new Error("Failed to fetch collections");
             }
             return response.json();
-        })
-        .then((data) => {
-            // Sort collections by created_at descending
-            data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            return data;
         })
         .catch((error) => {
             console.error("Error fetching collections:", error);

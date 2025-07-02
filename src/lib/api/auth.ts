@@ -132,15 +132,29 @@ export async function updateUsername(newUsername: string) {
     throw userError || new Error('No user found');
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ username: newUsername })
-    .eq('id', user.id);
-
-  if (error) {
-    console.error('Error updating username:', error.message);
-    throw error;
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error('No access token found');
   }
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/users/updateUsername`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      userId: user.id,
+      username: newUsername
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error updating username:', errorText);
+    throw new Error(errorText || 'Failed to update username');
+  }
+
   console.log('Username updated successfully');
   return true;
 }
