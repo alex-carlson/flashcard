@@ -15,7 +15,7 @@
 			console.log('Latest: Collections fetched:', collections?.length || 0);
 			console.log('Latest: Collections:', collections);
 
-			if (!collections || collections.length === 0) {
+			if (!raw || raw.length === 0) {
 				console.warn('Latest: No collections returned');
 				collections = [];
 			}
