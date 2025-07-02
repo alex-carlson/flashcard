@@ -142,6 +142,8 @@
                 height: 0;
                 margin: 0;
                 padding: 0;
+                // make sure touch events are not captured
+                pointer-events: none;
             }
         }
 
