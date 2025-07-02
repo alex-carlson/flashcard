@@ -5,10 +5,13 @@
  * @typedef {Object} PlayerState
  * @property {boolean} isPlaying
  * @property {boolean} playerReady
+ * @property {boolean} isMuted
+ * @property {boolean} isLoading
  * @property {number} duration
  * @property {number} currentTime
  * @property {number} progress
  * @property {string|null} currentVideoId
+ * @property {string|null} error
  */
 
 class YouTubePlayerService {
@@ -18,8 +21,7 @@ class YouTubePlayerService {
         this.isPlaying = false;
         this.playerReady = false;
         this.isMuted = false;
-        this.isLoading = false;
-        this.duration = 0;
+        this.isLoading = false; this.duration = 0;
         this.currentTime = 0;
         this.progress = 0;
         this.progressInterval = null;
@@ -27,13 +29,28 @@ class YouTubePlayerService {
         this.containerId = 'player';
         this.youtubeAPILoaded = null;
         this.playerInitialized = null;
-    }
-
-    // Subscribe to player state changes
+        this.error = null;
+    }    // Get user-friendly error message for YouTube error codes
+    getErrorMessage(errorCode) {
+        const errorMessages = {
+            2: 'Invalid video ID or video not found',
+            5: 'Video cannot be played in HTML5 player',
+            100: 'Video not found or has been removed',
+            101: 'Video is private or restricted',
+            150: 'Video is private, removed, or restricted for your location'
+        };
+        return errorMessages[errorCode] || `Unknown player error (${errorCode})`;
+    }    // Subscribe to player state changes
     subscribe(callback) {
         this.subscribers.add(callback);
         return () => this.subscribers.delete(callback);
-    }    // Notify all subscribers of state changes
+    }
+
+    // Clear any existing error
+    clearError() {
+        this.error = null;
+        this.notifySubscribers();
+    }// Notify all subscribers of state changes
     notifySubscribers() {
         const state = {
             isPlaying: this.isPlaying,
@@ -43,7 +60,8 @@ class YouTubePlayerService {
             duration: this.duration,
             currentTime: this.currentTime,
             progress: this.progress,
-            currentVideoId: this.currentVideoId
+            currentVideoId: this.currentVideoId,
+            error: this.error
         };
         this.subscribers.forEach(callback => callback(state));
     }// Load YouTube IFrame API
@@ -123,9 +141,7 @@ class YouTubePlayerService {
             // Set a timeout to prevent infinite loading
             const timeout = setTimeout(() => {
                 reject(new Error('YouTube player initialization timeout'));
-            }, 10000); // 10 second timeout
-
-            // @ts-expect-error - YT is loaded dynamically
+            }, 10000); // 10 second timeout            // @ts-expect-error - YT is loaded dynamically
             this.player = new YT.Player(this.containerId, {
                 width: "1",
                 height: "1", playerVars: {
@@ -134,8 +150,8 @@ class YouTubePlayerService {
                     rel: 0,
                     showinfo: 0,
                     iv_load_policy: 3,
-                    autoplay: 1, // Enable autoplay - will work when triggered by user interaction
-                    mute: 0, // Start unmuted for mobile compatibility
+                    autoplay: this.isFirefox() ? 0 : 1, // Firefox: disable autoplay, Chrome: enable
+                    mute: this.isFirefox() ? 1 : 0, // Firefox: start muted, Chrome: start unmuted
                     playsinline: 1,
                     fs: 0, // Disable fullscreen
                     cc_load_policy: 0, // Disable captions
@@ -164,11 +180,27 @@ class YouTubePlayerService {
                             this.stopProgressInterval();
                         }
                         this.notifySubscribers();
-                    },
-                    onError: (event) => {
-                        clearTimeout(timeout);
-                        console.error('YouTube player error:', event);
-                        reject(new Error(`YouTube player error: ${event.data}`));
+                    }, onError: (event) => {
+                        const errorCode = event.data;
+                        const errorMessage = this.getErrorMessage(errorCode);
+
+                        console.error('YouTube player error:', {
+                            code: errorCode,
+                            message: errorMessage,
+                            event: event
+                        });
+
+                        // Store error for UI display
+                        this.error = errorMessage;
+                        this.isLoading = false;
+                        this.notifySubscribers();
+
+                        // Don't reject initialization for video-specific errors
+                        // Only reject for critical player initialization errors
+                        if (errorCode === 2 || errorCode === 5) {
+                            clearTimeout(timeout);
+                            reject(new Error(errorMessage));
+                        }
                     }
                 },
             });
@@ -200,14 +232,11 @@ class YouTubePlayerService {
 
         if (this.isPlaying) {
             this.pause();
-        }
-
-        // Set loading state
+        }        // Set loading state and clear any previous errors
         this.isLoading = true;
         this.currentVideoId = videoId;
-        this.notifySubscribers();
-
-        try {
+        this.clearError();
+        this.notifySubscribers(); try {
             if (this.player && typeof this.player.loadVideoById === 'function') {
                 // Use loadVideoById which automatically plays with autoplay: 1
                 this.player.loadVideoById({
@@ -222,11 +251,18 @@ class YouTubePlayerService {
                 // Clear loading state
                 this.isLoading = false;
 
-                // If autoPlay is false, pause after loading
-                if (!autoPlay) {
+                // Firefox-specific handling: Always pause after loading since autoplay is disabled
+                if (this.isFirefox()) {
                     setTimeout(() => {
                         this.pause();
                     }, 100);
+                } else {
+                    // Chrome/other browsers: If autoPlay is false, pause after loading
+                    if (!autoPlay) {
+                        setTimeout(() => {
+                            this.pause();
+                        }, 100);
+                    }
                 }
             } else {
                 console.error('No video loading method available');
@@ -243,7 +279,7 @@ class YouTubePlayerService {
             this.notifySubscribers();
         }
     } play() {
-        console.log('play() called - player:', !!this.player, 'ready:', this.playerReady);
+        console.log('play() called - player:', !!this.player, 'ready:', this.playerReady, 'Firefox:', this.isFirefox());
 
         if (!this.player) {
             console.error('No player available');
@@ -256,8 +292,17 @@ class YouTubePlayerService {
         }
 
         try {
+            // For Firefox, we need to unmute first before playing
+            if (this.isFirefox() && typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
+                if (this.player.isMuted()) {
+                    console.log('Firefox: Unmuting video before play');
+                    this.player.unMute();
+                    this.isMuted = false;
+                }
+            }
+
             // Unmute the video when playing (important for mobile and user experience)
-            if (typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
+            if (!this.isFirefox() && typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
                 if (this.player.isMuted()) {
                     console.log('Unmuting video during play');
                     this.player.unMute();
@@ -269,6 +314,17 @@ class YouTubePlayerService {
             if (typeof this.player.playVideo === 'function') {
                 console.log('Calling player.playVideo()');
                 this.player.playVideo();
+
+                // Firefox-specific: Force unmute after play starts
+                if (this.isFirefox()) {
+                    setTimeout(() => {
+                        if (this.player && typeof this.player.unMute === 'function') {
+                            this.player.unMute();
+                            this.isMuted = false;
+                            this.notifySubscribers();
+                        }
+                    }, 100);
+                }
             } else {
                 console.error('playVideo method not available');
             }
@@ -312,39 +368,60 @@ class YouTubePlayerService {
         console.log('loadVideoOnly called for videoId:', videoId);
         await this.loadVideo(videoId, false);
     }
-
+    // Helper method to check if we're on Firefox
+    isFirefox() {
+        return typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
+    }
 
     // Helper method to check if we're on a mobile device
     isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }    // Method to handle first user interaction for mobile
+    }// Method to handle first user interaction for mobile and Firefox
     async handleUserInteraction() {
-        if (this.isMobileDevice() && this.player && this.playerReady) {
+        if ((this.isMobileDevice() || this.isFirefox()) && this.player && this.playerReady) {
             try {
-                console.log('Handling first user interaction for mobile...');
+                console.log('Handling first user interaction for', this.isFirefox() ? 'Firefox' : 'mobile', '...');
 
-                // Try to create an audio context or play a silent moment to unlock audio
-                // This is required for mobile devices to enable audio playback
-                if (typeof this.player.setVolume === 'function') {
-                    const currentVolume = this.player.getVolume ? this.player.getVolume() : 50;
-                    this.player.setVolume(1);
-
-                    // Try a quick play/pause to unlock audio context
+                // Firefox-specific audio unlock
+                if (this.isFirefox()) {
+                    // Try to unlock audio context by briefly playing and pausing
                     if (typeof this.player.playVideo === 'function' && typeof this.player.pauseVideo === 'function') {
+                        console.log('Firefox: Attempting audio unlock');
+
+                        // Unmute first for Firefox
+                        if (typeof this.player.unMute === 'function') {
+                            this.player.unMute();
+                        }
+
                         this.player.playVideo();
                         setTimeout(() => {
                             this.player.pauseVideo();
-                            this.player.setVolume(currentVolume);
+                            console.log('Firefox: Audio unlock sequence completed');
                         }, 50);
+                    }
+                } else {
+                    // Mobile device handling
+                    if (typeof this.player.setVolume === 'function') {
+                        const currentVolume = this.player.getVolume ? this.player.getVolume() : 50;
+                        this.player.setVolume(1);
+
+                        // Try a quick play/pause to unlock audio context
+                        if (typeof this.player.playVideo === 'function' && typeof this.player.pauseVideo === 'function') {
+                            this.player.playVideo();
+                            setTimeout(() => {
+                                this.player.pauseVideo();
+                                this.player.setVolume(currentVolume);
+                            }, 50);
+                        }
                     }
                 }
 
-                console.log('Mobile user interaction handled successfully');
+                console.log('User interaction handled successfully');
             } catch (error) {
-                console.warn('Mobile user interaction handling failed:', error);
+                console.warn('User interaction handling failed:', error);
             }
         } else {
-            console.log('Mobile device detected - playback should work with user interaction');
+            console.log('Device detected - playback should work with user interaction');
         }
     } toggleMute() {
         if (!this.player || !this.playerReady) {
@@ -448,6 +525,7 @@ class YouTubePlayerService {
         this.isMuted = false;
         this.isLoading = false;
         this.currentVideoId = null;
+        this.error = null;
         this.playerInitialized = null;
         this.youtubeAPILoaded = null;
         this.subscribers.clear();

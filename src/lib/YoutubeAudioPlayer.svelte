@@ -18,24 +18,31 @@
 	let isMuted = false;
 	let isLoading = false;
 	let duration = 0;
-	let currentTime = 0;
-	let progress = 0;
+	let currentTime = 0;	let progress = 0;
 	let isCurrentVideo = false;
-	let unsubscribe;
-	let hasUserInteracted = false;
-	async function handleButtonClick() {
-		console.log('Button clicked for video:', videoId);
+	let unsubscribe;	let hasUserInteracted = false;
+	let error = null;
+	
+	// Check if user is on Firefox
+	const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
-		// Handle first user interaction for mobile
-		if (!hasUserInteracted) {
-			console.log('First user interaction detected');
+	async function handleButtonClick() {
+		console.log('Button clicked for video:', videoId, 'Firefox:', isFirefox);
+
+		// Handle first user interaction for mobile and Firefox
+		if (!hasUserInteracted || isFirefox) {
+			console.log('First user interaction detected or Firefox - triggering audio unlock');
 			await youtubePlayerService.handleUserInteraction();
 			hasUserInteracted = true;
 		}
 
 		try {
-			// If this video isn't loaded yet, load it first
-			if (!isCurrentVideo) {
+			// If this video isn't loaded yet or has an error, try to load it
+			if (!isCurrentVideo || error) {
+				// Clear any existing error before attempting to load
+				if (error) {
+					youtubePlayerService.clearError();
+				}
 				await youtubePlayerService.loadVideoOnly(videoId);
 			} else {
 				// If loaded, toggle play/pause
@@ -66,11 +73,11 @@
 		return `${m}:${s}`;
 	}
 	onMount(async () => {
-		// Subscribe to player state changes first
-		unsubscribe = youtubePlayerService.subscribe((state) => {
+		// Subscribe to player state changes first		unsubscribe = youtubePlayerService.subscribe((state) => {
 			playerReady = state.playerReady;
 			isMuted = state.isMuted;
 			isLoading = state.isLoading;
+			error = state.error;
 			isCurrentVideo = state.currentVideoId === videoId;
 
 			if (isCurrentVideo) {
@@ -107,10 +114,12 @@
 				on:click={handleButtonClick}
 				on:touchstart|preventDefault={handleButtonClick}
 				on:touchend|preventDefault
-				disabled={!playerReady}
+				disabled={!playerReady || (error && isCurrentVideo)}
 				style="touch-action: manipulation;"
 			>
-				{#if isLoading && isCurrentVideo}
+				{#if error && isCurrentVideo}
+					<Fa icon={faDownload} style="color: #dc3545;" />
+				{:else if isLoading && isCurrentVideo}
 					<Fa icon={faSpinner} spin />
 				{:else if !isCurrentVideo}
 					<Fa icon={faDownload} />
@@ -133,6 +142,11 @@
 				</div>
 			</div>
 		</div>
+		{#if error && isCurrentVideo}
+			<div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem;">
+				{error}
+			</div>
+		{/if}
 		<span class="progress-time">
 			{formatTime(isCurrentVideo ? Math.min(currentTime, 60) : 0)} / 1:00
 		</span>
