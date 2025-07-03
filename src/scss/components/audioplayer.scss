@@ -1,0 +1,80 @@
+// Audio Player Components - Optimized with mixins
+@use "../mixins" as mix;
+
+// set custom properties for player colors
+:root {
+    --player-primary-color: var(--primary-color);
+    --player-secondary-color: #6c757d;
+    --player-text-color: #474747;
+    --player-bg-color: #bbbbbb;
+}
+
+.hidden-iframe {
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    position: absolute;
+    pointer-events: none;
+}
+
+
+.player-container {
+    width: 100%;
+    @include mix.flex-column;
+
+    .controls {
+        width: 100%;
+        @include mix.flex-center;
+        gap: 1rem;
+    }
+
+    button {
+        @include mix.button-round;
+        @include mix.focus-visible;
+        gap: 0.25em;
+        background-color: var(--player-primary-color);
+        border-bottom: 0;
+
+        // Hover effects
+        &:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        cursor: pointer;
+        height: 44px;
+        @include mix.flex-center;
+        margin-bottom: 0.25rem;
+        @include mix.focus-visible;
+    }
+
+    .progress-bar-bg {
+        @include mix.progress-bar(44px);
+    }
+
+    .progress-bar-fill {
+        background: var(--player-primary-color);
+        height: 100%;
+        transition: width var(--transition-speed) linear;
+    }
+
+    .progress-time {
+        font-size: 0.9em;
+        color: var(--player-text-color);
+        min-width: 60px;
+        text-align: right;
+        align-self: flex-end;
+        background-color: transparent !important;
+        padding: 0.25rem;
+    }
+
+    .error-message {
+        @include mix.fade-in;
+        padding: 0.5rem;
+        border-radius: var(--border-radius);
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+}

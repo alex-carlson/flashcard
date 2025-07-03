@@ -89,7 +89,7 @@
 			{#if item.answerer}
 				<ProfilePicture userId={item.answerer} size={32} class="answerer" />
 			{/if}
-			<span class={item.revealed ? 'revealed' : 'hidden'} style="transform: scale(1);">
+			<span class={`answer ${item.revealed ? 'revealed' : 'hidden'}`} style="transform: scale(1);">
 				{item.answer}
 			</span>
 			<input

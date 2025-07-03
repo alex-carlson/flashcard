@@ -30,6 +30,8 @@ class YouTubePlayerService {
         this.youtubeAPILoaded = null;
         this.playerInitialized = null;
         this.error = null;
+        this.preloadedVideos = new Map(); // Cache for preloaded video data
+        this.preloadPromises = new Map(); // Track ongoing preload operations
     }    // Get user-friendly error message for YouTube error codes
     getErrorMessage(errorCode) {
         const errorMessages = {
@@ -125,7 +127,8 @@ class YouTubePlayerService {
         }
 
         return this.playerInitialized;
-    } async _createPlayer() {
+    }
+    async _createPlayer() {
         await this.loadYouTubeAPI();
 
         // Create container if it doesn't exist
@@ -210,6 +213,15 @@ class YouTubePlayerService {
             await this.initializePlayer();
         }
 
+        // Check if video is preloaded and available
+        const preloadedData = this.getPreloadedVideo(videoId);
+        if (preloadedData && !preloadedData.available) {
+            this.error = preloadedData.error || 'Video is not available';
+            this.isLoading = false;
+            this.notifySubscribers();
+            return;
+        }
+
         // Wait until player is ready
         let retries = 0;
         while (!this.playerReady && retries < 50) {
@@ -278,7 +290,8 @@ class YouTubePlayerService {
             this.isLoading = false;
             this.notifySubscribers();
         }
-    } play() {
+    }
+    play() {
         console.log('play() called - player:', !!this.player, 'ready:', this.playerReady, 'Firefox:', this.isFirefox());
 
         if (!this.player) {
@@ -292,22 +305,12 @@ class YouTubePlayerService {
         }
 
         try {
-            // For Firefox, we need to unmute first before playing
-            if (this.isFirefox() && typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
+            // Always unmute when playing (for all browsers)
+            if (typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
                 if (this.player.isMuted()) {
-                    console.log('Firefox: Unmuting video before play');
+                    console.log('Unmuting video before play');
                     this.player.unMute();
                     this.isMuted = false;
-                }
-            }
-
-            // Unmute the video when playing (important for mobile and user experience)
-            if (!this.isFirefox() && typeof this.player.unMute === 'function' && typeof this.player.isMuted === 'function') {
-                if (this.player.isMuted()) {
-                    console.log('Unmuting video during play');
-                    this.player.unMute();
-                    this.isMuted = false;
-                    // Note: notifySubscribers will be called by the state change event
                 }
             }
 
@@ -315,15 +318,16 @@ class YouTubePlayerService {
                 console.log('Calling player.playVideo()');
                 this.player.playVideo();
 
-                // Firefox-specific: Force unmute after play starts
+                // Additional unmute check after play for Firefox
                 if (this.isFirefox()) {
                     setTimeout(() => {
                         if (this.player && typeof this.player.unMute === 'function') {
+                            console.log('Firefox: Double-checking unmute state');
                             this.player.unMute();
                             this.isMuted = false;
                             this.notifySubscribers();
                         }
-                    }, 100);
+                    }, 200);
                 }
             } else {
                 console.error('playVideo method not available');
@@ -344,8 +348,9 @@ class YouTubePlayerService {
                 console.error('Error pausing video:', error);
             }
         }
-    } async togglePlay(videoId) {
-        console.log('togglePlay called with videoId:', videoId, 'current:', this.currentVideoId, 'isPlaying:', this.isPlaying);
+    }
+    async togglePlay(videoId) {
+        console.log('togglePlay called with videoId:', videoId, 'current:', this.currentVideoId, 'isPlaying:', this.isPlaying, 'Firefox:', this.isFirefox());
 
         if (this.currentVideoId !== videoId) {
             // New video — load and play
@@ -357,7 +362,15 @@ class YouTubePlayerService {
                 console.log('Pausing current video');
                 this.pause();
             } else {
-                console.log('Playing current video');
+                console.log('Playing current video (Firefox requires special handling)');
+
+                // Firefox-specific: Make sure we're unmuted before attempting to play
+                if (this.isFirefox() && typeof this.player.unMute === 'function') {
+                    console.log('Firefox: Pre-play unmute');
+                    this.player.unMute();
+                    this.isMuted = false;
+                }
+
                 this.play();
             }
         }
@@ -376,29 +389,28 @@ class YouTubePlayerService {
     // Helper method to check if we're on a mobile device
     isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }// Method to handle first user interaction for mobile and Firefox
+    }    // Method to handle first user interaction for mobile and Firefox
     async handleUserInteraction() {
         if ((this.isMobileDevice() || this.isFirefox()) && this.player && this.playerReady) {
             try {
                 console.log('Handling first user interaction for', this.isFirefox() ? 'Firefox' : 'mobile', '...');
 
-                // Firefox-specific audio unlock
+                // Firefox-specific audio unlock - simpler approach
                 if (this.isFirefox()) {
-                    // Try to unlock audio context by briefly playing and pausing
-                    if (typeof this.player.playVideo === 'function' && typeof this.player.pauseVideo === 'function') {
-                        console.log('Firefox: Attempting audio unlock');
+                    console.log('Firefox: Setting volume and unmuting');
 
-                        // Unmute first for Firefox
-                        if (typeof this.player.unMute === 'function') {
-                            this.player.unMute();
-                        }
-
-                        this.player.playVideo();
-                        setTimeout(() => {
-                            this.player.pauseVideo();
-                            console.log('Firefox: Audio unlock sequence completed');
-                        }, 50);
+                    // Set volume first
+                    if (typeof this.player.setVolume === 'function') {
+                        this.player.setVolume(50);
                     }
+
+                    // Unmute
+                    if (typeof this.player.unMute === 'function') {
+                        this.player.unMute();
+                        this.isMuted = false;
+                    }
+
+                    console.log('Firefox: User interaction setup completed');
                 } else {
                     // Mobile device handling
                     if (typeof this.player.setVolume === 'function') {
@@ -416,6 +428,7 @@ class YouTubePlayerService {
                     }
                 }
 
+                this.notifySubscribers();
                 console.log('User interaction handled successfully');
             } catch (error) {
                 console.warn('User interaction handling failed:', error);
@@ -423,7 +436,8 @@ class YouTubePlayerService {
         } else {
             console.log('Device detected - playback should work with user interaction');
         }
-    } toggleMute() {
+    }
+    toggleMute() {
         if (!this.player || !this.playerReady) {
             console.warn('Player not ready for muting');
             return;
@@ -452,20 +466,37 @@ class YouTubePlayerService {
         } catch (error) {
             console.error('Error toggling mute:', error);
         }
-    }
-
-
-    seek(percent) {
+    } seek(percent) {
         if (!this.player || !this.playerReady) {
             console.warn('Player not ready for seeking');
             return;
         }
 
+        // Ensure percent is in valid range (0-100)
+        const clampedPercent = Math.max(0, Math.min(100, percent));
+
         try {
             if (typeof this.player.getDuration === 'function' && typeof this.player.seekTo === 'function') {
                 const duration = this.player.getDuration();
-                const seekTime = (percent / 100) * duration;
+
+                if (duration <= 0) {
+                    console.warn('Video duration not available for seeking');
+                    return;
+                }
+
+                const seekTime = (clampedPercent / 100) * duration;
+
+                console.log(`Seeking to ${clampedPercent.toFixed(1)}% (${seekTime.toFixed(1)}s of ${duration.toFixed(1)}s)`);
+
+                // The second parameter (allowSeekAhead) should be true to allow seeking to unbuffered parts
                 this.player.seekTo(seekTime, true);
+
+                // Update progress immediately for better UX
+                this.currentTime = seekTime;
+                this.progress = clampedPercent;
+                this.notifySubscribers();
+            } else {
+                console.error('Seek methods not available on player');
             }
         } catch (error) {
             console.error('Error seeking:', error);
@@ -487,9 +518,7 @@ class YouTubePlayerService {
         } catch (error) {
             console.error('Error updating progress:', error);
         }
-    }
-
-    startProgressInterval() {
+    } startProgressInterval() {
         if (this.progressInterval) clearInterval(this.progressInterval);
         this.progressInterval = setInterval(() => this.updateProgress(), 200);
     }
@@ -503,7 +532,8 @@ class YouTubePlayerService {
         const m = Math.floor(sec / 60);
         const s = Math.floor(sec % 60).toString().padStart(2, "0");
         return `${m}:${s}`;
-    } destroy() {
+    }
+    destroy() {
         this.stopProgressInterval();
 
         // Properly destroy the YouTube player
@@ -529,6 +559,100 @@ class YouTubePlayerService {
         this.playerInitialized = null;
         this.youtubeAPILoaded = null;
         this.subscribers.clear();
+    }
+
+    // Preload video metadata without creating iframe
+    async preloadVideo(videoId) {
+        if (this.preloadedVideos.has(videoId)) {
+            return this.preloadedVideos.get(videoId);
+        }
+
+        if (this.preloadPromises.has(videoId)) {
+            return this.preloadPromises.get(videoId);
+        }
+
+        const preloadPromise = this._fetchVideoMetadata(videoId);
+        this.preloadPromises.set(videoId, preloadPromise);
+
+        try {
+            const metadata = await preloadPromise;
+            this.preloadedVideos.set(videoId, metadata);
+            this.preloadPromises.delete(videoId);
+            return metadata;
+        } catch (error) {
+            this.preloadPromises.delete(videoId);
+            console.error('Failed to preload video:', videoId, error);
+            return null;
+        }
+    }
+
+    // Fetch video metadata using YouTube oEmbed API (no API key required)
+    async _fetchVideoMetadata(videoId) {
+        try {
+            const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            return {
+                videoId,
+                title: data.title,
+                author: data.author_name,
+                thumbnail: data.thumbnail_url,
+                duration: null, // oEmbed doesn't provide duration
+                available: true,
+                preloaded: true
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.warn(`Video ${videoId} may not be available:`, errorMessage);
+            return {
+                videoId,
+                title: 'Video Unavailable',
+                author: 'Unknown',
+                thumbnail: null,
+                duration: null,
+                available: false,
+                preloaded: true,
+                error: errorMessage
+            };
+        }
+    }
+
+    // Preload multiple videos at once
+    async preloadVideos(videoIds) {
+        console.log('Preloading videos:', videoIds);
+        const preloadPromises = videoIds.map(id => this.preloadVideo(id));
+        const results = await Promise.allSettled(preloadPromises);
+
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        console.log(`Preloaded ${successful}/${videoIds.length} videos`);
+
+        return results.map((result, index) => ({
+            videoId: videoIds[index],
+            success: result.status === 'fulfilled',
+            data: result.status === 'fulfilled' ? result.value : null,
+            error: result.status === 'rejected' ? result.reason : null
+        }));
+    }
+
+    // Get preloaded video data
+    getPreloadedVideo(videoId) {
+        return this.preloadedVideos.get(videoId) || null;
+    }
+
+    // Check if video is available before attempting to load
+    async isVideoAvailable(videoId) {
+        const preloaded = this.getPreloadedVideo(videoId);
+        if (preloaded) {
+            return preloaded.available;
+        }
+
+        const metadata = await this.preloadVideo(videoId);
+        return metadata ? metadata.available : false;
     }
 }
 

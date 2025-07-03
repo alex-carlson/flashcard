@@ -16,7 +16,6 @@ h4,
 h5,
 h6 {
     font-family: var(--header-font-family);
-    color: var(--bg-text-color);
     font-weight: 400;
     font-style: normal;
 }
@@ -27,18 +26,12 @@ li,
 button,
 input,
 select {
-    color: var(--form-bg-color);
     font-family: var(--body-font-family);
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
 }
 
-a {
-    color: var(--link-color);
-}
-
 a:hover {
-    color: var(--link-hover-color);
     text-decoration: underline;
 }

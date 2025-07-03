@@ -107,18 +107,19 @@
             row-gap: 4px;
             column-gap: 4px;
             padding: 4px;
-    
+
             img {
                 width: 100px;
                 height: 100px;
+                object-fit: contain;
             }
-    
+
             span,
             input[type="text"] {
                 // fill the space
                 flex: 1;
             }
-    
+
             button {
                 width: 44px;
                 height: 44px;

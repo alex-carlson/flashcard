@@ -1,0 +1,97 @@
+// Import variables for use in mixins
+@use "./variables" as vars;
+
+// SCSS Mixins for better performance and reusability
+
+// Flexbox utilities
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+// Button mixins
+@mixin button-base {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+@mixin button-round($size: vars.$player-button-size) {
+    @include button-base;
+    width: $size;
+    height: $size;
+    min-width: $size;
+    border-radius: 50%;
+}
+
+// Progress bar mixin
+@mixin progress-bar($height: vars.$player-progress-height) {
+    background: var(--player-bg-color);
+    // border-radius: calc($height / 2);
+    width: 100%;
+    height: $height;
+    position: relative;
+    overflow: hidden;
+}
+
+// Responsive breakpoints
+@mixin mobile {
+    @media (max-width: 768px) {
+        @content;
+    }
+}
+
+@mixin tablet {
+    @media (min-width: 769px) and (max-width: 1024px) {
+        @content;
+    }
+}
+
+@mixin desktop {
+    @media (min-width: 1025px) {
+        @content;
+    }
+}
+
+// Accessibility
+@mixin focus-visible {
+    &:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+}
+
+// Animation utilities
+@mixin fade-in($duration: 0.3s) {
+    animation: fadeIn $duration ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

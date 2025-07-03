@@ -10,22 +10,23 @@
 		faSpinner
 	} from '@fortawesome/free-solid-svg-icons';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
-
 	export let videoId;
-	export let id;
+	// export let id; // Commented out as it's unused
 	let isPlaying = false;
 	let playerReady = false;
 	let isMuted = false;
 	let isLoading = false;
 	let duration = 0;
-	let currentTime = 0;	let progress = 0;
+	let currentTime = 0;
+	let progress = 0;
 	let isCurrentVideo = false;
-	let unsubscribe;	let hasUserInteracted = false;
+	let unsubscribe;
+	let hasUserInteracted = false;
 	let error = null;
-	
-	// Check if user is on Firefox
-	const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 
+	// Check if user is on Firefox
+	const isFirefox =
+		typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
 	async function handleButtonClick() {
 		console.log('Button clicked for video:', videoId, 'Firefox:', isFirefox);
 
@@ -43,9 +44,11 @@
 				if (error) {
 					youtubePlayerService.clearError();
 				}
+				console.log('Loading video:', videoId);
 				await youtubePlayerService.loadVideoOnly(videoId);
 			} else {
 				// If loaded, toggle play/pause
+				console.log('Toggling play/pause for video:', videoId, 'isPlaying:', isPlaying);
 				await youtubePlayerService.togglePlay(videoId);
 			}
 		} catch (error) {
@@ -55,13 +58,54 @@
 	function toggleMute() {
 		youtubePlayerService.toggleMute();
 	}
-
 	function seek(e) {
 		if (!isCurrentVideo || !playerReady) return;
-		const rect = e.target.getBoundingClientRect();
+
+		// Get the progress bar element (might be clicked on child element)
+		let progressBar = e.target;
+		if (!progressBar.classList.contains('progress-bar-container')) {
+			progressBar = progressBar.closest('.progress-bar-container');
+		}
+
+		if (!progressBar) return;
+
+		const rect = progressBar.getBoundingClientRect();
 		const x = e.clientX - rect.left;
-		const percent = x / rect.width;
+		const percent = Math.max(0, Math.min(100, (x / rect.width) * 100)); // Convert to 0-100 range and clamp
+
+		console.log('Seeking to:', percent.toFixed(1) + '%', 'at position:', x, 'of', rect.width);
 		youtubePlayerService.seek(percent);
+	}
+
+	function handleProgressKeydown(e) {
+		if (!isCurrentVideo || !playerReady) return;
+
+		let newPercent = isCurrentVideo ? progress : 0;
+
+		switch (e.key) {
+			case 'ArrowLeft':
+				newPercent = Math.max(0, newPercent - 5); // Seek back 5%
+				break;
+			case 'ArrowRight':
+				newPercent = Math.min(100, newPercent + 5); // Seek forward 5%
+				break;
+			case 'Home':
+				newPercent = 0; // Seek to beginning
+				break;
+			case 'End':
+				newPercent = 100; // Seek to end
+				break;
+			case 'Enter':
+			case ' ':
+				// Space or Enter - treat as click at current position
+				seek(e);
+				return;
+			default:
+				return; // Don't prevent default for other keys
+		}
+		e.preventDefault();
+		console.log('Keyboard seeking to:', newPercent.toFixed(1) + '%');
+		youtubePlayerService.seek(newPercent);
 	}
 
 	function formatTime(sec) {
@@ -73,7 +117,8 @@
 		return `${m}:${s}`;
 	}
 	onMount(async () => {
-		// Subscribe to player state changes first		unsubscribe = youtubePlayerService.subscribe((state) => {
+		// Subscribe to player state changes first
+		unsubscribe = youtubePlayerService.subscribe((state) => {
 			playerReady = state.playerReady;
 			isMuted = state.isMuted;
 			isLoading = state.isLoading;
@@ -114,6 +159,7 @@
 				on:click={handleButtonClick}
 				on:touchstart|preventDefault={handleButtonClick}
 				on:touchend|preventDefault
+				on:mousedown|preventDefault={isFirefox ? handleButtonClick : undefined}
 				disabled={!playerReady || (error && isCurrentVideo)}
 				style="touch-action: manipulation;"
 			>
@@ -129,14 +175,17 @@
 					<Fa icon={faPlayCircle} />
 				{/if}
 			</button>
-			<!-- <button on:click={toggleMute} disabled={!playerReady}>
-				{#if isMuted}
-					<Fa icon={faVolumeMute} />
-				{:else}
-					<Fa icon={faVolumeHigh} />
-				{/if}
-			</button> -->
-			<div class="progress-bar-container" on:click={seek}>
+			<div
+				class="progress-bar-container"
+				on:click={seek}
+				on:keydown={handleProgressKeydown}
+				role="slider"
+				tabindex="0"
+				aria-valuemin="0"
+				aria-valuemax="100"
+				aria-valuenow={isCurrentVideo ? Math.round(progress) : 0}
+				aria-label="Video progress - use arrow keys to seek, Enter to play/pause"
+			>
 				<div class="progress-bar-bg">
 					<div class="progress-bar-fill" style="width: {isCurrentVideo ? progress : 0}%"></div>
 				</div>
@@ -148,7 +197,7 @@
 			</div>
 		{/if}
 		<span class="progress-time">
-			{formatTime(isCurrentVideo ? Math.min(currentTime, 60) : 0)} / 1:00
+			{formatTime(isCurrentVideo ? currentTime : 0)} / {formatTime(isCurrentVideo ? duration : 0)}
 		</span>
 	{/if}
 </div>

@@ -1,46 +1,38 @@
-// 1. Load functions first (required for Bootstrap overrides)
-@use "bootstrap/scss/functions";
-
-// 2. Override Bootstrap variables BEFORE importing the rest
+// All @use rules must come first
 @use "sass:map";
+@use "bootstrap/scss/functions";
+@use "./variables" as vars;
+@use "./mixins" as mixins;
 
-$theme-colors: (
-    "primary": #2b2b2b,
-    "secondary": #5c5c5c,
-    "success": #28A745,
-    "danger": #DC3545,
-    "warning": #FF5733,
-    "dark": #2b2b2b
-);
+// Override Bootstrap variables
+@use "bootstrap/scss/bootstrap" with ($theme-colors: ("primary": #2b2b2b,
+        "secondary": #5c5c5c,
+        "success": #28A745,
+        "danger": #DC3545,
+        "warning": #FF5733,
+        "dark": #2b2b2b),
+    $body-bg: #6F1D1B,
+    $body-color: #FCE343,
+    $link-color: #FCE343,
+    $link-hover-color: #eef3b1);
 
-$body-bg: #6F1D1B;
-$body-color: #FCE343;
-$link-color: #FCE343;
-$link-hover-color: #eef3b1;
+// Component styles
+@use "./components/typography.scss";
+@use "./components/forms.scss";
+@use "./components/layout.scss";
+@use "./components/header.scss";
+@use "./components/flashcards.scss";
+@use "./components/uploads.scss";
+@use "./components/sort-filter.scss";
+@use "./components/avatar.scss";
+@use "./components/home.scss";
+@use "./components/about.scss";
+@use "./components/party.scss";
+@use "./components/modal.scss";
+@use "./components/dashboard.scss";
+@use "./components/audioplayer.scss";
 
-// 3. Now use Bootstrap with your overrides
-@use "bootstrap/scss/bootstrap" with ($theme-colors: $theme-colors,
-    $body-bg: $body-bg,
-    $body-color: $body-color,
-    $link-color: $link-color,
-    $link-hover-color: $link-hover-color);
-
-// 4. Then your component styles
-@use "./typography.scss";
-@use "./forms.scss";
-@use "./layout.scss";
-@use "./header.scss";
-@use "./flashcards.scss";
-@use "./uploads.scss";
-@use "./sort-filter.scss";
-@use "./avatar.scss";
-@use "./home.scss";
-@use "./about.scss";
-@use "./party.scss";
-@use "./modal.scss";
-@use "./dashboard.scss";
-
-// 5. Your CSS custom properties and global styles
+// CSS custom properties and global styles
 :root {
     --bg-color: #6F1D1B;
     --bg-text-color: #FCE343;
@@ -66,28 +58,27 @@ body {
     background-color: var(--bg-color);
     color: var(--bg-text-color);
 
-    .white {
-        background-color: var(--form-bg-color);
-        color: var(--form-text-color);
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p,
-        span {
-            color: var(--text-color);
-        }
-
-        a {
-            color: var(--link-color);
-        }
-    }
 
     a {
         color: var(--bg-text-color);
+    }
+}
+
+.white {
+    background-color: var(--form-bg-color);
+    color: var(--form-text-color);
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--text-color);
+    }
+
+    a {
+        color: var(--link-color);
     }
 }
 
