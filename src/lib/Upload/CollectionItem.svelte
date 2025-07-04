@@ -57,14 +57,20 @@
 		{#if item.question != null}
 			<span class="question">{item.question}</span>
 		{:else if item.audio != null}
-			<iframe
-				title="YouTube audio player"
-				class="audio"
-				width="320"
-				height="100"
-				src={`https://www.youtube.com/embed/${item.audio}`}
-				frameborder="0"
-			></iframe>
+			<div class="audio">
+				{#await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${item.audio}&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`)
+					.then((res) => res.json())
+					.then((data) => data.items[0]?.snippet) then snippet}
+					{#if snippet}
+						<img src={snippet.thumbnails?.medium?.url} alt={snippet.title} />
+						<p>{snippet.title}</p>
+					{:else}
+						<p>{item.audio}</p>
+					{/if}
+				{:catch}
+					<p>{item.audio}</p>
+				{/await}
+			</div>
 		{:else}
 			<img class="preview" src={item.file || item.image} alt="Preview" />
 		{/if}
