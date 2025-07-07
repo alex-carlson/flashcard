@@ -27,9 +27,10 @@
 
 	function loadSearchedPage(event) {
 		const detail = event.detail;
-		const url = `/quiz/${detail.author_id}/${detail.slug}`;
+		const url = `/quiz/${detail.author_public_id}/${detail.slug}`;
+		const state = { collectionId: detail.id };
 		if (browser) {
-			goto(url);
+			goto(url, { state });
 		}
 	}
 
@@ -52,7 +53,7 @@
 	<Search on:SearchItemClicked={loadSearchedPage} />
 	<h2 class="mt-3">Latest Collections</h2>
 	<Latest />
-	<div class="mt-3">
+	<div class="mt-3 mb-5">
 		<a href="/explore">See More...</a>
 	</div>
 </div>

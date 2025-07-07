@@ -64,7 +64,6 @@ export async function fetchLatestCollections(limit = 12): Promise<Collection[] |
 
 // Fetch random collections
 export async function fetchRandomCollections(limit = 10): Promise<Collection[] | undefined> {
-    console.log("Fetching random collections from API");
     const url = `${import.meta.env.VITE_API_URL}/collections/random/${limit}`;
     try {
         const response = await fetch(url, { method: "GET" });
@@ -77,9 +76,8 @@ export async function fetchRandomCollections(limit = 10): Promise<Collection[] |
 }
 
 // Fetch a collection by author and collection id
-export async function fetchCollectionById(author_id: string, collection_id: string): Promise<Collection | undefined> {
-    console.log(`Fetching collection ${collection_id} by author ${author_id}`);
-    const url = `${import.meta.env.VITE_API_URL}/collections/user/${author_id}/${collection_id}`;
+export async function fetchCollectionById(collection_id: string): Promise<Collection | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/user/public/${collection_id}`;
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch collection");

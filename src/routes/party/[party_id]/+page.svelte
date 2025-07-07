@@ -1,6 +1,5 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { supabase } from '$lib/api/supabaseClient.js';
 	import { socket, disconnectSocket } from '$stores/socket.js';
 	import { user } from '$stores/user.js';
 	import { page } from '$app/stores';
@@ -54,7 +53,7 @@
 			console.log('Room updated:', room);
 			// if room.collectionId changed, fetch collection info
 			if (room.collectionId && room.collectionId !== partyData?.collectionId) {
-				getCollectionInformation(room.collectionId);
+				// getCollectionInformation(room.collectionId);
 			}
 			partyData = {
 				...partyData,
@@ -70,7 +69,7 @@
 		});
 
 		socketInstance.on('score-updated', (data) => {
-			const { scores: newScores, cardIndex, playerId: pID } = data;
+			const { scores: newScores, cardIndex, playerId: pID, cards } = data;
 
 			// Merge new scores
 			partyData = {
@@ -78,7 +77,8 @@
 				scores: {
 					...(partyData.scores || {}),
 					...newScores
-				}
+				},
+				cards: cards || partyData.cards || []
 			};
 
 			// Sort players by score descending
@@ -86,6 +86,15 @@
 				partyData.players = [...partyData.players].sort(
 					(a, b) => (partyData.scores[b] || 0) - (partyData.scores[a] || 0)
 				);
+			}
+
+			// loop through partyData.cards
+			if (partyData.cards && partyData.cards.length > 0) {
+				// for each card, call flashCardsRef.setRevealed(key, true, val)
+				partyData.cards.forEach((key, index) => {
+					console.log('Setting card revealed:', key, index);
+					flashCardsRef.setRevealed(key, true, index);
+				});
 			}
 
 			updatePre();
@@ -147,8 +156,6 @@
 
 		socketInstance.on('collection-changed', (data) => {
 			console.log('Collection changed:', data);
-			// Update collection information
-			getCollectionInformation(data.collectionId);
 			// updated partydata with data
 			partyData = {
 				...partyData,
@@ -197,25 +204,6 @@
 		unsubscribeUser();
 	});
 
-	function getCollectionInformation(collectionId) {
-		supabase
-			.from('collections')
-			.select('author_id, category, slug, author')
-			.eq('id', collectionId)
-			.single()
-			.then(({ data, error }) => {
-				if (error) {
-					console.error('Error fetching collection information:', error);
-				} else {
-					console.log('Collection information:', data);
-					author_id = data.author_id;
-					slug = data.slug; // Assuming slug is part of the collection data
-					authorName = data.author; // Assuming author name is part of the collection data
-					collectionName = data.category; // Assuming category is the collection name
-				}
-			});
-	}
-
 	async function getPartyData(party_id) {
 		try {
 			const response = await fetch(`${import.meta.env.VITE_API_URL}/party/${party_id}`);
@@ -228,8 +216,6 @@
 
 			partyData.hostId = data.hostId;
 			partyData.collectionId = data.collectionId;
-
-			getCollectionInformation(data.collectionId);
 		} catch (error) {
 			console.error('Error fetching party data:', error);
 		}
@@ -275,7 +261,7 @@
 
 <div class="container white partymode">
 	<div class="padding">
-		<pre class="debug-box padding" id="party-data" style="display: none"></pre>
+		<pre class="debug-box padding" id="party-data"></pre>
 		<h1 class="room-label">{party_id}</h1>
 
 		<!-- Connected players -->
@@ -357,10 +343,9 @@
 			</ul>
 
 			<FlashCards
-				collection={slug}
+				collectionId={partyData.collectionId}
 				isPartyMode={true}
 				bind:this={flashCardsRef}
-				{author_id}
 				on:correctAnswer={(e) => scorePoint(e.detail)}
 			/>
 

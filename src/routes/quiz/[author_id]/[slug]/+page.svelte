@@ -1,37 +1,28 @@
 <script>
 	import FlashCards from '$lib/FlashCards.svelte';
 	import { page } from '$app/stores';
-	import { onMount, onDestroy } from 'svelte';
-
+	import { onDestroy } from 'svelte';
 	let author_id = null;
 	let category = null;
-	let mounted = false;
+	let collectionId = null;
 
-	// Initialize params from current page state
-	$: if ($page?.params) {
-		author_id = $page.params.author_id || null;
-		category = $page.params.slug || null;
+	const unsubscribe = page.subscribe(($page) => {
+		author_id = $page.params.author_id;
+		category = $page.params.slug;
+		collectionId = $page.state?.collectionId || null;
 
-		// Only set title if we have valid params and are mounted
-		if (mounted && category) {
-			document.title = `${category}`;
-		}
-	}
-
-	onMount(() => {
-		mounted = true;
-		// Set title on mount if category is available
-		if (category) {
-			document.title = `${category}`;
-		}
+		// set page title to <category> by <author_id>
+		document.title = `${category}`;
 	});
+
+	onDestroy(unsubscribe);
 </script>
 
 <div>
-	<!-- Wait for both params to be available and component to be mounted -->
-	{#if !mounted || !author_id || !category}
+	<!-- if collectionId is null, show loading instead -->
+	{#if author_id == null || category == null}
 		<p>Loading...</p>
 	{:else}
-		<FlashCards {author_id} collection={category} />
+		<FlashCards {collectionId} />
 	{/if}
 </div>

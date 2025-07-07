@@ -2,10 +2,24 @@
 	export let collection;
 	import { formatTimestamp } from '$lib/api/utils.js';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
+	import { goto } from '$app/navigation';
+
+	function gotoPageWithState(authorId, slug) {
+		const url = `/quiz/${authorId}/${slug}`;
+		console.log('Navigating to:', url);
+		// Set the state with the collection ID
+		const state = { collectionId: collection.id };
+		console.log('State:', state);
+		goto(url, { state });
+	}
 </script>
 
 <li>
-	<a class="collection-card-link" href="/quiz/{collection.author_public_id}/{collection.slug}">
+	<a
+		class="collection-card-link"
+		href="/quiz/{collection.author_public_id}/{collection.slug}"
+		on:click|preventDefault={() => gotoPageWithState(collection.author_public_id, collection.slug)}
+	>
 		<div class="collection-card">
 			<div class="card-image-container">
 				{#if collection.itemsLength > 0}

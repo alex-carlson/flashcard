@@ -66,7 +66,7 @@
 	}
 </script>
 
-<div class="container white">
+<div class="container white py-3">
 	{#if !$user}
 		<h1>
 			{isLogin ? 'Log In' : 'Sign Up'} or

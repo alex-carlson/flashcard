@@ -30,9 +30,8 @@
 			}
 
 			const data = await response.json();
-
-			// save data to collections
 			searchResults = data;
+			console.log('Search results:', searchResults);
 		} catch (error) {
 			console.error('Error fetching search results:', error);
 		}
@@ -69,14 +68,12 @@
 				{#each searchResults as result}
 					<li>
 						<a
-							href="/quiz/{result.author_id}/{result.category}"
+							href="/quiz/{result.author_public_id}/{result.slug}"
 							on:click|preventDefault={() => onClicked({ detail: result })}
 						>
-							{#if result.items.length > 0}
-								<img src={result.items[0].image} alt={result.category} />
-							{/if}
+							<img src={result.thumbnail} alt={result.category} />
 							<p>
-								{result.category} by: {result.author}
+								{result.category} by: {result.author} [{result.itemsLength}]
 							</p>
 						</a>
 					</li>

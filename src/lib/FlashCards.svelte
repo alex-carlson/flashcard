@@ -23,11 +23,12 @@
 	import Card from './Card.svelte';
 	import { mapCards } from '$lib/api/utils';
 	import { getScoreMessage } from './api/quizScore';
-	export let collection = null;
-	export let author_id = null;
+
+	export let collectionId = null;
 	export let isPartyMode = false;
+
+	let author_id = null;
 	let author = null;
-	let collectionId = null;
 	let collectionName = null;
 	let collectionDescription = null;
 	let cards = [];
@@ -44,19 +45,11 @@
 	// function to fetch collection from id
 	async function fetchCollection() {
 		try {
-			const data = await fetchCollectionById(author_id, collection);
+			const data = await fetchCollectionById(collectionId);
 
 			author = data.author;
-			collectionId = data.id;
 			collectionName = data.category;
 			collectionDescription = data.description;
-
-			console.log('Fetched collection:', {
-				author,
-				collectionId,
-				collectionName,
-				collectionDescription
-			});
 
 			// set page tab title to collectionName
 			document.title = `${collectionName} - ${author}`;

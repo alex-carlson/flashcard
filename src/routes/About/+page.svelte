@@ -7,7 +7,7 @@
 </script>
 
 <div class="about">
-	<div class="container align-left">
+	<div class="container align-left white rounded my-3">
 		<h1 class="mt-5">About Quizzems</h1>
 		<p>
 			Quizzems is a platform designed to help study for bar trivia. With the design pillars to load

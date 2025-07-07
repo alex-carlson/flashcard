@@ -62,7 +62,7 @@
 	}
 	async function setCollection(collectionId) {
 		try {
-			const newCollection = await fetchCollectionById($user.public_id, collectionId);
+			const newCollection = await fetchCollectionById(collectionId);
 			console.log('Fetched collection details:', newCollection);
 
 			if (newCollection) {
