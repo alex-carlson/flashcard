@@ -106,7 +106,10 @@
 				on:input={handleInput}
 			/>
 		{:else}
-			<span class={item.revealed ? 'revealed' : 'hidden'} style="transform: scale(1);">
+			<span
+				class={`answer black ${item.revealed ? 'revealed' : 'hidden'}`}
+				style="transform: scale(1);"
+			>
 				{item.answer || 'Loading'}
 			</span>
 		{/if}

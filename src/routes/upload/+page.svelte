@@ -28,11 +28,12 @@
 	let errorMessage,
 		successMessage = '';
 	let showImageSuggestions = false;
-
 	// things to move to uploader.ts
 	let item = {};
 	let tempCategory = '';
 	let tempDescription = '';
+	let answerInput; // Reference to the answer input field
+	let questionInput; // Reference to the question input field
 
 	$: if ($user?.public_id) {
 		loadCollections();
@@ -54,12 +55,24 @@
 			successMessage = ''; // Clear the success message after 10 seconds
 		}, 10000);
 	}
-
 	function showErrorMessage(message) {
 		errorMessage = message;
 		setTimeout(() => {
 			errorMessage = ''; // Clear the error message after 10 seconds
 		}, 10000);
+	}
+	function focusAnswerInput() {
+		if (answerInput) {
+			answerInput.focus();
+			answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}
+
+	function focusQuestionInput() {
+		if (questionInput) {
+			questionInput.focus();
+			questionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
 	}
 	async function setCollection(collectionId) {
 		try {
@@ -327,6 +340,7 @@
 								type="text"
 								class="form-control mb-2"
 								bind:value={item.answer}
+								bind:this={answerInput}
 								placeholder="Enter an answer"
 							/>
 							<button
@@ -341,7 +355,9 @@
 										showSuccessMessage('Item added successfully!');
 										item.file = null;
 										item.answer = '';
-										showImageSuggestions = false; // Hide suggestions after adding
+										// Keep suggestions visible if they were already shown
+										// Focus and scroll to answer input for next item
+										setTimeout(focusAnswerInput, 100);
 									}
 								}}>Add item</button
 							>
@@ -367,7 +383,9 @@
 										showSuccessMessage('Image added successfully!');
 										item.file = null;
 										item.answer = '';
-										showImageSuggestions = false; // Hide suggestions after adding
+										// Keep suggestions visible if they were already shown
+										// Focus and scroll to answer input for next item
+										setTimeout(focusAnswerInput, 100);
 									}
 								}}
 							/>
@@ -397,6 +415,7 @@
 								type="text"
 								class="form-control mb-2"
 								bind:value={item.question}
+								bind:this={questionInput}
 								placeholder="Enter a question"
 							/>
 							<input
@@ -419,9 +438,11 @@
 										collection.items = newItems[0].items;
 										collection.itemsLength = newItems[0].items.length;
 										showSuccessMessage('Question added successfully!');
+										item.question = '';
+										item.answer = '';
+										// Focus and scroll to question input for next item
+										setTimeout(focusQuestionInput, 100);
 									}
-									item.question = '';
-									item.answer = '';
 								}}>Add Question</button
 							>
 						</div>
