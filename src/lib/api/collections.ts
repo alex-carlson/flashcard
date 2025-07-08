@@ -92,6 +92,20 @@ export async function fetchCollectionById(
     }
 }
 
+export async function fetchCollectionByAuthorAndSlug(
+    authorId,
+    slug
+): Promise<Collection | undefined> {
+    const url = `/collections/user/collection/${authorId}/${slug}`;
+    try {
+        const data = await apiFetch(url, 'GET', null, false, true);
+        return data.id;
+    } catch (error) {
+        console.error("Error fetching collection by author slug:", error);
+        return undefined;
+    }
+}
+
 export async function createCollection(collection: Collection): Promise<Collection | undefined> {
     const url = `${import.meta.env.VITE_API_URL}/collections/createCollection`;
     try {
