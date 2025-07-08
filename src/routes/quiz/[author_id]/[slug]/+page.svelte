@@ -24,7 +24,7 @@
 		if (!collectionId && author_id && category) {
 			try {
 				collectionId = await fetchCollectionByAuthorAndSlug(author_id, category);
-				console.log('Fetched collection by author/slug:', collectionId);
+				console.log('Fetched collectionId:', collectionId);
 			} catch (error) {
 				console.error('Error fetching collection by author/slug:', error);
 			} finally {

@@ -84,7 +84,7 @@ export async function fetchCollectionById(
         ? `/collections/user/collection/${collection_id}`
         : `/collections/user/public/${collection_id}`;
     try {
-        const data = await apiFetch(url, 'GET', null, false, true);
+        const data = await apiFetch(url, 'GET', null, false, protectedCollection);
         return data;
     } catch (error) {
         console.error("Error fetching collection:", error);
@@ -98,7 +98,8 @@ export async function fetchCollectionByAuthorAndSlug(
 ): Promise<Collection | undefined> {
     const url = `/collections/user/collection/${authorId}/${slug}`;
     try {
-        const data = await apiFetch(url, 'GET', null, false, true);
+        let data = await apiFetch(url, 'GET', null, false, false);
+        console.log("Fetched collection by author slug:", data);
         return data.id;
     } catch (error) {
         console.error("Error fetching collection by author slug:", error);
