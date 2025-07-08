@@ -73,6 +73,7 @@
 		on:click={() => currentMode === 'FLASH_CARDS' && toggleReveal(i)}
 	>
 		{#if item.type === 'audio'}
+			<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
 			{#if item.revealed}
 				<div class="audio-revealed">
 					<img
@@ -96,8 +97,6 @@
 						}
 					</div>
 				</div>
-			{:else}
-				<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
 			{/if}
 		{:else if item.type === 'image'}
 			<LazyLoadImage
