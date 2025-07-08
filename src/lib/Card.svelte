@@ -39,17 +39,23 @@
 
 				dispatch('correctAnswer', { index: i });
 
-				const inputs = document.querySelectorAll('.flashcards input');
+				const inputs = document.querySelectorAll('.flashcards .card input[type="text"]');
 				for (let j = i + 1; j < inputs.length; j++) {
 					if (!inputs[j].disabled) {
 						inputs[j].scrollIntoView({
-							behavior: 'smooth',
-							block: 'end',
+							behavior: 'auto',
+							block: 'end', // Scroll so input is at the bottom of the visible area
 							inline: 'nearest'
 						});
 						setTimeout(() => {
 							inputs[j].focus({ preventScroll: true });
-						}, 80);
+							// Ensure input is visible and at the bottom of the viewport
+							const rect = inputs[j].getBoundingClientRect();
+							const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+							if (rect.bottom > viewportHeight || rect.top < 0) {
+								inputs[j].scrollIntoView({ behavior: 'smooth', block: 'end' });
+							}
+						}, 0);
 						break;
 					}
 				}

@@ -27,6 +27,7 @@
 	let collections = [];
 	let errorMessage,
 		successMessage = '';
+	let showImageSuggestions = false;
 
 	// things to move to uploader.ts
 	let item = {};
@@ -62,7 +63,7 @@
 	}
 	async function setCollection(collectionId) {
 		try {
-			const newCollection = await fetchCollectionById(collectionId);
+			const newCollection = await fetchCollectionById(collectionId, true);
 			console.log('Fetched collection details:', newCollection);
 
 			if (newCollection) {
@@ -313,7 +314,7 @@
 					</li>
 				</ul>
 				{#if questionType === 'Image'}
-					<form class="form row g-2 align-items-center">
+					<form class="form row g-2 align-items-center container">
 						<div
 							class="col-12 col-md-auto"
 							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
@@ -340,25 +341,37 @@
 										showSuccessMessage('Item added successfully!');
 										item.file = null;
 										item.answer = '';
+										showImageSuggestions = false; // Hide suggestions after adding
 									}
 								}}>Add item</button
 							>
+
+							<button
+								type="button"
+								class="btn btn-secondary mt-2"
+								on:click={() => (showImageSuggestions = !showImageSuggestions)}
+							>
+								{showImageSuggestions ? 'Hide' : 'Show'} Suggestions
+							</button>
 						</div>
-						<ImageSuggestions
-							bind:category={collection.category}
-							bind:searchTerm={item.answer}
-							on:addImage={async (e) => {
-								item.file = e.detail;
-								const newItem = await uploadData(item, undefined, false);
-								if (newItem) {
-									collection.items = newItem[0].items;
-									collection.itemsLength = newItem[0].items.length;
-									showSuccessMessage('Image added successfully!');
-									item.file = null;
-									item.answer = '';
-								}
-							}}
-						/>
+						{#if showImageSuggestions}
+							<ImageSuggestions
+								category={collection.category}
+								searchTerm={item.answer}
+								on:addImage={async (e) => {
+									item.file = e.detail;
+									const newItem = await uploadData(item, undefined, false);
+									if (newItem) {
+										collection.items = newItem[0].items;
+										collection.itemsLength = newItem[0].items.length;
+										showSuccessMessage('Image added successfully!');
+										item.file = null;
+										item.answer = '';
+										showImageSuggestions = false; // Hide suggestions after adding
+									}
+								}}
+							/>
+						{/if}
 					</form>
 				{:else if questionType === 'Audio'}
 					<AudioUploader

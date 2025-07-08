@@ -11959,12 +11959,40 @@ button span {
   border-radius: 0.5rem;
 }
 
+.suggestions {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  /* Prevent parent overflow */
+}
 .suggestions .suggestion {
   display: flex;
   flex-direction: row;
   gap: 1rem;
   overflow-x: auto;
+  overflow-y: hidden;
   padding: 0.5rem 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* Better mobile scrolling */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Show scrollbar on desktop */
+}
+.suggestions .suggestion::-webkit-scrollbar {
+  height: 6px;
+}
+.suggestions .suggestion::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+.suggestions .suggestion::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+.suggestions .suggestion::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 .suggestions .suggestion .suggestion-item {
   flex: 0 0 auto;
@@ -11972,11 +12000,19 @@ button span {
   flex-direction: column;
   align-items: center;
   width: 140px;
+  min-width: 140px;
+  /* Prevent shrinking */
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 0.5rem;
   margin: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.suggestions .suggestion .suggestion-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 .suggestions .suggestion .suggestion-item a {
   display: flex;
