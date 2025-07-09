@@ -5,6 +5,7 @@
 
 	import Search from '$lib/Search.svelte';
 	import Latest from '$lib/Latest.svelte';
+	import Beer from '$lib/components/Beer.svelte';
 
 	const taglines = [
 		'The best place on the whole internet for doing trivia (probably)',
@@ -48,6 +49,9 @@
 		<p id="tagline" class="drop-quote">{tagline}</p>
 	</div>
 </div>
+<!-- <div class="container">
+	<Beer />
+</div> -->
 <div class="container">
 	<h2>Search</h2>
 	<Search on:SearchItemClicked={loadSearchedPage} />
