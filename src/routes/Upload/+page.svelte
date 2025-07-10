@@ -19,7 +19,6 @@
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
-
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
@@ -35,6 +34,8 @@
 	let tempDescription = '';
 	let answerInput; // Reference to the answer input field
 	let questionInput; // Reference to the question input field
+	let thumbnailUploader; // Reference to the thumbnail FileUpload component
+	let itemUploader; // Reference to the item FileUpload component
 
 	$: if ($user?.public_id) {
 		console.log('User public_id:', $user.public_id);
@@ -204,9 +205,22 @@
 						style="width: 180px; height: 180px;"
 					>
 						<FileUpload
-							on:uploadImage={(event) => {
+							bind:this={thumbnailUploader}
+							on:uploadImage={async (event) => {
 								console.log('Thumbnail upload event:', event.detail);
-								uploadThumbnail(event.detail, collection.category);
+								try {
+									const result = await uploadThumbnail(event.detail, collection.category);
+									if (result) {
+										console.log('Thumbnail upload successful:', result);
+										// Clear the image after successful upload
+										if (thumbnailUploader && typeof thumbnailUploader.clearImage === 'function') {
+											thumbnailUploader.clearImage();
+										}
+									}
+								} catch (error) {
+									console.error('Error uploading thumbnail:', error);
+									showErrorMessage('Failed to upload thumbnail. Please try again.');
+								}
 							}}
 						/>
 					</div>
@@ -338,7 +352,10 @@
 							class="col-12 col-md-auto"
 							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
 						>
-							<FileUpload on:uploadImage={(event) => (item.file = event.detail)} />
+							<FileUpload
+								bind:this={itemUploader}
+								on:uploadImage={(event) => (item.file = event.detail)}
+							/>
 						</div>
 						<div class="col-12 col-md">
 							<input
@@ -361,6 +378,10 @@
 										showSuccessMessage('Item added successfully!');
 										item.file = null;
 										item.answer = '';
+										// Clear the FileUpload component
+										if (itemUploader && typeof itemUploader.clearImage === 'function') {
+											itemUploader.clearImage();
+										}
 										// Keep suggestions visible if they were already shown
 										// Focus and scroll to answer input for next item
 										setTimeout(focusAnswerInput, 100);
