@@ -12789,6 +12789,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
   row-gap: 4px;
   column-gap: 4px;
   padding: 4px;
+  min-height: 100px;
 }
 .uploads ul li:nth-child(even) {
   background-color: #e7e7e7;

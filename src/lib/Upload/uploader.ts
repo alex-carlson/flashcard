@@ -121,15 +121,12 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 category: item.category,
                 answer: item.answer
             };
-            console.log("usr:", usr);
-            console.log('Uploading URL data:', data);
             const result = await apiFetch('/items/upload-url', 'POST', data);
             return result;
         } catch (error) {
             console.error('Error uploading URL data:', error);
             return error;
         }
-        return;
     }
 
     // Otherwise, upload as file

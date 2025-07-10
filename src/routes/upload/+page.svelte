@@ -19,14 +19,13 @@
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
+	import { on } from 'svelte/events';
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
 	let editableItemId = null;
 	let isReordering = false;
 	let collections = [];
-	let errorMessage,
-		successMessage = '';
 	let showImageSuggestions = false;
 	// things to move to uploader.ts
 	let item = {};
@@ -56,18 +55,6 @@
 		}
 	}
 
-	function showSuccessMessage(message) {
-		successMessage = message;
-		setTimeout(() => {
-			successMessage = ''; // Clear the success message after 10 seconds
-		}, 10000);
-	}
-	function showErrorMessage(message) {
-		errorMessage = message;
-		setTimeout(() => {
-			errorMessage = ''; // Clear the error message after 10 seconds
-		}, 10000);
-	}
 	function focusAnswerInput() {
 		if (answerInput) {
 			answerInput.focus();
@@ -107,17 +94,26 @@
 				console.log('Collection set with', collection.itemsLength, 'items');
 			} else {
 				console.error('No collection data received');
-				showErrorMessage('Failed to load collection data');
+				addToast({
+					type: 'error',
+					message: 'Failed to load collection data. Please try again.'
+				});
 			}
 		} catch (error) {
 			console.error('Error fetching collection:', error);
-			showErrorMessage('Failed to load collection. Please try again.');
+			addToast({
+				type: 'error',
+				message: 'Failed to load collection. Please try again.'
+			});
 		}
 	}
 
 	function handleCollectionDeleted(newCollection) {
 		collection = null;
-		showSuccessMessage('Collection deleted successfully!');
+		addToast({
+			type: 'success',
+			message: 'Collection deleted successfully!'
+		});
 	}
 
 	async function setVisible(event) {
@@ -133,7 +129,10 @@
 			await apiFetch('/collections/setVisible', 'POST', data);
 		} catch (error) {
 			console.error('Error setting visibility:', error);
-			errorMessage = 'Visibility change failed. Please try again.';
+			addToast({
+				type: 'error',
+				message: 'Failed to update visibility. Please try again.'
+			});
 		}
 	}
 
@@ -148,12 +147,18 @@
 		try {
 			const result = await apiFetch(`/collections/update/${collection.id}`, 'POST', data, false);
 			if (result) {
-				showSuccessMessage('Collection updated successfully!');
+				addToast({
+					type: 'success',
+					message: 'Collection updated successfully!'
+				});
 				loadCollections();
 			}
 		} catch (error) {
 			console.error('Error updating collection:', error);
-			showErrorMessage('Failed to update collection. Please try again.');
+			addToast({
+				type: 'error',
+				message: 'Failed to update collection. Please try again.'
+			});
 		}
 	}
 </script>
@@ -163,12 +168,6 @@
 </svelte:head>
 
 <div class="container form white padding uploader">
-	{#if errorMessage}
-		<p class="alert alert-danger mt-2">{errorMessage}</p>
-	{/if}
-	{#if successMessage}
-		<p class="alert alert-success mt-2">{successMessage}</p>
-	{/if}
 	{#if !user}
 		<p><a href="/login">Log in</a> to manage your collections.</p>
 	{:else}
@@ -219,7 +218,10 @@
 									}
 								} catch (error) {
 									console.error('Error uploading thumbnail:', error);
-									showErrorMessage('Failed to upload thumbnail. Please try again.');
+									addToast({
+										type: 'error',
+										message: 'Failed to upload thumbnail. Please try again.'
+									});
 								}
 							}}
 						/>
@@ -247,6 +249,7 @@
 						/>
 						<form
 							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
+							on:submit|preventDefault
 							on:change={setVisible}
 						>
 							<label for="privacy-toggle" class="form-label me-5 mb-0">Privacy</label>
@@ -271,49 +274,47 @@
 				<h4>Questions</h4>
 				<ul class="items-list list-group mb-4">
 					{#if collection.items && collection.items.length > 0}
-						{#key collection.items}
-							{#each collection.items as item, index}
-								<CollectionItem
-									{item}
-									{index}
-									bind:editableItemId
-									on:removeItem={async () => {
-										const updatedItems = await removeItem(item.id, collection.category);
-										if (updatedItems) {
-											console.log('updatedItems:', updatedItems);
-											collection.items = updatedItems.items;
-											collection.itemsLength = updatedItems.items.length;
-										}
-									}}
-									on:saveEdit={async (e) => {
-										console.log('Save edit event:', e.detail);
-										const d = {
-											collection: collection.category,
-											id: e.detail.id,
-											answer: e.detail.answer,
-											author_id: $user.public_id
-										};
-										const result = await saveEdit(d);
-										if (result) {
-											collections = result;
-										}
-									}}
-									on:reorderItem={async (e) => {
-										const result = await reorderItems(
-											e.detail.prevIndex,
-											e.detail.newIndex,
-											collection
-										);
-										if (result) {
-											console.log('Reordered items:', result);
-											collection.items = result[0].items;
-											collection.itemsLength = result[0].items.length;
-										}
-									}}
-									{isReordering}
-								/>
-							{/each}
-						{/key}
+						{#each collection.items as item, index (item.id)}
+							<CollectionItem
+								{item}
+								{index}
+								bind:editableItemId
+								on:removeItem={async () => {
+									const updatedItems = await removeItem(item.id, collection.category);
+									if (updatedItems) {
+										console.log('updatedItems:', updatedItems);
+										collection.items = updatedItems.items;
+										collection.itemsLength = updatedItems.items.length;
+									}
+								}}
+								on:saveEdit={async (e) => {
+									console.log('Save edit event:', e.detail);
+									const d = {
+										collection: collection.category,
+										id: e.detail.id,
+										answer: e.detail.answer,
+										author_id: $user.public_id
+									};
+									const result = await saveEdit(d);
+									if (result) {
+										collections = result;
+									}
+								}}
+								on:reorderItem={async (e) => {
+									const result = await reorderItems(
+										e.detail.prevIndex,
+										e.detail.newIndex,
+										collection
+									);
+									if (result) {
+										console.log('Reordered items:', result);
+										collection.items = result[0].items;
+										collection.itemsLength = result[0].items.length;
+									}
+								}}
+								{isReordering}
+							/>
+						{/each}
 					{:else}
 						<li class="list-group-item text-muted">No questions yet. Add some below!</li>
 					{/if}
@@ -347,7 +348,7 @@
 					</li>
 				</ul>
 				{#if questionType === 'Image'}
-					<form class="form row g-2 align-items-center container">
+					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
 						<div
 							class="col-12 col-md-auto"
 							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
@@ -375,7 +376,10 @@
 										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
 										collection.itemsLength = newItems[0].items.length;
-										showSuccessMessage('Item added successfully!');
+										addToast({
+											type: 'success',
+											message: 'Item added successfully!'
+										});
 										item.file = null;
 										item.answer = '';
 										// Clear the FileUpload component
@@ -402,17 +406,24 @@
 								category={collection.category}
 								searchTerm={item.answer}
 								on:addImage={async (e) => {
+									// Store current scroll position
+									const currentScrollY = window.scrollY;
+
 									item.file = e.detail;
 									const newItem = await uploadData(item, undefined, false);
 									if (newItem) {
+										// Update collection data
 										collection.items = newItem[0].items;
 										collection.itemsLength = newItem[0].items.length;
-										showSuccessMessage('Image added successfully!');
+
+										addToast({
+											type: 'success',
+											message: 'Image added successfully!'
+										});
+
+										// Clear form data
 										item.file = null;
 										item.answer = '';
-										// Keep suggestions visible if they were already shown
-										// Focus and scroll to answer input for next item
-										setTimeout(focusAnswerInput, 100);
 									}
 								}}
 							/>
@@ -431,12 +442,15 @@
 							if (newItems) {
 								collection.items = newItems[0].items;
 								collection.itemsLength = newItems[0].items.length;
-								showSuccessMessage('Audio added successfully!');
+								addToast({
+									type: 'success',
+									message: 'Audio added successfully!'
+								});
 							}
 						}}
 					/>
 				{:else if questionType === 'Question'}
-					<form class="form row g-2 align-items-center">
+					<form class="form row g-2 align-items-center" on:submit|preventDefault>
 						<div class="col-12">
 							<input
 								type="text"
@@ -456,15 +470,20 @@
 								class="btn btn-success mt-2"
 								on:click={async () => {
 									if ((item.question ?? '').trim() === '') {
-										showErrorMessage('Please enter a question.');
+										addToast({
+											type: 'error',
+											message: 'Please enter a question.'
+										});
 										return;
 									}
 									const newItems = await uploadQuestion(item);
 									if (newItems) {
-										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
 										collection.itemsLength = newItems[0].items.length;
-										showSuccessMessage('Question added successfully!');
+										addToast({
+											type: 'success',
+											message: 'Question added successfully!'
+										});
 										item.question = '';
 										item.answer = '';
 										// Focus and scroll to question input for next item
@@ -497,7 +516,7 @@
 		{/if}
 	{/if}
 	<div class="container" style="display: none;">
-		<form action="">
+		<form action="" on:submit|preventDefault>
 			<input type="file" name="file" id="file" />
 			<input type="text" name="answer" id="answer" />
 			<button type="submit">Upload</button>
