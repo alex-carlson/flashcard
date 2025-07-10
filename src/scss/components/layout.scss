@@ -55,10 +55,31 @@ ul {
             flex-direction: column;
             align-items: stretch;
             gap: 4px;
+            height: 100%;
 
             a {
                 display: flex;
                 flex-direction: column;
+                height: 100%;
+
+                .lazy-load {
+                    width: 100%;
+                    height: 180px;
+                    min-height: 120px;
+                    max-height: 220px;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        aspect-ratio: 4 / 3;
+                        display: block;
+                    }
+                }
             }
         }
     }
@@ -85,12 +106,20 @@ ul {
 
                 .lazy-load {
                     width: 100%;
-                    height: 120px;
+                    height: 180px;
+                    min-height: 120px;
+                    max-height: 220px;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
 
                     img {
                         width: 100%;
                         height: 100%;
                         object-fit: cover;
+                        aspect-ratio: 4 / 3;
+                        display: block;
                     }
                 }
 
@@ -118,6 +147,18 @@ ul {
         padding: 16px;
         text-align: center;
         color: #888;
+    }
+
+    &.condensed ul {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        
+        @media (min-width: 768px) {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 12px;
+        }
     }
 
     &.condensed ul li {

@@ -12089,10 +12089,29 @@ ul img {
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
+  height: 100%;
 }
 .list.grid ul li a {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+.list.grid ul li a .lazy-load {
+  width: 100%;
+  height: 180px;
+  min-height: 120px;
+  max-height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.list.grid ul li a .lazy-load img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 4/3;
+  display: block;
 }
 .list ul {
   list-style: none;
@@ -12116,12 +12135,20 @@ ul img {
 }
 .list ul li a .lazy-load {
   width: 100%;
-  height: 120px;
+  height: 180px;
+  min-height: 120px;
+  max-height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .list ul li a .lazy-load img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  aspect-ratio: 4/3;
+  display: block;
 }
 .list ul li a p {
   padding: 1rem;
@@ -12141,6 +12168,18 @@ ul img {
   padding: 16px;
   text-align: center;
   color: #888;
+}
+.list.condensed ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+@media (min-width: 768px) {
+  .list.condensed ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 12px;
+  }
 }
 .list.condensed ul li {
   padding: 4px;
