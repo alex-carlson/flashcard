@@ -2,7 +2,7 @@
 	export let imageUrl = '';
 	export let tempSize = ''; // e.g. "200px" or "100%"
 
-	import { getImageUrl } from '$lib/api/supabaseClient';
+	import { addToast } from '../stores/toast';
 
 	let loaded = false;
 	let finalUrl = '';
@@ -13,6 +13,10 @@
 
 	function handleError() {
 		console.error('Error loading image');
+		addToast({
+			type: 'error',
+			message: 'Failed to load image. Please try again later.'
+		});
 	}
 
 	// Reactively update finalUrl when imageUrl or imagePath changes

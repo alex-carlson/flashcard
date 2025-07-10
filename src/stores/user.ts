@@ -17,19 +17,38 @@ export interface User {
 export const user = writable<User | null>(null);
 
 // Internal helper to merge profile data with session user
-async function fetchUserProfile(sessionUser: Record<string, unknown>, token: string | null = null): Promise<User | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchUserProfile(sessionUser: { id: string; email?: string; user_metadata?: any;[key: string]: any }, token: string | null = null): Promise<User | null> {
   if (!sessionUser) {
     console.error('No session user provided');
     return null;
   }
 
   try {
-    const userWithProfile = await fetchUser(sessionUser.id);
+    let userWithProfile = await fetchUser(sessionUser.id);
 
+    // If no profile found, wait a bit and try again (profile might be being created)
     if (!userWithProfile) {
-      console.error('No user profile found for session user:', sessionUser.id);
-      return null;
-    } return {
+      console.log('No user profile found, waiting 1 second and retrying...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      userWithProfile = await fetchUser(sessionUser.id);
+    }
+
+    // If still no profile, create a fallback user object with basic info
+    if (!userWithProfile) {
+      console.warn('No user profile found after retry, creating fallback user object');
+      return {
+        id: sessionUser.id as string,
+        public_id: sessionUser.id as string,
+        username: sessionUser.user_metadata?.username || sessionUser.email?.split('@')[0] || 'User',
+        bio: '',
+        email: sessionUser.email as string,
+        uid: sessionUser.id as string,
+        token,
+      };
+    }
+
+    return {
       ...sessionUser,
       bio: userWithProfile.bio || '',
       username: userWithProfile.username || '',
@@ -41,7 +60,16 @@ async function fetchUserProfile(sessionUser: Record<string, unknown>, token: str
     };
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    return null;
+    // Return fallback user object even on error
+    return {
+      id: sessionUser.id as string,
+      public_id: sessionUser.id as string,
+      username: sessionUser.user_metadata?.username || sessionUser.email?.split('@')[0] || 'User',
+      bio: '',
+      email: sessionUser.email as string,
+      uid: sessionUser.id as string,
+      token,
+    };
   }
 }
 
@@ -52,7 +80,8 @@ async function initializeAuth() {
   try {
     const session = await getSession();
     if (session?.user) {
-      const userWithProfile = await fetchUserProfile(session.user as Record<string, unknown>, session.access_token);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userWithProfile = await fetchUserProfile(session.user as any, session.access_token);
       user.set(userWithProfile);
     }
   } catch (error) {
@@ -80,9 +109,9 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_OUT' || !session?.user) {
     user.set(null);
     return;
-  }
-  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-    const userWithProfile = await fetchUserProfile(session.user as unknown as Record<string, unknown>, session.access_token);
+  } if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userWithProfile = await fetchUserProfile(session.user as any, session.access_token);
     user.set(userWithProfile);
   }
 });

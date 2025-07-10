@@ -19,6 +19,7 @@
 	import { completeQuiz } from '$lib/api/user';
 	import { user } from '$stores/user';
 	import { Modes } from './api/constants.js';
+	import { addToast } from '$stores/toast';
 	import Modal from './Modal.svelte';
 	import Card from './Card.svelte';
 	import { mapCards } from '$lib/api/utils';
@@ -66,6 +67,10 @@
 			}
 		} catch (error) {
 			console.error('Error fetching collection:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to fetch collection. Please try again later.'
+			});
 		}
 	}
 

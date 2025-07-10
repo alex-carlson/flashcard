@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { addToast } from '../stores/toast';
 	const dispatch = createEventDispatcher();
 	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 	const CX = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
@@ -40,6 +41,10 @@
 			}
 		} catch (e) {
 			console.error('Image search failed:', e);
+			addToast({
+				type: 'error',
+				message: 'Failed to fetch image suggestions. Please try again later.'
+			});
 		}
 	}
 

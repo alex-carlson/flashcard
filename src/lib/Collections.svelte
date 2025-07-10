@@ -22,18 +22,22 @@
 		{isCollapsed ? 'Show Collections' : 'Hide Collections'}
 	</button>
 	{#if !isCollapsed}
-		<ul class="py-3">
-			{#each collections as collection}
-				<li>
-					<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
-						<LazyLoadImage imageUrl={collection.thumbnail} tempSize="50px" />
-						<span>
-							{collection.category}
-						</span>
-					</a>
-				</li>
-			{/each}
-		</ul>
+		{#if collections.length === 0}
+			<p>No collections available</p>
+		{:else}
+			<ul class="py-3">
+				{#each collections as collection}
+					<li>
+						<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
+							<LazyLoadImage imageUrl={collection.thumbnail} tempSize="50px" />
+							<span>
+								{collection.category}
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	{/if}
 </div>
 

@@ -3,6 +3,7 @@ import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
 import { on } from 'svelte/events';
+import { addToast } from '$stores/toast';
 
 // Helper function to safely get current user
 function getCurrentUser() {
@@ -230,6 +231,12 @@ export async function uploadThumbnail(data, category) {
     try {
         const result = await apiFetch('/items/add-thumbnail', 'POST', formData, true);
         console.log('Thumbnail upload result:', result);
+        addToast({
+            message: 'Thumbnail uploaded successfully!',
+            type: 'success',
+            duration: 3000
+        });
+        return result;
     } catch (error) {
         console.error('Error uploading thumbnail:', error);
     }

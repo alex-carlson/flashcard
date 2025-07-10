@@ -5,6 +5,7 @@
 	import { user } from '$stores/user.js';
 	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
+	import { addToast } from '../../stores/toast';
 
 	let userId = null;
 
@@ -22,6 +23,11 @@
 
 		if (!token) {
 			console.error('No auth token available.');
+			addToast({
+				type: 'error',
+				message: 'You must be logged in to create a room.',
+				duration: 10000
+			});
 			return;
 		}
 

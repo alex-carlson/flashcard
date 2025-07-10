@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { addToast } from '../stores/toast';
 	const dispatch = createEventDispatcher();
 	export function addSong(title, id) {
 		// This function can be used to add a song to a playlist or perform other actions
@@ -27,6 +28,10 @@
 			}));
 		} catch (err) {
 			console.error('Error fetching YouTube data:', err);
+			addToast({
+				type: 'error',
+				message: 'Failed to fetch audio results. Please try again later.'
+			});
 		}
 	}
 </script>

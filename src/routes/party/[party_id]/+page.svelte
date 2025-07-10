@@ -9,6 +9,7 @@
 	import RandomItems from '$lib/RandomItems.svelte';
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { faFlag } from '@fortawesome/free-solid-svg-icons';
+	import { addToast } from '$stores/toast.js';
 	import Fa from 'svelte-fa';
 
 	let party_id = null;
@@ -218,6 +219,10 @@
 			partyData.collectionId = data.collectionId;
 		} catch (error) {
 			console.error('Error fetching party data:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to fetch party data. Please try again later.'
+			});
 		}
 	}
 

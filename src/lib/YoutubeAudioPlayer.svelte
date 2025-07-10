@@ -10,6 +10,7 @@
 		faSpinner
 	} from '@fortawesome/free-solid-svg-icons';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
+	import { addToast } from '../stores/toast.js';
 	export let videoId;
 	// export let id; // Commented out as it's unused
 	let isPlaying = false;
@@ -53,6 +54,10 @@
 			}
 		} catch (error) {
 			console.error('Error in handleButtonClick:', error);
+			addToast({
+				type: 'error',
+				message: `Failed to play video: ${error.message || 'Unknown error'}`
+			});
 		}
 	}
 	function toggleMute() {
@@ -140,6 +145,10 @@
 			await youtubePlayerService.initializePlayer();
 		} catch (error) {
 			console.error('Failed to initialize YouTube player:', error);
+			addToast({
+				type: 'error',
+				message: `Failed to initialize player: ${error.message || 'Unknown error'}`
+			});
 		}
 	});
 

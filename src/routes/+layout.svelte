@@ -2,6 +2,7 @@
 	import '../scss/custom.scss';
 	import Header from '$lib/Header.svelte';
 	import Footer from '$lib/Footer.svelte';
+	import Toasts from '$lib/components/Toasts.svelte';
 </script>
 
 <svelte:head>
@@ -18,5 +19,6 @@
 <Header></Header>
 <main>
 	<slot />
+	<Toasts position="top-right" />
 </main>
 <Footer></Footer>

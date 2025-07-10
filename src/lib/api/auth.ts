@@ -1,5 +1,6 @@
 import { supabase } from '$lib/api/supabaseClient';
 import { user } from '$stores/user';
+import { addToast } from '../../stores/toast';
 
 export async function signInWithEmail(email: string, password: string) {
   try {
@@ -7,23 +8,31 @@ export async function signInWithEmail(email: string, password: string) {
 
     if (error) {
       console.error('[signInWithEmail] Login error:', error.message);
+      addToast({
+        message: 'Login failed. Please check your email and password.',
+        type: 'error',
+        duration: 5000
+      });
       throw error;
     }
 
-    const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+    // Don't manually set the user store here - let the onAuthStateChange listener in user.ts handle it
+    // This ensures profile data gets properly merged with session user
+    console.log('[signInWithEmail] User signed in successfully');
 
-    if (userError) {
-      console.error('[signInWithEmail] Error fetching current user:', userError.message);
-      throw userError;
+    // Ensure profile exists for the user
+    if (data.user) {
+      ensureProfileExists(data.user.id, data.user.user_metadata?.username || 'New User');
     }
-
-    localStorage.setItem('user', JSON.stringify(currentUser));
-    user.set(currentUser);
-    ensureProfileExists(currentUser.id, currentUser.user_metadata?.username || 'New User');
 
     return data;
   } catch (err) {
     console.error('[signInWithEmail] Exception caught:', err);
+    addToast({
+      message: 'An unexpected error occurred. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw err;
   }
 }
@@ -40,17 +49,17 @@ export async function signInWithGoogle() {
 
   if (error) {
     console.error('Google sign-in error:', error.message);
+    addToast({
+      message: 'Google sign-in failed. Please try again.',
+      type: 'error',
+      duration: 5000
+    });
     throw error;
   }
 
-  // set user and profile stores
-  const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-  if (userError) {
-    console.error('Error fetching current user:', userError.message);
-    throw userError;
-  }
-  user.set(currentUser);
-  ensureProfileExists(currentUser.id, currentUser.user_metadata?.username || 'New User');
+  // Don't manually set the user store here - let the onAuthStateChange listener in user.ts handle it
+  // This ensures profile data gets properly merged with session user
+  console.log('Google sign-in initiated successfully');
 
   return data;
 }
@@ -67,6 +76,11 @@ export async function signUpWithEmail(email: string, password: string) {
 
   if (error) {
     console.error('Sign-up error:', error.message);
+    addToast({
+      message: 'Sign-up failed. Please check your email and password.',
+      type: 'error',
+      duration: 5000
+    });
     throw error;
   }
 
@@ -91,6 +105,11 @@ export async function createProfileIfMissing(id: string, username: string) {
 
   if (insertError) {
     console.error('Failed to create profile:', insertError.message);
+    addToast({
+      message: 'Failed to create profile. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw insertError;
   }
 }
@@ -100,6 +119,11 @@ export async function updateEmail(newEmail: string) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     console.error('Error fetching current user:', userError?.message);
+    addToast({
+      message: 'Failed to fetch user data. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw userError || new Error('No user found');
   }
 
@@ -108,6 +132,11 @@ export async function updateEmail(newEmail: string) {
   });
   if (authError) {
     console.error('Error updating email in auth:', authError.message);
+    addToast({
+      message: 'Failed to update email. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw authError;
   }
 
@@ -119,6 +148,11 @@ export async function updateEmail(newEmail: string) {
 
   if (profileError) {
     console.error('Error updating email in profile:', profileError.message);
+    addToast({
+      message: 'Failed to update email in profile. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw profileError;
   }
 
@@ -129,6 +163,11 @@ export async function updateUsername(newUsername: string) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     console.error('Error fetching current user:', userError?.message);
+    addToast({
+      message: 'Failed to fetch user data. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw userError || new Error('No user found');
   }
 
@@ -136,6 +175,11 @@ export async function updateUsername(newUsername: string) {
   const token = session?.access_token;
   if (!token) {
     throw new Error('No access token found');
+    addToast({
+      message: 'No access token found. Please log in again.',
+      type: 'error',
+      duration: 5000
+    });
   }
   const response = await fetch(`${import.meta.env.VITE_API_URL}/users/updateUsername`, {
     method: 'POST',
@@ -152,6 +196,11 @@ export async function updateUsername(newUsername: string) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Error updating username:', errorText);
+    addToast({
+      message: 'Failed to update username. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw new Error(errorText || 'Failed to update username');
   }
 
@@ -165,6 +214,11 @@ export async function logOut() {
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.error('Log out error:', error.message);
+    addToast({
+      message: 'Log out failed. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw error;
   }
 
@@ -179,6 +233,11 @@ export async function deleteUser(userId: string) {
 
   if (error) {
     console.error("Error deleting user:", error);
+    addToast({
+      message: 'Failed to delete user. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw error;
   }
 
@@ -192,6 +251,11 @@ export async function ensureProfileExists(userId: string, username: string) {
     console.log('Profile ensured for user:', userId);
   } catch (error) {
     console.error('Error ensuring profile exists:', error);
+    addToast({
+      message: 'Failed to ensure profile exists. Please try again later.',
+      type: 'error',
+      duration: 5000
+    });
     throw error;
   }
 }

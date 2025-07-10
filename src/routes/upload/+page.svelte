@@ -18,6 +18,7 @@
 		reorderItems
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
+	import { addToast } from '../../stores/toast';
 
 	let collection = null;
 	let questionType = 'Image';
@@ -36,6 +37,7 @@
 	let questionInput; // Reference to the question input field
 
 	$: if ($user?.public_id) {
+		console.log('User public_id:', $user.public_id);
 		loadCollections();
 	}
 
@@ -46,6 +48,10 @@
 			collections = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 		} catch (error) {
 			console.error('Error fetching user collections:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to load collections. Please try again later.'
+			});
 		}
 	}
 

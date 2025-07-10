@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fetchLatestCollections } from './api/collections';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
+	import { addToast } from '../stores/toast';
 
 	export let count = 12;
 
@@ -13,6 +14,10 @@
 			collections = await fetchLatestCollections(count);
 		} catch (error) {
 			console.error('Latest: Error loading collections:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to load collections. Please try again later.'
+			});
 			collections = [];
 		} finally {
 			loading = false;
