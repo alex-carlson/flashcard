@@ -48,7 +48,7 @@ ul {
     &.grid ul {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 12px;
+        gap: 8px;
 
         li {
             display: flex;
@@ -125,7 +125,6 @@ ul {
         font-size: 14px;
         width: 100%;
 
-
         a {
             display: flex;
             flex-direction: row;
@@ -133,23 +132,17 @@ ul {
             gap: 8px;
             text-decoration: none;
 
-            img {
-                width: 60px;
-                height: 60px;
-                object-fit: contain;
+            .card-image-container img {
+                width: 120px;
+                height: 120px;
+                aspect-ratio: 4 / 3;
             }
 
-            div {
-                width: 44px;
-                height: 44px;
-                margin-bottom: 2px;
-                align-self: center;
-            }
-
-            span {
+            .card-content {
                 flex: 1;
-                font-size: 14px;
-                text-align: center;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
         }
     }

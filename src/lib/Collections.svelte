@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
+	import CollectionCard from './components/CollectionCard.svelte';
 	export let collections = [];
 	let isCollapsed = true;
 
@@ -27,14 +28,7 @@
 		{:else}
 			<ul class="py-3">
 				{#each collections as collection}
-					<li>
-						<a href="#" on:click|preventDefault={() => selectCollection(collection.id)}>
-							<LazyLoadImage imageUrl={collection.thumbnail} tempSize="50px" />
-							<span>
-								{collection.category}
-							</span>
-						</a>
-					</li>
+					<CollectionCard {collection} onNavigate={() => selectCollection(collection.id)} />
 				{/each}
 			</ul>
 		{/if}

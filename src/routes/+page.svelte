@@ -43,19 +43,17 @@
 	});
 </script>
 
-<div class="image-section content">
-	<div class="image-content">
+<!-- <div class="image-section content">
+	<div class="image-content my-3">
 		<h1>Welcome to Quizzems</h1>
 		<p id="tagline" class="drop-quote">{tagline}</p>
 	</div>
-</div>
+</div> -->
 <!-- <div class="container">
 	<Beer />
 </div> -->
-<div class="container">
-	<h2>Search</h2>
-	<Search on:SearchItemClicked={loadSearchedPage} />
-	<h2 class="mt-3">Latest Collections</h2>
+<div class="container my-3">
+	<h2 class="my-3">Latest Collections</h2>
 	<Latest />
 	<div class="mt-3 mb-5">
 		<a href="/explore">See More...</a>

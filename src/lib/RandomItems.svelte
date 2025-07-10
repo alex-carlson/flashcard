@@ -3,6 +3,7 @@
 	import Fa from 'svelte-fa';
 	import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
+	import CollectionCard from './components/CollectionCard.svelte';
 	export let onCollectionClick;
 
 	let randomItemsPromise;
@@ -31,17 +32,11 @@
 <div class="randomCollections">
 	{#await randomItemsPromise then data}
 		<div class="grid condensed card-grid">
-			{#each data as collection}
-				<div class="card" on:click={() => onCollectionClick(collection)}>
-					<img class="card-thumbnail" src={collection.thumbnail} alt={collection.category} />
-					<div class="card-content">
-						<span class="card-title">{collection.category} [{collection.itemsLength}]</span>
-						<span class="card-meta sm"
-							>{collection.author} - {formatDate(collection.created_at)}</span
-						>
-					</div>
-				</div>
-			{/each}
+			<ul>
+				{#each data as collection}
+					<CollectionCard {collection} onNavigate={(col) => onCollectionClick(col)} />
+				{/each}
+			</ul>
 		</div>
 		<button class="refresh mt-3" on:click={refresh}>
 			<span>

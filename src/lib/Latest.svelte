@@ -29,7 +29,7 @@
 	});
 </script>
 
-<div class="list grid">
+<div class="list grid condensed">
 	{#if loading}
 		<p>Loading collections...</p>
 	{:else if collections.length > 0}

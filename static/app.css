@@ -12082,7 +12082,7 @@ ul img {
 .list.grid ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .list.grid ul li {
   display: flex;
@@ -12154,21 +12154,16 @@ ul img {
   gap: 8px;
   text-decoration: none;
 }
-.list.condensed ul li a img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
+.list.condensed ul li a .card-image-container img {
+  width: 120px;
+  height: 120px;
+  aspect-ratio: 4/3;
 }
-.list.condensed ul li a div {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 2px;
-  align-self: center;
-}
-.list.condensed ul li a span {
+.list.condensed ul li a .card-content {
   flex: 1;
-  font-size: 14px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .collection-card {
@@ -13000,7 +12995,6 @@ header .navContainer ul li.user-tab a .profile-picture img {
   position: relative;
   z-index: 2;
   text-align: center;
-  margin: 5rem 0;
 }
 .image-section .image-content h1,
 .image-section .image-content p {
