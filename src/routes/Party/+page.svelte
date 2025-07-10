@@ -25,8 +25,7 @@
 			console.error('No auth token available.');
 			addToast({
 				type: 'error',
-				message: 'You must be logged in to create a room.',
-				duration: 10000
+				message: 'You must be logged in to create a room.'
 			});
 			return;
 		}
