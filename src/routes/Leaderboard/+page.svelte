@@ -39,52 +39,37 @@
 	onMount(async () => {
 		try {
 			users = await fetchUsers();
+			console.log('Fetched users:', users);
 		} catch (error) {
 			console.error('Error fetching users:', error);
 		}
 	});
 </script>
 
-<div class="white container padding">
-	<h1>User Leaderboard</h1>
-	<div class="table-responsive">
-		<table
-			class="table table-striped table-bordered align-middle w-100"
-			style="table-layout: fixed;"
-		>
-			<thead class="table-light">
-				<tr>
-					<th scope="col" style="width: 10%;">Rank</th>
-					<th scope="col" style="width: 40%;">Username</th>
-					<th scope="col" style="width: 25%;">Quizzes Completed</th>
-					<th scope="col" style="width: 25%;">GPA</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each [...users]
-					.filter((user) => user.quizzes_completed != null)
-					.sort((a, b) => b.quizzes_completed.length - a.quizzes_completed.length) as user, i}
-					<tr class={i % 2 === 0 ? 'even-row padded-row' : 'odd-row padded-row'}>
-						<td>{i + 1}</td>
-						<td>
-							<a href={`/${user.id}`}>
-								<strong>{user.username}</strong>
-							</a>
-						</td>
-						<td>{user.quizzes_completed.length}</td>
-						<td>{getGPA(user.quizzes_completed)} ({getPercentage(user.quizzes_completed)}%)</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+<div class="leaderboard-container white container py-3">
+	<h1 class="mt-3 mb-5">User Leaderboard</h1>
+	<div class="leaderboard-grid">
+		<div class="leaderboard-header">
+			<div>Rank</div>
+			<div>Username</div>
+			<div>Quizzes Completed</div>
+			<div>GPA</div>
+		</div>
+		{#each [...users]
+			.filter((user) => user.quizzes_completed != null)
+			.sort((a, b) => b.quizzes_completed.length - a.quizzes_completed.length) as user, i}
+			<div class="leaderboard-row {i % 2 === 0 ? 'even-row' : 'odd-row'}">
+				<div class="rank">
+					{i + 1}
+				</div>
+				<div>
+					<a href={`/author/${user.public_id}`}>
+						<strong>{user.username}</strong>
+					</a>
+				</div>
+				<div>{user.quizzes_completed.length}</div>
+				<div>{getGPA(user.quizzes_completed)} ({getPercentage(user.quizzes_completed)}%)</div>
+			</div>
+		{/each}
 	</div>
 </div>
-
-<style>
-	.even-row {
-		background-color: rgb(230, 230, 230);
-	}
-	.odd-row {
-		background-color: #ffffff;
-	}
-</style>

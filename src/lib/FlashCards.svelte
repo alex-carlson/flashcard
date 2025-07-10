@@ -384,7 +384,7 @@
 			{
 				text: 'Leaderboards',
 				action: () => {
-					window.location.hash = '/leaderboard';
+					window.location.href = '/leaderboard';
 				},
 				class: 'bg-blue-500 text-white'
 			}

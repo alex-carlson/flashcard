@@ -13307,6 +13307,36 @@ header .navContainer ul li.user-tab a .profile-picture img {
   border: 1px solid rgba(220, 53, 69, 0.2);
 }
 
+.leaderboard-grid .leaderboard-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
+  align-items: center;
+  padding: 10px;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
+}
+.leaderboard-grid .leaderboard-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+.leaderboard-grid .leaderboard-row .leaderboard-position {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+.leaderboard-grid .leaderboard-row .leaderboard-name {
+  font-weight: bold;
+  color: var(--secondary-color);
+}
+.leaderboard-grid .leaderboard-row .leaderboard-score {
+  text-align: right;
+  color: var(--tertiary-color);
+}
+
 :root {
   --bg-color: #6F1D1B;
   --bg-text-color: #FCE343;

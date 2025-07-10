@@ -1,0 +1,35 @@
+.leaderboard-grid {
+    .leaderboard-header {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr 1fr;
+        align-items: center;
+        padding: 10px;
+        background-color: var(--primary-color);
+        color: #fff;
+        font-weight: bold;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .leaderboard-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr 1fr;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+
+        .leaderboard-position {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .leaderboard-score {
+            text-align: right;
+            color: var(--tertiary-color);
+        }
+    }
+}
