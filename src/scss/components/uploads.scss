@@ -146,6 +146,32 @@
                 width: 44px;
                 height: 44px;
             }
+
+            .editing {
+                width: 100%;
+
+                .cropper-container {
+                    display: inline-block;
+                    box-sizing: content-box;
+                    padding: 1rem;
+                    width: auto;
+                    height: auto;
+                    max-width: 100%;
+                }
+
+                input[type="text"] {
+                    margin-bottom: 4px;
+                }
+
+                .cropper-actions {
+                    button {
+                        width: auto;
+                        background: black;
+                        color: white;
+                    }
+                }
+
+            }
         }
     }
 }

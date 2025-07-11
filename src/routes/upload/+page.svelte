@@ -19,7 +19,6 @@
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
-	import { on } from 'svelte/events';
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
@@ -27,7 +26,7 @@
 	let isReordering = false;
 	let collections = [];
 	let showImageSuggestions = false;
-	// things to move to uploader.ts
+
 	let item = {};
 	let tempCategory = '';
 	let tempDescription = '';
@@ -278,6 +277,7 @@
 							<CollectionItem
 								{item}
 								{index}
+								{collection}
 								bind:editableItemId
 								on:removeItem={async () => {
 									const updatedItems = await removeItem(item.id, collection.category);
@@ -298,6 +298,14 @@
 									const result = await saveEdit(d);
 									if (result) {
 										collections = result;
+									}
+								}}
+								on:updateItem={(e) => {
+									// Update the specific item in the collection
+									const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
+									if (itemIndex !== -1) {
+										collection.items[itemIndex] = { ...collection.items[itemIndex], ...e.detail };
+										collection.items = [...collection.items]; // Trigger reactivity
 									}
 								}}
 								on:reorderItem={async (e) => {
