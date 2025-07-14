@@ -4,14 +4,33 @@
 	import { formatTimestamp } from '$lib/api/utils.js';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
 	import { goto } from '$app/navigation';
+	import { fetchUser } from '$lib/api/user';
 
-	function defaultGotoPageWithState(authorId, slug) {
-		const url = `/quiz/${authorId}/${slug}`;
-		console.log('Navigating to:', url);
-		// Set the state with the collection ID
-		const state = { collectionId: collection.id };
-		console.log('State:', state);
-		goto(url, { state });
+	async function defaultGotoPageWithState(author_id, slug) {
+		console.log('Default navigation function called with:', { author_id, slug });
+
+		try {
+			// Wait for the user data to be fetched
+			const user = await fetchUser(author_id);
+			const author_slug = user.username_slug || user.username || 'unknown-author';
+
+			const url = `/quiz/${author_slug}/${slug}`;
+			console.log('Navigating to:', url);
+
+			// Set the state with the collection ID
+			const state = { collectionId: collection.id };
+			console.log('State:', state);
+
+			goto(url, { state });
+		} catch (error) {
+			console.error('Error fetching user for navigation:', error);
+			// Fallback navigation with unknown author
+			const url = `/quiz/unknown-author/${slug}`;
+			console.log('Fallback navigation to:', url);
+
+			const state = { collectionId: collection.id };
+			goto(url, { state });
+		}
 	}
 
 	function handleNavigation() {
@@ -19,7 +38,8 @@
 			// Use parent's navigation function if provided
 			onNavigate(collection);
 		} else {
-			// Use default navigation
+			// Use default navigation (now properly async)
+			console.log('default navigating with collection:', collection);
 			defaultGotoPageWithState(collection.author_public_id, collection.slug);
 		}
 	}
@@ -28,7 +48,7 @@
 <li>
 	<a
 		class="collection-card-link"
-		href="/quiz/{collection.author_public_id}/{collection.slug}"
+		href="/quiz/{collection.author}/{collection.slug}"
 		on:click|preventDefault={handleNavigation}
 	>
 		<div class="card-image-container">
