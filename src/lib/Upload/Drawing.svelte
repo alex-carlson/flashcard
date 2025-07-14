@@ -1,6 +1,14 @@
 <script>
 	import Fa from 'svelte-fa';
-	import { faEyedropper, faPencil } from '@fortawesome/free-solid-svg-icons';
+	import {
+		faUndo,
+		faCancel,
+		faCheck,
+		faEraser,
+		faEyedropper,
+		faFloppyDisk,
+		faPencil
+	} from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 
@@ -11,11 +19,22 @@
 	let image = new Image();
 	let drawing = false;
 	let eyedropping = false;
+	let erasing = false;
 	let color = '#000000';
 	let width = 10;
 
 	let lastX = 0;
 	let lastY = 0;
+
+	let removingBackground = false;
+	let removalThreshold = 30; // Threshold for flood fill removal
+	const undoStack = []; // Stack to keep track of undo actions
+
+	function saveState() {
+		if (!canvas) return;
+		undoStack.push(canvas.toDataURL('image/png'));
+	}
+
 	// Load image and draw it on the canvas
 	function drawImageToCanvas() {
 		canvas.width = image.width;
@@ -38,12 +57,23 @@
 	});
 
 	function startDrawing(x, y) {
+		saveState(); // Save the current state before starting a new drawing
 		drawing = true;
 		[lastX, lastY] = [x, y];
 	}
 	function draw(x, y) {
 		if (!drawing) return;
-		ctx.strokeStyle = color;
+
+		if (erasing) {
+			// Use destination-out composite operation to erase
+			ctx.globalCompositeOperation = 'destination-out';
+			ctx.strokeStyle = 'rgba(0,0,0,1)'; // Color doesn't matter for erasing
+		} else {
+			// Normal drawing
+			ctx.globalCompositeOperation = 'source-over';
+			ctx.strokeStyle = color;
+		}
+
 		ctx.lineWidth = width; // Use the current width setting
 		ctx.beginPath();
 		ctx.moveTo(lastX, lastY);
@@ -53,17 +83,30 @@
 	}
 	function endDrawing() {
 		drawing = false;
+		// Reset composite operation to normal
+		ctx.globalCompositeOperation = 'source-over';
 	}
-
 	function toggleEyedropper() {
 		eyedropping = !eyedropping;
+		erasing = false; // Disable erasing when eyedropping
 		if (eyedropping) {
 			canvas.style.cursor = 'crosshair';
 		} else {
 			canvas.style.cursor = 'default';
 		}
 	}
+
+	function toggleEraser() {
+		erasing = !erasing;
+		eyedropping = false; // Disable eyedropping when erasing
+		if (erasing) {
+			canvas.style.cursor = 'crosshair';
+		} else {
+			canvas.style.cursor = 'default';
+		}
+	}
 	function pickColor(x, y) {
+		saveState(); // Save the current state before picking color
 		try {
 			const imageData = ctx.getImageData(x, y, 1, 1);
 			const pixel = imageData.data;
@@ -80,17 +123,68 @@
 				'Cannot pick color from this image due to security restrictions. Please use the color picker instead.'
 			);
 		}
-	} // Mouse events
+	}
+
+	function floodFillRemove(startX, startY, threshold = 30) {
+		saveState(); // Save the current state before removing background
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = imageData.data;
+
+		const width = canvas.width;
+		const height = canvas.height;
+
+		const index = (x, y) => (y * width + x) * 4;
+
+		// Get target color
+		const i = index(startX, startY);
+		const target = [data[i], data[i + 1], data[i + 2]];
+
+		const visited = new Uint8Array(width * height);
+		const stack = [[startX, startY]];
+
+		const colorDistance = (r1, g1, b1, r2, g2, b2) =>
+			Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+
+		while (stack.length) {
+			const [x, y] = stack.pop();
+			const idx = index(x, y);
+
+			if (x < 0 || x >= width || y < 0 || y >= height) continue;
+			if (visited[y * width + x]) continue;
+
+			const r = data[idx];
+			const g = data[idx + 1];
+			const b = data[idx + 2];
+
+			if (colorDistance(r, g, b, ...target) < threshold) {
+				// Make transparent
+				data[idx + 3] = 0;
+
+				stack.push([x + 1, y]);
+				stack.push([x - 1, y]);
+				stack.push([x, y + 1]);
+				stack.push([x, y - 1]);
+			}
+
+			visited[y * width + x] = 1;
+		}
+
+		ctx.putImageData(imageData, 0, 0);
+	}
+	// Mouse events
 	function handleMouseDown(e) {
 		const rect = canvas.getBoundingClientRect();
 		const scaleX = canvas.width / rect.width;
 		const scaleY = canvas.height / rect.height;
-		const x = (e.clientX - rect.left) * scaleX;
-		const y = (e.clientY - rect.top) * scaleY;
+		const x = Math.floor((e.clientX - rect.left) * scaleX);
+		const y = Math.floor((e.clientY - rect.top) * scaleY);
 
 		if (eyedropping) {
 			pickColor(x, y);
+		} else if (removingBackground) {
+			floodFillRemove(x, y);
 		} else {
+			// Normal drawing or erasing
 			startDrawing(x, y);
 		}
 	}
@@ -122,7 +216,11 @@
 
 		if (eyedropping) {
 			pickColor(pos.x, pos.y);
+		} else if (removingBackground) {
+			floodFillRemove(Math.floor(pos.x), Math.floor(pos.y));
+			removingBackground = false;
 		} else {
+			// Normal drawing or erasing
 			startDrawing(pos.x, pos.y);
 		}
 	}
@@ -140,10 +238,17 @@
 		endDrawing();
 	}
 
-	function clearCanvas() {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		ctx.drawImage(image, 0, 0); // Redraw background image
+	function undo() {
+		if (undoStack.length === 0) return;
+		const lastState = undoStack.pop();
+		const img = new Image();
+		img.onload = () => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(img, 0, 0);
+		};
+		img.src = lastState;
 	}
+
 	function saveDrawing() {
 		// dispatch a custom event to notify parent component
 		const dataURL = canvas.toDataURL('image/png');
@@ -159,7 +264,6 @@
 <div class="drawing-container">
 	<div class="container py-3 drawing-controls">
 		<h4 class="mb-3">Tools</h4>
-
 		<!-- Tool Buttons -->
 		<div class="row mb-3">
 			<div class="col-12 d-flex gap-2">
@@ -168,9 +272,10 @@
 					class="btn btn-outline-secondary"
 					on:click={() => {
 						eyedropping = false;
+						erasing = false;
 						canvas && (canvas.style.cursor = 'default');
 					}}
-					class:active={!eyedropping}
+					class:active={!eyedropping && !erasing}
 				>
 					<Fa icon={faPencil} /> Draw
 				</button>
@@ -178,19 +283,38 @@
 				<button
 					type="button"
 					class="btn btn-outline-secondary"
-					on:click={() => {
-						eyedropping = true;
-						canvas && (canvas.style.cursor = 'crosshair');
-					}}
+					on:click={toggleEraser}
+					class:active={erasing}
+				>
+					<Fa icon={faEraser} /> Erase
+				</button>
+
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					on:click={toggleEyedropper}
 					class:active={eyedropping}
 				>
 					<Fa icon={faEyedropper} /> Pick Color
+				</button>
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					on:click={() => {
+						removingBackground = !removingBackground;
+					}}
+				>
+					{#if removingBackground}
+						<Fa icon={faCheck} /> Confirm Background
+					{:else}
+						<Fa icon={faEraser} />Remove Background
+					{/if}
 				</button>
 			</div>
 		</div>
 
 		<!-- Color and Brush Size -->
-		<div class="row mb-3">
+		<div class="row mb-3" style="height: 50px;">
 			<div class="col-12 d-flex align-items-center gap-3 flex-wrap">
 				<label class="d-flex align-items-center gap-2 m-0">
 					Color:
@@ -220,9 +344,15 @@
 		<!-- Action Buttons -->
 		<div class="row">
 			<div class="col-12 d-flex gap-2 flex-wrap">
-				<button type="button" class="btn btn-warning" on:click={clearCanvas}>Clear</button>
-				<button type="button" class="btn btn-success" on:click={saveDrawing}>Save</button>
-				<button type="button" class="btn btn-secondary" on:click={cancelDrawing}>Cancel</button>
+				<button type="button" class="btn btn-warning" on:click={undo}
+					><Fa icon={faUndo} />Undo</button
+				>
+				<button type="button" class="btn btn-success" on:click={saveDrawing}
+					><Fa icon={faFloppyDisk} />Save</button
+				>
+				<button type="button" class="btn btn-secondary" on:click={cancelDrawing}
+					><Fa icon={faCancel} />Cancel</button
+				>
 			</div>
 		</div>
 	</div>

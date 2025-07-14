@@ -33,21 +33,19 @@
 		editableItemId = null;
 		dispatch('saveEdit', item);
 	}
-	async function onCropped(event) {
-		console.log('Cropped event received:', event);
-		const croppedFile = event.detail;
 
+	async function uploadChangedImage(file, fileName = null) {
 		try {
-			// Set the originalname property on the cropped file
-			if (croppedFile && typeof croppedFile === 'object') {
-				const fileName = croppedFile.name || 'cropped-image.jpg';
-				croppedFile.originalname = fileName;
+			// Set the originalname property on the file
+			if (file && typeof file === 'object') {
+				const defaultFileName = fileName || file.name || 'modified-image.jpg';
+				file.originalname = defaultFileName;
 			}
 
-			// Create a temporary item object with the new cropped image
+			// Create a temporary item object with the new file
 			const tempItem = {
 				...item,
-				file: croppedFile,
+				file: file,
 				// Keep the existing answer
 				answer: item.answer,
 				// Add category from collection
@@ -56,7 +54,7 @@
 
 			console.log('Temporary item for upload:', tempItem);
 
-			// Upload the new cropped image
+			// Upload the new image
 			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
 
 			if (result && result.length > 0) {
@@ -75,19 +73,32 @@
 				}
 			}
 		} catch (error) {
-			console.error('Error updating cropped image:', error);
+			console.error('Error updating image:', error);
 			addToast({
 				type: 'error',
 				message: 'Failed to update image. Please try again.'
 			});
 		}
+	}
 
+	async function onCropped(event) {
+		console.log('Cropped event received:', event);
+		const croppedFile = event.detail;
+
+		await uploadChangedImage(croppedFile, 'cropped-image.jpg');
 		isCropping = false; // Reset cropping state
 	}
 
-	function onSave() {
-		// Placeholder for save logic in Drawing component
-		console.log('Drawing saved');
+	async function onSave(event) {
+		console.log('Drawing saved:', event);
+		const { dataURL } = event.detail;
+
+		// Convert dataURL to File object
+		const response = await fetch(dataURL);
+		const blob = await response.blob();
+		const file = new File([blob], 'drawing.png', { type: 'image/png' });
+
+		await uploadChangedImage(file, 'drawing.png');
 		isDrawing = false; // Reset drawing state
 	}
 
@@ -145,7 +156,7 @@
 					<div class="actions my-3">
 						{#if isEditable(item.image)}
 							<button class="btn btn-secondary" on:click={() => (isCropping = true)}>Crop</button>
-							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Draw</button>
+							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Edit</button>
 						{/if}
 					</div>
 				{:else if isCropping}
