@@ -1,0 +1,165 @@
+{
+    "name": "Quizzems - Interactive Flash Cards & Quizzes",
+    "short_name": "Quizzems",
+    "description": "Create, share, and study with interactive flash cards and quizzes. Learn faster with Quizzems - the ultimate study companion.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#007bff",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "en-US",
+    "categories": [
+        "education",
+        "productivity",
+        "utilities"
+    ],
+    "icons": [
+        {
+            "src": "/favicon.png",
+            "sizes": "32x32",
+            "type": "image/png",
+            "purpose": "favicon"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "apple-touch-icon"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/desktop-home.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Home screen showing flash card collections"
+        },
+        {
+            "src": "/screenshots/mobile-quiz.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Quiz interface on mobile"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Create Quiz",
+            "short_name": "Create",
+            "description": "Create a new flash card collection",
+            "url": "/upload",
+            "icons": [
+                {
+                    "src": "/icons/create.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Browse Collections",
+            "short_name": "Browse",
+            "description": "Browse all flash card collections",
+            "url": "/explore",
+            "icons": [
+                {
+                    "src": "/icons/browse.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "View your personal dashboard",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/icons/dashboard.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "edge_side_panel": {
+        "preferred_width": 400
+    },
+    "launch_handler": {
+        "client_mode": "navigate-existing"
+    },
+    "protocol_handlers": [
+        {
+            "protocol": "web+quizzems",
+            "url": "/?quiz=%s"
+        }
+    ],
+    "file_handlers": [
+        {
+            "action": "/upload",
+            "accept": {
+                "image/*": [
+                    ".png",
+                    ".jpg",
+                    ".jpeg",
+                    ".gif",
+                    ".webp"
+                ],
+                "audio/*": [
+                    ".mp3",
+                    ".wav",
+                    ".ogg",
+                    ".m4a"
+                ],
+                "video/*": [
+                    ".mp4",
+                    ".webm",
+                    ".mov"
+                ]
+            }
+        }
+    ],
+    "share_target": {
+        "action": "/upload",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url",
+            "files": [
+                {
+                    "name": "files",
+                    "accept": [
+                        "image/*",
+                        "audio/*",
+                        "video/*"
+                    ]
+                }
+            ]
+        }
+    }
+}

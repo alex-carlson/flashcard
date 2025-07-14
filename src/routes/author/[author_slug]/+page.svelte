@@ -4,13 +4,25 @@
 	import { page } from '$app/stores';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 
+	export let data;
+
 	let collections = [];
 	let author = null;
 	let bio = null;
 	let userData = null;
 
-	// This runs whenever $page.params.author_id changes
-	$: if ($page.params.author_slug) {
+	// Use server-loaded data if available, otherwise fetch client-side
+	$: if (data?.userData) {
+		userData = data.userData;
+		author = userData.username;
+		bio = userData.bio;
+		// Still need to fetch collections client-side since they might be dynamic
+		if (userData.id) {
+			fetchUserCollections(userData.id).then((result) => {
+				collections = result || [];
+			});
+		}
+	} else if ($page.params.author_slug) {
 		init($page.params.author_slug);
 	}
 	async function init(authorSlug) {
@@ -38,6 +50,81 @@
 		}
 	}
 </script>
+
+<svelte:head>
+	<title>{data?.title || `Author: ${$page.params.author_slug}`}</title>
+	<meta
+		name="description"
+		content={data?.description || `Author profile for ${$page.params.author_slug}`}
+	/>
+
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content={data?.og?.type || 'profile'} />
+	<meta
+		property="og:title"
+		content={data?.og?.title || data?.title || `Author: ${$page.params.author_slug}`}
+	/>
+	<meta
+		property="og:description"
+		content={data?.og?.description ||
+			data?.description ||
+			`Author profile for ${$page.params.author_slug}`}
+	/>
+	<meta
+		property="og:image"
+		content={data?.og?.image || data?.image || `/images/authors/${$page.params.author_slug}.jpg`}
+	/>
+	<meta
+		property="og:url"
+		content={data?.og?.url || data?.url || `/author/${$page.params.author_slug}`}
+	/>
+	<meta property="og:site_name" content={data?.og?.siteName || 'Flash Cards'} />
+
+	{#if data?.og?.profile}
+		<meta property="profile:first_name" content={data.og.profile.firstName} />
+		<meta property="profile:last_name" content={data.og.profile.lastName} />
+		<meta property="profile:username" content={data.og.profile.username} />
+	{/if}
+
+	<!-- Twitter -->
+	<meta name="twitter:card" content={data?.twitter?.card || 'summary'} />
+	<meta
+		name="twitter:title"
+		content={data?.twitter?.title || data?.title || `Author: ${$page.params.author_slug}`}
+	/>
+	<meta
+		name="twitter:description"
+		content={data?.twitter?.description ||
+			data?.description ||
+			`Author profile for ${$page.params.author_slug}`}
+	/>
+	<meta
+		name="twitter:image"
+		content={data?.twitter?.image ||
+			data?.image ||
+			`/images/authors/${$page.params.author_slug}.jpg`}
+	/>
+	{#if data?.twitter?.creator}
+		<meta name="twitter:creator" content={data.twitter.creator} />
+	{/if}
+	{#if data?.twitter?.site}
+		<meta name="twitter:site" content={data.twitter.site} />
+	{/if}
+
+	<!-- Additional SEO -->
+	{#if data?.meta?.author}
+		<meta name="author" content={data.meta.author} />
+	{/if}
+	{#if data?.meta?.keywords}
+		<meta name="keywords" content={data.meta.keywords} />
+	{/if}
+	{#if data?.meta?.robots}
+		<meta name="robots" content={data.meta.robots} />
+	{/if}
+	{#if data?.meta?.canonical}
+		<link rel="canonical" href={data.meta.canonical} />
+	{/if}
+</svelte:head>
 
 {#if author}
 	<div class="container p-4 mb-4">
