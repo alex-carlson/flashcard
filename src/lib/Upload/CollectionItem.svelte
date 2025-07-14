@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { Fa } from 'svelte-fa';
 	import Cropper from './Cropper.svelte';
+	import Drawing from './Drawing.svelte';
 	import {
 		faPenToSquare,
 		faTrashCan,
@@ -17,6 +18,8 @@
 	export let editableItemId;
 	export let isReordering;
 	export let collection; // Add collection prop to get category
+	let isCropping = false; // Track if cropping is active
+	let isDrawing = false; // Track if drawing is active
 	const dispatch = createEventDispatcher();
 
 	function removeItemHandler() {
@@ -38,7 +41,7 @@
 			// Set the originalname property on the cropped file
 			if (croppedFile && typeof croppedFile === 'object') {
 				const fileName = croppedFile.name || 'cropped-image.jpg';
-				(croppedFile as any).originalname = fileName;
+				croppedFile.originalname = fileName;
 			}
 
 			// Create a temporary item object with the new cropped image
@@ -78,6 +81,44 @@
 				message: 'Failed to update image. Please try again.'
 			});
 		}
+
+		isCropping = false; // Reset cropping state
+	}
+
+	function onSave() {
+		// Placeholder for save logic in Drawing component
+		console.log('Drawing saved');
+		isDrawing = false; // Reset drawing state
+	}
+
+	function onCancel() {
+		console.log('Drawing cancelled');
+		isCropping = false; // Reset cropping state
+		isDrawing = false; // Reset drawing state
+	}
+
+	function isEditable(image) {
+		if (!image || typeof image !== 'string') return false;
+
+		try {
+			const url = new URL(image);
+			const segments = url.pathname.split('/').reverse();
+
+			for (const segment of segments) {
+				const match = segment.match(/\.(png|jpe?g)$/i);
+				if (match) return true;
+			}
+		} catch {
+			// Fallback for non-URL strings
+			const segments = image.split('?')[0].split('#')[0].split('/').reverse();
+
+			for (const segment of segments) {
+				const match = segment.match(/\.(png|jpe?g)$/i);
+				if (match) return true;
+			}
+		}
+
+		return false;
 	}
 </script>
 
@@ -99,7 +140,19 @@
 					placeholder="Enter an audio URL"
 				/>
 			{:else}
-				<Cropper src={item.image} on:cropped={onCropped} />
+				<img src={item.image} alt="To crop" class="border" />
+				{#if !isCropping && !isDrawing}
+					<div class="actions my-3">
+						{#if isEditable(item.image)}
+							<button class="btn btn-secondary" on:click={() => (isCropping = true)}>Crop</button>
+							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Draw</button>
+						{/if}
+					</div>
+				{:else if isCropping}
+					<Cropper src={item.image} on:cropped={onCropped} on:cancel={onCancel} />
+				{:else if isDrawing}
+					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
+				{/if}
 			{/if}
 			<input id="editedAnswer" type="text" bind:value={item.answer} placeholder="Enter an answer" />
 			<div class="vertical">

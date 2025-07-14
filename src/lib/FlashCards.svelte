@@ -11,7 +11,8 @@
 		faPlus,
 		faMinus,
 		faFlag,
-		faRotateBack
+		faRotateBack,
+		faArrowUp
 	} from '@fortawesome/free-solid-svg-icons';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount } from 'svelte';
@@ -49,6 +50,7 @@
 			const data = await fetchCollectionById(collectionId);
 
 			author = data.author;
+			author_id = data.author_public_id;
 			collectionName = data.category;
 			collectionDescription = data.description;
 
@@ -333,15 +335,24 @@
 				/>
 			{/each}
 		</div>
+		{#if !isPartyMode && !isComplete}
+			<div class="py-3" style="display: flex; gap: 4px; flex-direction: column;">
+				{#if currentMode === 'FILL_IN_THE_BLANK'}
+					<button class="give-up" on:click={onCompleteQuiz}>
+						<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
+					</button>
+				{:else}
+					<button
+						class="scroll-to-top"
+						on:click={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+					>
+						<span>Scroll to Top <Fa icon={faArrowUp} style="margin-left: 0.5rem" /></span>
+					</button>
+				{/if}
+			</div>
+		{/if}
 	{/if}
 
-	{#if !isPartyMode && !isComplete}
-		<div class="py-3">
-			<button class="give-up" on:click={onCompleteQuiz}>
-				<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
-			</button>
-		</div>
-	{/if}
 	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>
 
 	<Modal

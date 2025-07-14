@@ -42,25 +42,61 @@
 			cropper = null;
 		}
 	});
-
 	function getCroppedImage() {
-		if (!cropper) return;
+		if (!cropper) return null;
+
+		// Detect the original image format
+		const originalFormat = getImageFormat(src);
+		const mimeType = getMimeType(originalFormat);
+		const fileExtension = originalFormat.toLowerCase();
 
 		const canvas = cropper.getCroppedCanvas({
 			imageSmoothingEnabled: true,
 			imageSmoothingQuality: 'high'
 		});
 
-		canvas.toBlob(
-			(blob) => {
-				if (blob) {
-					const file = new File([blob], 'cropped.jpg', { type: 'image/jpeg' });
-					dispatch('cropped', { file, blob, canvas });
-				}
-			},
-			'image/jpeg',
-			0.9
-		);
+		// Use appropriate quality based on format
+		const quality = mimeType === 'image/jpeg' ? 0.9 : undefined;
+
+		return new Promise((resolve) => {
+			canvas.toBlob(
+				(blob) => {
+					if (blob) {
+						const file = new File([blob], `cropped.${fileExtension}`, { type: mimeType });
+						dispatch('cropped', file);
+						resolve(file);
+					} else {
+						resolve(null);
+					}
+				},
+				mimeType,
+				quality
+			);
+		});
+	}
+
+	function getImageFormat(imageSrc) {
+		// Extract format from URL or data URI
+		if (imageSrc.startsWith('data:')) {
+			const match = imageSrc.match(/^data:image\/([^;]+)/);
+			return match ? match[1] : 'jpg';
+		}
+
+		// Extract from file extension
+		const extension = imageSrc.split('.').pop()?.toLowerCase();
+		return extension || 'jpg';
+	}
+
+	function getMimeType(format) {
+		const mimeTypes = {
+			jpg: 'image/jpeg',
+			jpeg: 'image/jpeg',
+			png: 'image/png',
+			webp: 'image/webp',
+			gif: 'image/gif',
+			bmp: 'image/bmp'
+		};
+		return mimeTypes[format] || 'image/jpeg';
 	}
 </script>
 
@@ -69,6 +105,7 @@
 
 	<div class="cropper-actions">
 		<button class="btn btn-primary" on:click={getCroppedImage}> Crop & Save </button>
+		<button class="btn btn-secondary" on:click={() => dispatch('cancel')}> Cancel </button>
 	</div>
 </div>
 

@@ -12532,8 +12532,12 @@ header .navContainer ul li.user-tab a .profile-picture img {
 }
 .card img {
   max-width: 100%;
+  max-height: 60vh;
+  width: auto;
+  height: auto;
   padding: 1rem;
   box-sizing: border-box;
+  object-fit: contain;
 }
 
 .answer {
@@ -12853,6 +12857,27 @@ header .navContainer ul li.user-tab a .profile-picture img {
 .uploads ul li button {
   width: 44px;
   height: 44px;
+}
+.uploads ul li .editing {
+  width: 100%;
+}
+.uploads ul li .editing .cropper-container {
+  display: inline-block;
+  box-sizing: content-box;
+  padding: 1rem;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+}
+.uploads ul li .editing input[type=text] {
+  margin-bottom: 4px;
+}
+.uploads ul li .editing .actions button,
+.uploads ul li .editing .cropper-actions button,
+.uploads ul li .editing .drawing-controls button {
+  background-color: black;
+  color: white;
+  width: auto;
 }
 
 .sort-and-filter {

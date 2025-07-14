@@ -163,14 +163,15 @@
                     margin-bottom: 4px;
                 }
 
-                .cropper-actions {
+                .actions,
+                .cropper-actions,
+                .drawing-controls {
                     button {
-                        width: auto;
-                        background: black;
+                        background-color: black;
                         color: white;
+                        width: auto;
                     }
                 }
-
             }
         }
     }
