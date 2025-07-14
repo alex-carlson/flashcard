@@ -174,12 +174,12 @@ export async function updateUsername(newUsername: string) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) {
-    throw new Error('No access token found');
     addToast({
       message: 'No access token found. Please log in again.',
       type: 'error',
       duration: 5000
     });
+    throw new Error('No access token found');
   }
   const response = await fetch(`${import.meta.env.VITE_API_URL}/users/updateUsername`, {
     method: 'POST',
