@@ -1,6 +1,6 @@
 <script>
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
-	import { fetchUser, fetchUserCollections } from '$lib/api/user';
+	import { fetchUser, fetchUserBySlug, fetchUserCollections } from '$lib/api/user';
 	import { page } from '$app/stores';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 
@@ -10,17 +10,32 @@
 	let userData = null;
 
 	// This runs whenever $page.params.author_id changes
-	$: if ($page.params.author_id) {
-		init($page.params.author_id);
+	$: if ($page.params.author_slug) {
+		init($page.params.author_slug);
 	}
+	async function init(authorSlug) {
+		try {
+			// First, get the user data using the slug to find the author_id
+			userData = await fetchUserBySlug(authorSlug);
 
-	async function init(author_id) {
-		userData = await fetchUser(author_id);
-		collections = await fetchUserCollections(author_id);
-		bio = userData?.bio || null;
-		author = userData?.username || null;
-		console.log('User data fetched:', userData);
-		console.log('Collections fetched:', collections);
+			if (!userData) {
+				console.error('User not found:', authorSlug);
+				author = null;
+				collections = [];
+				bio = null;
+				return;
+			}
+
+			// Now fetch collections using the author_id from userData
+			collections = await fetchUserCollections(userData.public_id);
+			bio = userData?.bio || null;
+			author = userData?.username || null;
+		} catch (error) {
+			console.error('Error fetching author data:', error);
+			author = null;
+			collections = [];
+			bio = null;
+		}
 	}
 </script>
 

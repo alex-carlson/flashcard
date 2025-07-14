@@ -17,7 +17,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { onMount } from 'svelte';
 	import { fetchCollectionById } from './api/collections';
-	import { completeQuiz } from '$lib/api/user';
+	import { completeQuiz, fetchUser } from '$lib/api/user';
 	import { user } from '$stores/user';
 	import { Modes } from './api/constants.js';
 	import { addToast } from '$stores/toast';
@@ -29,7 +29,7 @@
 	export let collectionId = null;
 	export let isPartyMode = false;
 
-	let author_id = null;
+	let author_slug = null;
 	let author = null;
 	let collectionName = null;
 	let collectionDescription = null;
@@ -48,9 +48,10 @@
 	async function fetchCollection() {
 		try {
 			const data = await fetchCollectionById(collectionId);
+			const authorData = await fetchUser(data.author_public_id);
 
-			author = data.author;
-			author_id = data.author_public_id;
+			author = authorData.username;
+			author_slug = authorData.username_slug;
 			collectionName = data.category;
 			collectionDescription = data.description;
 
@@ -304,7 +305,7 @@
 		<div class="headline my-3">
 			<h1>{collectionName}</h1>
 			<p>
-				by <a href={`/author/${author_id}`}>{author}</a>
+				by <a href={`/author/${author_slug}`}>{author}</a>
 			</p>
 			{#if collectionDescription && collectionDescription.length > 0}
 				<p class="description">{collectionDescription}</p>

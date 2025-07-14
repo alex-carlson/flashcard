@@ -63,7 +63,7 @@
 					{i + 1}
 				</div>
 				<div>
-					<a href={`/author/${user.public_id}`}>
+					<a href={`/author/${user.username_slug}`}>
 						<strong>{user.username}</strong>
 					</a>
 				</div>

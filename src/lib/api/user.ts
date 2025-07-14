@@ -14,6 +14,21 @@ export async function fetchUser(author_id) {
         });
 }
 
+export async function fetchUserBySlug(slug) {
+    const url = `${import.meta.env.VITE_API_URL}/users/username/${slug}`;
+    return fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch user by username");
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            console.error("Error fetching user by username:", error);
+            return null;  // optionally return null on error
+        });
+}
+
 export async function fetchUserCollections(author_id) {
     return fetch(`${import.meta.env.VITE_API_URL}/collections/user/all/${author_id}`)
         .then((response) => {
