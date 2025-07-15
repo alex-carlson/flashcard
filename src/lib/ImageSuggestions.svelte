@@ -8,6 +8,7 @@
 	export let searchTerm = '';
 
 	let query = '';
+	let fileType = 'any'; // Default to any file type
 	export let suggestions = [];
 
 	// Update query when category or searchTerm changes
@@ -16,25 +17,43 @@
 	// Log when category or searchTerm changes
 	$: console.log('Category:', category, 'SearchTerm:', searchTerm);
 
-	// Reactively fetch suggestions when query length is greater than category.length + 3
+	// on searchTerm change, fetch suggestions
 	$: if (query.length > category.length + 3) {
-		console.log('Fetching suggestions for:', query);
 		fetchSuggestions();
 	}
 
-	async function fetchSuggestions() {
-		const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&searchType=image&key=${API_KEY}&cx=${CX}`;
+	// if fileType changed, fetch suggestions
+	$: if (fileType && query.length > category.length + 3) {
+		fetchSuggestions();
+	}
+
+	export async function fetchSuggestions() {
+		// if filetype is png, add transparent, no background, isolated, etc. to the query
+		const pngQuery = 'transparent isolated no background';
+		let fullQuery = query;
+		if (fileType === 'png') {
+			fullQuery += ' transparent isolated no background';
+		}
+
+		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery + ' filetype:' + fileType)}&searchType=image&key=${API_KEY}&cx=${CX}`;
+		// Add file type filter if not 'any'
+		if (fileType !== 'any') {
+			url += `&fileType=${fileType}`;
+		}
 
 		try {
 			const res = await fetch(url);
 			const data = await res.json();
 
 			if (data.items) {
-				suggestions = data.items.slice(0, 10).map((item) => ({
-					title: item.title,
-					thumbnail: item.image.thumbnailLink,
-					url: item.link
-				}));
+				suggestions = data.items
+					.filter((item) => item.link && item.link.endsWith(`.${fileType}`)) // Filter by file type
+					.slice(0, 10)
+					.map((item) => ({
+						title: item.title,
+						thumbnail: item.link || item.image.thumbnailLink,
+						url: item.link
+					}));
 				// imageSuggestions.set(suggestions); // Remove or comment if not defined
 			} else {
 				suggestions = [];
@@ -47,15 +66,31 @@
 			});
 		}
 	}
-
 	function handleAddImage(url) {
 		dispatch('addImage', url);
+	}
+
+	function handleFileTypeChange() {
+		if (query.length > category.length + 3) {
+			fetchSuggestions();
+		}
 	}
 </script>
 
 <div class="suggestions">
 	{#if query.length > category.length + 3}
-		<h6>Search results for: {query}</h6>
+		<div class="search-controls">
+			<h6>Search results for: {query}</h6>
+			<div class="file-type-selector">
+				<label for="fileType">File Type:</label>
+				<select id="fileType" bind:value={fileType} on:change={handleFileTypeChange}>
+					<option value="any">Any</option>
+					<option value="png">PNG</option>
+					<option value="jpg">JPG</option>
+					<option value="gif">GIF</option>
+				</select>
+			</div>
+		</div>
 		<div class="scroll-wrapper">
 			<div class="suggestion">
 				{#each suggestions as suggestion}

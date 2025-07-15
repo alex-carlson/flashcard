@@ -373,6 +373,7 @@
 								bind:this={answerInput}
 								placeholder="Enter an answer"
 							/>
+
 							<button
 								type="button"
 								class="btn btn-success mt-2"
