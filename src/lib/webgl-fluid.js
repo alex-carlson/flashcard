@@ -363,7 +363,15 @@ export function createFluidSim(canvas) {
             // vUv.y goes from 0 (bottom) to 1 (top)
             // Only draw pixels where y coordinate is below fill height
             if (vUv.y <= fillHeight) {
-                gl_FragColor = color;
+                // Create gradient: darker at bottom, lighter at top
+                float gradientFactor = vUv.y / fillHeight; // 0 at bottom, 1 at top of fill
+                gradientFactor = smoothstep(0.0, 1.0, gradientFactor); // Smooth gradient
+                
+                // Darken the color at the bottom (multiply by 0.6-1.0 range)
+                float darkening = 0.6 + gradientFactor * 0.4;
+                
+                vec3 gradientColor = color.rgb * darkening;
+                gl_FragColor = vec4(gradientColor, color.a);
             } else {
                 discard;
             }
@@ -1079,6 +1087,23 @@ export function createFluidSim(canvas) {
     let fakeFillDuration = 3; // 3 seconds to fill
     let fakeFillHeight = 0; // Current fill height (0 to 1)
 
+    // Cheers animation variables
+    let cheersActive = false;
+    let cheersTimer = 0;
+    let cheersDuration = 0.8; // 0.8 seconds for complete animation (faster)
+    let cheersPhase = 0; // 0: move, 1: hold, 2: return
+    let tiltAngle = 0; // Current tilt angle (reduced rotation)
+    let maxTiltAngle = -0.15; // Reduced tilt angle in radians (~-8.6 degrees)
+    let translateX = 0; // Current horizontal translation
+    let maxTranslateX = -60; // Maximum horizontal translation in pixels (negative = left)
+    let spillAmount = 0; // How much to reduce fill level
+    let cheersSpillEmitted = false; // Track if we've emitted spill splats
+
+    // Fill level interpolation variables
+    let targetFillHeight = 0; // Target fill height after spill
+    let fillHeightChangeActive = false; // Whether we're interpolating fill height
+    let fillLerpSpeed = 2.0; // Speed of fill level interpolation
+
     update();
 
     function update() {
@@ -1115,7 +1140,95 @@ export function createFluidSim(canvas) {
         // Update fake fill progress
         if (fakeFillingStarted && fakeFillTimer < fakeFillDuration) {
             fakeFillTimer += dt;
-            fakeFillHeight = Math.min(1, fakeFillTimer / fakeFillDuration);
+            const progress = fakeFillTimer / fakeFillDuration;
+            const maxFillHeight = 0.88;
+            fakeFillHeight = Math.min(maxFillHeight, progress * maxFillHeight);
+        }
+
+        // Handle cheers animation
+        if (cheersActive) {
+            cheersTimer += dt;
+            const progress = Math.min(1, cheersTimer / cheersDuration);
+
+            // Animation has three phases: move (0-0.25), hold (0.25-0.65), return (0.65-1.0)
+            if (progress < 0.25) {
+                // Move phase - fast movement with slight tilt
+                cheersPhase = 0;
+                const moveProgress = progress / 0.25;
+                const easeOut = 1 - Math.pow(1 - moveProgress, 3); // Ease out cubic
+                tiltAngle = maxTiltAngle * easeOut;
+                translateX = maxTranslateX * easeOut;
+            } else if (progress < 0.65) {
+                // Hold phase - maintain position and emit spill splats
+                cheersPhase = 1;
+                tiltAngle = maxTiltAngle;
+                translateX = maxTranslateX;
+
+                // Emit spill splats during hold phase
+                if (!cheersSpillEmitted) {
+                    cheersSpillEmitted = true;
+                    spillAmount = 0.2; // Reduce fill level by 20%
+
+                    // Emit multiple splats from the rim area to simulate spillage
+                    for (let i = 0; i < 12; i++) {
+                        const rimX = 0.15 + Math.random() * 0.25; // Left side of rim
+                        const rimY = 0.3 + Math.random() * 0.4; // Mid-height area
+                        const spillDx = -300 - Math.random() * 200; // Strong leftward velocity
+                        const spillDy = -100 + Math.random() * 200; // Varied vertical velocity
+                        const color = generateColor();
+                        splat(rimX, rimY, spillDx, spillDy, color);
+                    }
+
+                    // Additional splash effect - multiple bursts
+                    for (let burst = 0; burst < 3; burst++) {
+                        setTimeout(() => {
+                            for (let i = 0; i < 8; i++) {
+                                const rimX = 0.15 + Math.random() * 0.2; // Left side of rim
+                                const rimY = 0.35 + Math.random() * 0.3;
+                                const spillDx = -250 - Math.random() * 150; // Leftward velocity
+                                const spillDy = -75 + Math.random() * 150;
+                                const color = generateColor();
+                                splat(rimX, rimY, spillDx, spillDy, color);
+                            }
+                        }, burst * 100);
+                    }
+
+                    // Set up smooth fill height reduction
+                    targetFillHeight = Math.max(0, fakeFillHeight - spillAmount);
+                    fillHeightChangeActive = true;
+                }
+            } else {
+                // Return phase - fast return with ease in
+                cheersPhase = 2;
+                const returnProgress = (progress - 0.65) / 0.35;
+                const easeIn = Math.pow(returnProgress, 2); // Ease in quadratic
+                tiltAngle = maxTiltAngle * (1 - easeIn);
+                translateX = maxTranslateX * (1 - easeIn);
+            }
+
+            // End animation
+            if (progress >= 1) {
+                cheersActive = false;
+                cheersTimer = 0;
+                tiltAngle = 0;
+                translateX = 0;
+                cheersSpillEmitted = false;
+            }
+        }
+
+        // Handle smooth fill height interpolation
+        if (fillHeightChangeActive) {
+            const lerpFactor = fillLerpSpeed * dt;
+            const difference = targetFillHeight - fakeFillHeight;
+
+            if (Math.abs(difference) < 0.001) {
+                // Close enough, snap to target
+                fakeFillHeight = targetFillHeight;
+                fillHeightChangeActive = false;
+            } else {
+                // Lerp towards target
+                fakeFillHeight += difference * lerpFactor;
+            }
         }
 
         applyInputs();
@@ -1327,9 +1440,9 @@ export function createFluidSim(canvas) {
         // Use the fill program with proper fill height
         fillProgram.bind();
 
-        // Beer color: golden yellow/amber with transparency
-        const beerColor = { r: 1.0, g: 0.8, b: 0.2 };
-        gl.uniform4f(fillProgram.uniforms.color, beerColor.r, beerColor.g, beerColor.b, 0.6);
+        // Darker beer color: deeper amber with more brown tint
+        const beerColor = { r: 0.8, g: 0.5, b: 0.1 };
+        gl.uniform4f(fillProgram.uniforms.color, beerColor.r, beerColor.g, beerColor.b, 0.7);
         gl.uniform1f(fillProgram.uniforms.fillHeight, fakeFillHeight);
 
         // Enable blending for overlay effect
@@ -1455,13 +1568,31 @@ export function createFluidSim(canvas) {
     }
 
     function generateColor() {
-        // Pick either "beer yellow" or white
-        if (Math.random() < 0.5) {
-            // Beer yellow: RGB(255, 215, 0)
-            return { r: 255 / 255 * 0.9, g: 215 / 255 * 0.9, b: 0 / 255 * 0.9 };
+        // 70% chance for beer colors, 30% chance for foam variations
+        if (Math.random() < 0.7) {
+            // More yellow beer colors with less brown tint
+            const variation = Math.random() * 0.3; // 0 to 0.3 variation
+            return {
+                r: (200 + variation * 55) / 255,  // 200-255 range (brighter amber)
+                g: (160 + variation * 95) / 255,  // 160-255 range (more golden yellow)
+                b: (0 + variation * 40) / 255     // 0-40 range (more yellow, less brown)
+            };
         } else {
-            // White
-            return { r: 1.0, g: 1.0, b: 1.0 };
+            // Foam variations - different shades of white/cream
+            const foamType = Math.random();
+            if (foamType < 0.4) {
+                // Pure white foam
+                return { r: 1.0, g: 1.0, b: 1.0 };
+            } else if (foamType < 0.7) {
+                // Cream colored foam
+                return { r: 1.0, g: 0.98, b: 0.85 };
+            } else if (foamType < 0.9) {
+                // Light yellow foam
+                return { r: 1.0, g: 0.95, b: 0.7 };
+            } else {
+                // Very light amber foam
+                return { r: 0.95, g: 0.9, b: 0.75 };
+            }
         }
     }
 
@@ -1538,5 +1669,24 @@ export function createFluidSim(canvas) {
             hash |= 0; // Convert to 32bit integer
         }
         return hash;
+    }
+
+    // Cheers function to trigger the animation
+    function cheers() {
+        if (!cheersActive) { // Only start if not already active
+            cheersActive = true;
+            cheersTimer = 0;
+            cheersPhase = 0;
+            tiltAngle = 0;
+            translateX = 0;
+            cheersSpillEmitted = false;
+        }
+    }
+
+    // Return API object
+    return {
+        cheers: cheers,
+        getTiltAngle: () => tiltAngle,
+        getTranslateX: () => translateX
     };
 }

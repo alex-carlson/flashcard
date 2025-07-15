@@ -43,15 +43,6 @@
 	});
 </script>
 
-<!-- <div class="image-section content">
-	<div class="image-content my-3">
-		<h1>Welcome to Quizzems</h1>
-		<p id="tagline" class="drop-quote">{tagline}</p>
-	</div>
-</div> -->
-<!-- <div class="container">
-	<Beer />
-</div> -->
 <div class="container my-3">
 	<h2 class="my-3">Latest Collections</h2>
 	<Latest />

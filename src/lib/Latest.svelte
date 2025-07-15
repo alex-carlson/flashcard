@@ -3,6 +3,7 @@
 	import { fetchLatestCollections } from './api/collections';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 	import { addToast } from '../stores/toast';
+	import Loading from './components/Loading.svelte';
 
 	export let count = 12;
 
@@ -31,6 +32,7 @@
 
 <div class="list grid condensed">
 	{#if loading}
+		<Loading invert={true} />
 		<p>Loading collections...</p>
 	{:else if collections.length > 0}
 		<ul>

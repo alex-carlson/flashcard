@@ -3,6 +3,7 @@
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { onMount } from 'svelte';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
+	import Loading from '$lib/components/Loading.svelte';
 	let collections = [];
 	let filteredCollections = [];
 	let page = 1;
@@ -12,6 +13,7 @@
 	let itemsPerPage = 20;
 	let totalPages = 0;
 	let totalCount = 0;
+	let isLoading = true;
 	async function fetchPaginatedCollections(
 		pageNum = 1,
 		limit = 20,
@@ -19,6 +21,7 @@
 		sortOrder = 'desc',
 		filterText = ''
 	) {
+		isLoading = true;
 		try {
 			const url = `/collections/page/${pageNum}/${limit}`;
 
@@ -30,8 +33,6 @@
 			};
 
 			const response = await apiFetch(url, 'POST', requestBody, false, false);
-
-			console.log(response);
 
 			if (response && response.collections) {
 				collections = response.collections;
@@ -51,6 +52,8 @@
 			filteredCollections = [];
 			totalCount = 0;
 			totalPages = 0;
+		} finally {
+			isLoading = false;
 		}
 	}
 
@@ -133,6 +136,7 @@
 	}
 	onMount(async () => {
 		document.title = 'Explore';
+		isLoading = true;
 		await fetchPaginatedCollections(1, itemsPerPage, sortOption, sortOrder, filterText);
 	});
 </script>
@@ -153,31 +157,37 @@
 
 <div class="container">
 	<div class="list grid">
-		<!-- show # of collections -->
-		<p class="collection-count">
-			Showing {filteredCollections.length} of {totalCount} collections
-		</p>
-		<ul>
-			{#each filteredCollections as collection}
-				<CollectionCard {collection} />
-			{/each}
-		</ul>
+		{#if isLoading}
+			<Loading invert={true} />
+		{:else}
+			<!-- show # of collections -->
+			<p class="collection-count">
+				Showing {filteredCollections.length} of {totalCount} collections
+			</p>
+			<ul>
+				{#each filteredCollections as collection}
+					<CollectionCard {collection} />
+				{/each}
+			</ul>
+		{/if}
 	</div>
 </div>
 
 <!-- Pagination controls -->
-<div class="paginationControls container margin-auto">
-	{#each pageNumbers as pageNum}
-		{#if pageNum === '...'}
-			<span class="ellipsis">...</span>
-		{:else}
-			<button
-				on:click|preventDefault={() => goToPage(pageNum)}
-				class:active={pageNum === page}
-				type="button"
-			>
-				{pageNum}
-			</button>
-		{/if}
-	{/each}
-</div>
+{#if !isLoading && totalPages > 1}
+	<div class="paginationControls container margin-auto">
+		{#each pageNumbers as pageNum}
+			{#if pageNum === '...'}
+				<span class="ellipsis">...</span>
+			{:else}
+				<button
+					on:click|preventDefault={() => goToPage(pageNum)}
+					class:active={pageNum === page}
+					type="button"
+				>
+					{pageNum}
+				</button>
+			{/if}
+		{/each}
+	</div>
+{/if}

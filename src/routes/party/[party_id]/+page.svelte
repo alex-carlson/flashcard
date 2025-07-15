@@ -11,6 +11,7 @@
 	import { faFlag } from '@fortawesome/free-solid-svg-icons';
 	import { addToast } from '$stores/toast.js';
 	import Fa from 'svelte-fa';
+	import Beer from '$lib/components/Beer.svelte';
 
 	let party_id = null;
 	let partyData = null;
@@ -315,6 +316,7 @@
 		<!-- Game Finished -->
 		{#if partyData?.isFinished}
 			<h2>That's a wrap!</h2>
+			<Beer width={100} height={160} />
 			<ul class="final-scores-list padding">
 				{#each partyData.players as playerId}
 					<li>
