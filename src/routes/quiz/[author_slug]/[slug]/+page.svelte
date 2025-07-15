@@ -3,34 +3,38 @@
 	import { page } from '$app/stores';
 	import { onDestroy, onMount } from 'svelte';
 	import { fetchCollectionByAuthorAndSlug } from '$lib/api/collections';
-
-	let author_id = null;
+	import { fetchUserBySlug } from '$lib/api/user';
+	let author_slug = null;
+	let author_id = null; // Keeping this for reference, but using author_slug in the page params
 	let category = null;
 	let collectionId = null;
 	let loading = true;
+
 	const unsubscribe = page.subscribe(($page) => {
-		author_id = $page.params.author_id;
+		author_slug = $page.params.author_slug;
 		category = $page.params.slug;
 		collectionId = $page.state?.collectionId || null;
 
-		// If we have collectionId from state, we can stop loading
 		if (collectionId) {
 			loading = false;
 		}
 	});
 
 	onMount(async () => {
-		// If we don't have collectionId, fetch collection by author and slug
-		if (!collectionId && author_id && category) {
+		if (!collectionId && author_slug && category) {
 			try {
+				const authorData = await fetchUserBySlug(author_slug);
+				author_id = authorData?.public_id;
+
 				collectionId = await fetchCollectionByAuthorAndSlug(author_id, category);
-				console.log('Fetched collectionId:', collectionId);
 			} catch (error) {
 				console.error('Error fetching collection by author/slug:', error);
 			} finally {
 				loading = false;
 			}
 		} else if (collectionId) {
+			loading = false;
+		} else {
 			loading = false;
 		}
 	});

@@ -374,12 +374,18 @@ class YouTubePlayerService {
                 this.play();
             }
         }
-    }
-
-    // New method to just load a video without playing
+    }    // New method to just load a video without playing
     async loadVideoOnly(videoId) {
         console.log('loadVideoOnly called for videoId:', videoId);
         await this.loadVideo(videoId, false);
+
+        // Play the video after loading is completed
+        setTimeout(() => {
+            if (this.currentVideoId === videoId) {
+                console.log('Playing video after loadVideoOnly completion:', videoId);
+                this.play();
+            }
+        }, 100);
     }
     // Helper method to check if we're on Firefox
     isFirefox() {

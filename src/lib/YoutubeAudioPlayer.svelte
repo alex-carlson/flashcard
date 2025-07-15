@@ -4,8 +4,6 @@
 	import {
 		faPlayCircle,
 		faPauseCircle,
-		faVolumeMute,
-		faVolumeHigh,
 		faDownload,
 		faSpinner
 	} from '@fortawesome/free-solid-svg-icons';
@@ -173,11 +171,11 @@
 				style="touch-action: manipulation;"
 			>
 				{#if error && isCurrentVideo}
-					<Fa icon={faDownload} style="color: #dc3545;" />
+					<Fa icon={faPlayCircle} style="color: #dc3545;" />
 				{:else if isLoading && isCurrentVideo}
 					<Fa icon={faSpinner} spin />
 				{:else if !isCurrentVideo}
-					<Fa icon={faDownload} />
+					<Fa icon={faPlayCircle} />
 				{:else if isCurrentVideo && isPlaying}
 					<Fa icon={faPauseCircle} />
 				{:else}

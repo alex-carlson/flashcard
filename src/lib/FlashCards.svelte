@@ -23,9 +23,9 @@
 	import { addToast } from '$stores/toast';
 	import Modal from './Modal.svelte';
 	import Card from './Card.svelte';
+	import Loading from './components/Loading.svelte';
 	import { mapCards } from '$lib/api/utils';
 	import { getScoreMessage } from './api/quizScore';
-
 	export let collectionId = null;
 	export let isPartyMode = false;
 
@@ -41,13 +41,38 @@
 	let isComplete = false;
 	let showModal = false;
 	let currentMode = 'FILL_IN_THE_BLANK';
+	let isLoading = true;
+	let loadingError = null;
 
-	const dispatch = createEventDispatcher();
-
-	// function to fetch collection from id
+	const dispatch = createEventDispatcher(); // function to fetch collection from id
 	async function fetchCollection() {
+		isLoading = true;
+		loadingError = null;
+
+		if (!collectionId) {
+			loadingError = 'No collection ID provided';
+			isLoading = false;
+			addToast({
+				type: 'error',
+				message: 'No collection ID provided'
+			});
+			return;
+		}
+
 		try {
 			const data = await fetchCollectionById(collectionId);
+
+			if (!data) {
+				console.error('No data returned from fetchCollectionById');
+				loadingError = 'Collection not found';
+				isLoading = false;
+				addToast({
+					type: 'error',
+					message: 'Collection not found'
+				});
+				return;
+			}
+
 			const authorData = await fetchUser(data.author_public_id);
 
 			author = authorData.username;
@@ -60,19 +85,30 @@
 
 			// if items length is 0, or is undefined, return
 			if (!data.items || data.items.length === 0) {
+				console.log('No items found in collection');
+				isLoading = false;
+				addToast({
+					type: 'warning',
+					message: 'This collection has no items'
+				});
 				return;
 			}
 
 			cards = mapCards(data.items);
+
 			// if isPartyMode, set mode to FILL_IN_THE_BLANK
 			if (isPartyMode) {
 				currentMode = 'FILL_IN_THE_BLANK';
 			}
+
+			isLoading = false;
 		} catch (error) {
 			console.error('Error fetching collection:', error);
+			loadingError = error.message || 'Failed to fetch collection';
+			isLoading = false;
 			addToast({
 				type: 'error',
-				message: 'Failed to fetch collection. Please try again later.'
+				message: `Failed to fetch collection: ${error.message || 'Please try again later.'}`
 			});
 		}
 	}
@@ -90,7 +126,6 @@
 
 	export function setRevealed(index, value, playerId = null) {
 		// get card at index and add the class "disabled"
-		console.log('Setting revealed for card at index:', index, 'to value:', value);
 		if (cards[index]) {
 			cards[index].revealed = value;
 			if (playerId) {
@@ -263,93 +298,114 @@
 		showModal = true;
 		isComplete = true;
 	}
-
 	onMount(() => {
-		fetchCollection();
+		if (collectionId) {
+			fetchCollection();
+		}
 	});
+	// Reactive statement to watch for collectionId changes
+	$: if (collectionId && !cards.length) {
+		fetchCollection();
+	}
 </script>
 
 <div class="container white pt-3">
-	{#if !isPartyMode}
-		<div class="toolbar">
-			<button on:click={shuffleCards}>
-				<Fa icon={faShuffle} />
-			</button>
-			<button on:click={toggleCards}>
-				<Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
-			</button>
-			{#if canReset}
-				<button on:click={resetCards}>
-					<Fa icon={faRotateBack} />
-				</button>
-			{/if}
-			{#if isFullscreen}
-				<button on:click={() => scaleImage(-0.25)}>
-					<Fa icon={faMinus} />
-				</button>
-				<button on:click={() => scaleImage(0.25)}>
-					<Fa icon={faPlus} />
-				</button>
-			{:else}
-				<button on:click={toggleGrid}>
-					<Fa icon={isGrid ? faList : faTableCells} />
-				</button>
-			{/if}
-			<button on:click={isFullscreen ? exitFullscreen : goFullscreen}>
-				<Fa icon={isFullscreen ? faCompress : faExpand} />
+	{#if isLoading}
+		<Loading />
+	{:else if loadingError}
+		<div class="error-container">
+			<p>Error: {loadingError}</p>
+			<button on:click={fetchCollection} class="retry-button">
+				<Fa icon={faRotateBack} />
+				Retry
 			</button>
 		</div>
-	{/if}
-
-	{#if cards.length > 0}
-		<div class="headline my-3">
-			<h1>{collectionName}</h1>
-			<p>
-				by <a href={`/author/${author_slug}`}>{author}</a>
-			</p>
-			{#if collectionDescription && collectionDescription.length > 0}
-				<p class="description">{collectionDescription}</p>
-			{/if}
-			{#if !isPartyMode}
-				<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
-					{#each Object.keys(Modes) as mode}
-						<option value={mode}>
-							{Modes[mode]}
-						</option>
-					{/each}
-				</select>
-			{/if}
-		</div>
-
-		<div class={'flashcards ' + (isGrid ? 'grid' : 'vertical')}>
-			{#each cards as item, i}
-				<Card
-					{item}
-					{i}
-					{cards}
-					{currentMode}
-					{shuffleTrigger}
-					{onCardLoad}
-					{toggleReveal}
-					{updateCards}
-					on:correctAnswer={(e) => dispatch('correctAnswer', e.detail)}
-				/>
-			{/each}
-		</div>
-		{#if !isPartyMode && !isComplete}
-			<div class="py-3" style="display: flex; gap: 4px; flex-direction: column;">
-				{#if currentMode === 'FILL_IN_THE_BLANK'}
-					<button class="give-up" on:click={onCompleteQuiz}>
-						<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
-					</button>
-				{:else}
-					<button
-						class="scroll-to-top"
-						on:click={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-					>
-						<span>Scroll to Top <Fa icon={faArrowUp} style="margin-left: 0.5rem" /></span>
+	{:else}
+		{#if !isPartyMode}
+			<div class="toolbar">
+				<button on:click={shuffleCards}>
+					<Fa icon={faShuffle} />
+				</button>
+				<button on:click={toggleCards}>
+					<Fa icon={areAnyCardsRevealed() ? faEyeSlash : faEye} />
+				</button>
+				{#if canReset}
+					<button on:click={resetCards}>
+						<Fa icon={faRotateBack} />
 					</button>
 				{/if}
+				{#if isFullscreen}
+					<button on:click={() => scaleImage(-0.25)}>
+						<Fa icon={faMinus} />
+					</button>
+					<button on:click={() => scaleImage(0.25)}>
+						<Fa icon={faPlus} />
+					</button>
+				{:else}
+					<button on:click={toggleGrid}>
+						<Fa icon={isGrid ? faList : faTableCells} />
+					</button>
+				{/if}
+				<button on:click={isFullscreen ? exitFullscreen : goFullscreen}>
+					<Fa icon={isFullscreen ? faCompress : faExpand} />
+				</button>
+			</div>
+		{/if}
+
+		{#if cards.length > 0}
+			<div class="headline my-3">
+				<h1>{collectionName}</h1>
+				<p>
+					by <a href={`/author/${author_slug}`}>{author}</a>
+				</p>
+				{#if collectionDescription && collectionDescription.length > 0}
+					<p class="description">{collectionDescription}</p>
+				{/if}
+				{#if !isPartyMode}
+					<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
+						{#each Object.keys(Modes) as mode}
+							<option value={mode}>
+								{Modes[mode]}
+							</option>
+						{/each}
+					</select>
+				{/if}
+			</div>
+
+			<div class={'flashcards ' + (isGrid ? 'grid' : 'vertical')}>
+				{#each cards as item, i}
+					<Card
+						{item}
+						{i}
+						{cards}
+						{currentMode}
+						{shuffleTrigger}
+						{onCardLoad}
+						{toggleReveal}
+						{updateCards}
+						on:correctAnswer={(e) => dispatch('correctAnswer', e.detail)}
+					/>
+				{/each}
+			</div>
+			{#if !isPartyMode && !isComplete}
+				<div class="py-3" style="display: flex; gap: 4px; flex-direction: column;">
+					{#if currentMode === 'FILL_IN_THE_BLANK'}
+						<button class="give-up" on:click={onCompleteQuiz}>
+							<span>Give Up <Fa icon={faFlag} style="margin-left: 0.5rem" /></span>
+						</button>
+					{:else}
+						<button
+							class="scroll-to-top"
+							on:click={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+						>
+							<span>Scroll to Top <Fa icon={faArrowUp} style="margin-left: 0.5rem" /></span>
+						</button>
+					{/if}
+				</div>
+			{/if}
+		{:else if !isLoading && !loadingError}
+			<div class="empty-state">
+				<p>No cards available in this collection.</p>
 			</div>
 		{/if}
 	{/if}
@@ -403,3 +459,38 @@
 		]}
 	/>
 </div>
+
+<style>
+	.error-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 3rem;
+		text-align: center;
+		color: #dc3545;
+	}
+
+	.retry-button {
+		margin-top: 1rem;
+		padding: 0.5rem 1rem;
+		background-color: #007bff;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.retry-button:hover {
+		background-color: #0056b3;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 3rem;
+		color: #666;
+	}
+</style>

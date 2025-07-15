@@ -43,7 +43,6 @@
 	async function loadCollections() {
 		try {
 			const result = await fetchUserCollections($user.public_id);
-			console.log('Fetched collections:', result);
 			collections = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 		} catch (error) {
 			console.error('Error fetching user collections:', error);
@@ -70,7 +69,6 @@
 	async function setCollection(collectionId) {
 		try {
 			const newCollection = await fetchCollectionById(collectionId, true);
-			console.log('Fetched collection details:', newCollection);
 
 			if (newCollection) {
 				// Set the collection with all its data

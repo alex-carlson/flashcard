@@ -99,7 +99,6 @@ export async function fetchCollectionByAuthorAndSlug(
     const url = `/collections/user/collection/${authorId}/${slug}`;
     try {
         let data = await apiFetch(url, 'GET', null, false, false);
-        console.log("Fetched collection by author slug:", data);
         return data.id;
     } catch (error) {
         console.error("Error fetching collection by author slug:", error);

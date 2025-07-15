@@ -2,11 +2,13 @@
 	import { user, setUserBio } from '$stores/user';
 	import { getSession } from '$lib/api/supabaseClient';
 	import { updateUsername, updateEmail } from '$lib/api/auth';
+	import { toggleCache, CACHE_ENABLED } from '$stores/data';
 	import { get } from 'svelte/store';
 
 	let message = '';
 	let file = null;
 	let userId = null;
+	let cacheEnabled = CACHE_ENABLED;
 	$: userId = get(user)?.id ?? null;
 
 	async function getAuthHeaders() {
@@ -76,7 +78,6 @@
 			});
 		}
 	}
-
 	async function updateBio() {
 		const bio = $user.bio;
 		if (!userId) {
@@ -90,6 +91,11 @@
 		} else {
 			message = 'Failed to update bio.';
 		}
+	}
+
+	function handleCacheToggle() {
+		cacheEnabled = toggleCache(cacheEnabled);
+		message = `Cache ${cacheEnabled ? 'enabled' : 'disabled'}`;
 	}
 </script>
 
@@ -127,8 +133,87 @@
 			</label>
 			<button on:click={() => updateBio()}>Update Bio</button>
 		</div>
+		<div class="toggle-field padding">
+			<label>
+				<strong>Cache Settings:</strong>
+				<div class="toggle-container">
+					<input
+						type="checkbox"
+						id="cache-toggle"
+						bind:checked={cacheEnabled}
+						on:change={handleCacheToggle}
+					/>
+					<label for="cache-toggle" class="toggle-label">
+						{cacheEnabled ? 'Cache Enabled' : 'Cache Disabled'}
+					</label>
+				</div>
+			</label>
+			<p class="cache-description">
+				{cacheEnabled
+					? 'Data is cached for better performance. Disable to always fetch fresh data.'
+					: 'Cache is disabled. All data will be fetched fresh on each request.'}
+			</p>
+		</div>
 		<p>{message}</p>
 	</div>
 {:else}
 	<p>Loading profile...</p>
 {/if}
+
+<style>
+	.toggle-field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.toggle-container {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	#cache-toggle {
+		appearance: none;
+		width: 48px;
+		height: 24px;
+		background: #ccc;
+		border-radius: 12px;
+		position: relative;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+	#cache-toggle:checked {
+		background: #4caf50;
+	}
+
+	#cache-toggle::before {
+		content: '';
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 20px;
+		height: 20px;
+		background: white;
+		border-radius: 50%;
+		transition: transform 0.3s ease;
+	}
+
+	#cache-toggle:checked::before {
+		transform: translateX(24px);
+	}
+
+	.toggle-label {
+		font-weight: 500;
+		color: #333;
+		cursor: pointer;
+	}
+
+	.cache-description {
+		font-size: 0.875rem;
+		color: #666;
+		margin: 0;
+		font-style: italic;
+	}
+</style>
