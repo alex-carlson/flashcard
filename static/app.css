@@ -12870,6 +12870,12 @@ header .navContainer ul li.user-tab a .profile-picture img {
   height: auto;
   width: 100%;
 }
+.uploads ul li .audio button {
+  width: auto;
+  background-color: green;
+  color: white;
+  height: auto;
+}
 .uploads ul li img {
   width: 100px;
   height: 100px;

@@ -82,29 +82,9 @@
 			<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
 			{#if item.revealed}
 				<div class="audio-revealed">
-					<img
-						src={`https://img.youtube.com/vi/${item.audio}/hqdefault.jpg`}
-						alt="YouTube thumbnail"
-						class="youtube-thumbnail"
-					/>
+					<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
 					<div class="youtube-title">
-						{item.title
-							? item.title
-							: (() => {
-									let [title, setTitle] = [item._ytTitle, (t) => (item._ytTitle = t)];
-									if (!title && item.audio) {
-										fetch(
-											`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${item.audio}`
-										)
-											.then((r) => r.json())
-											.then((data) => setTitle(data.title))
-											.catch(() => setTitle(''));
-									}
-									return (
-										title ||
-										item.audio.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-									);
-								})()}
+						{item.title}
 					</div>
 				</div>
 			{/if}

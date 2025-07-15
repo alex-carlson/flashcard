@@ -3,10 +3,10 @@
 	import { Fa } from 'svelte-fa';
 	import { faSearch } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
-	export function addSong(title, id) {
+	export function addSong(data) {
 		// This function can be used to add a song to a playlist or perform other actions
-		console.log(`Adding song: ${title}, ID: ${id}`);
-		dispatch('addSong', { title, id });
+		console.log(`Adding song: ${data.title}, ID: ${data.videoId}`);
+		dispatch('addSong', data);
 	}
 	let searchTerm = '';
 	let results = [];
@@ -25,7 +25,8 @@
 			const data = await res.json();
 			results = data.items.map((item) => ({
 				title: item.snippet.title,
-				videoId: item.id.videoId
+				videoId: item.id.videoId,
+				thumbnail: item.snippet.thumbnails.medium.url
 			}));
 		} catch (err) {
 			console.error('Error fetching YouTube data:', err);
@@ -52,7 +53,7 @@
 				<li>
 					<button
 						type="button"
-						on:click={() => addSong(result.title, result.videoId)}
+						on:click={() => addSong(result)}
 						style="background:none;border:none;padding:0;cursor:pointer;text-align:left;width:100%;"
 					>
 						<img

@@ -1,11 +1,12 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { addToast } from '../stores/toast';
+	import { Fa } from 'svelte-fa';
+	import { faSearch } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
-	export function addSong(title, id) {
+	export function addSong(data) {
 		// This function can be used to add a song to a playlist or perform other actions
-		console.log(`Adding song: ${title}, ID: ${id}`);
-		dispatch('addSong', { title, id });
+		console.log(`Adding song: ${data.title}, ID: ${data.videoId}`);
+		dispatch('addSong', data);
 	}
 	let searchTerm = '';
 	let results = [];
@@ -24,22 +25,27 @@
 			const data = await res.json();
 			results = data.items.map((item) => ({
 				title: item.snippet.title,
-				videoId: item.id.videoId
+				videoId: item.id.videoId,
+				thumbnail: item.snippet.thumbnails.medium.url
 			}));
 		} catch (err) {
 			console.error('Error fetching YouTube data:', err);
-			addToast({
-				type: 'error',
-				message: 'Failed to fetch audio results. Please try again later.'
-			});
 		}
 	}
 </script>
 
-<div class="container white audio-uploader">
-	<h2>Find Audio</h2>
-	<input type="text" bind:value={searchTerm} placeholder="e.g. Prince" />
-	<button on:click={searchYoutube}>Search</button>
+<div class="container white audio-uploader padding">
+	<div class="search-container">
+		<input
+			type="text"
+			bind:value={searchTerm}
+			placeholder="e.g. Prince"
+			on:keydown={(e) => {
+				if (e.key === 'Enter') searchYoutube();
+			}}
+		/>
+		<button on:click={searchYoutube}><Fa icon={faSearch} /></button>
+	</div>
 
 	{#if results.length > 0}
 		<ul>
@@ -47,7 +53,7 @@
 				<li>
 					<button
 						type="button"
-						on:click={() => addSong(result.title, result.videoId)}
+						on:click={() => addSong(result)}
 						style="background:none;border:none;padding:0;cursor:pointer;text-align:left;width:100%;"
 					>
 						<img
@@ -57,10 +63,12 @@
 							height="60"
 							style="vertical-align: middle; margin-right: 8px;"
 						/>
-						{@html result.title
-							.replace(/&amp;/g, '&')
-							.replace(/&quot;/g, '"')
-							.replace(/&#39;/g, "'")}
+						<div class="text">
+							{@html result.title
+								.replace(/&amp;/g, '&')
+								.replace(/&quot;/g, '"')
+								.replace(/&#39;/g, "'")}
+						</div>
 					</button>
 				</li>
 			{/each}

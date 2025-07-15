@@ -289,10 +289,10 @@
 									console.log('Save edit event:', e.detail);
 									const d = {
 										collection: collection.category,
-										id: e.detail.id,
-										answer: e.detail.answer,
-										author_id: $user.public_id
+										author_id: $user.public_id,
+										...e.detail
 									};
+									console.log('Data to save:', d);
 									const result = await saveEdit(d);
 									if (result) {
 										collections = result;
@@ -440,6 +440,7 @@
 						on:addSong={async (e) => {
 							console.log('AudioUploader addSong event:', e);
 							const audioData = {
+								...e.detail,
 								url: e.detail.id,
 								category: collection.category,
 								answer: e.detail.title

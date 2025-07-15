@@ -34,6 +34,29 @@
 		dispatch('saveEdit', item);
 	}
 
+	async function addItemMetaData(videoId) {
+		try {
+			const response = await fetch(
+				`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`
+			);
+			const data = await response.json();
+			if (data.items && data.items.length > 0) {
+				const snippet = data.items[0].snippet;
+				const updatedItem = {
+					...item,
+					thumbnail: snippet.thumbnails?.medium?.url || '',
+					title: snippet.title || ''
+				};
+				console.log('Updated item with metadata:', updatedItem);
+				dispatch('saveEdit', updatedItem);
+			} else {
+				console.warn('No video data found for ID:', videoId);
+			}
+		} catch (err) {
+			console.error('Error fetching video data:', err);
+		}
+	}
+
 	async function uploadChangedImage(file, fileName = null) {
 		try {
 			// Set the originalname property on the file
@@ -176,18 +199,14 @@
 			<span class="question">{item.question}</span>
 		{:else if item.audio != null}
 			<div class="audio">
-				{#await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${item.audio}&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`)
-					.then((res) => res.json())
-					.then((data) => data.items[0]?.snippet) then snippet}
-					{#if snippet}
-						<img src={snippet.thumbnails?.medium?.url} alt={snippet.title} />
-						<p>{snippet.title}</p>
-					{:else}
-						<p>{item.audio}</p>
-					{/if}
-				{:catch}
-					<p>{item.audio}</p>
-				{/await}
+				{#if item.thumbnail}
+					<img src={item.thumbnail} alt={item.answer} />
+					<p>{item.title || item.answer}</p>
+				{:else}
+					<button on:click={() => addItemMetaData(item.audio)}>
+						<Fa icon={faPenToSquare} />Update Data</button
+					>
+				{/if}
 			</div>
 		{:else}
 			<img class="preview" src={item.file || item.image} alt="Preview" />

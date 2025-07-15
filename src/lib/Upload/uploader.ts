@@ -51,6 +51,11 @@ export async function saveEdit(data) {
     try {
         const result = await apiFetch('/items/edit', 'POST', data);
         console.log('Edit result:', result);
+        addToast({
+            message: 'Item edited successfully!',
+            type: 'success',
+            duration: 3000
+        });
         return result;
     } catch (error) {
         console.error('Error editing item:', error);
