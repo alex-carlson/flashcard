@@ -1,10 +1,9 @@
 // All @use rules must come first
 @use "sass:map";
-@use "bootstrap/scss/functions";
 @use "./variables" as vars;
 @use "./mixins" as mixins;
 
-// Override Bootstrap variables
+// Configure and use Bootstrap with variable overrides
 @use "bootstrap/scss/bootstrap" with ($theme-colors: ("primary": #2b2b2b,
         "secondary": #5c5c5c,
         "success": #28A745,
@@ -16,7 +15,6 @@
     $link-color: #FCE343,
     $link-hover-color: #eef3b1);
 
-// Component styles
 @use "./components/typography.scss";
 @use "./components/forms.scss";
 @use "./components/layout.scss";

@@ -12463,6 +12463,10 @@ header .navContainer ul li.user-tab a .profile-picture img {
   font-size: 12px;
 }
 
+.flashcards.vertical {
+  gap: 3rem;
+}
+
 .card {
   overflow: hidden;
   text-align: center;
@@ -12475,11 +12479,11 @@ header .navContainer ul li.user-tab a .profile-picture img {
   position: relative;
   cursor: pointer;
   background-color: white;
-  border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
   padding: 0;
   gap: 0;
+  border: 0;
 }
 
 .card.revealed img {
@@ -12494,11 +12498,12 @@ header .navContainer ul li.user-tab a .profile-picture img {
 }
 
 .card.revealed .revealed {
+  width: 100%;
   background-color: rgb(10, 121, 34);
 }
 
 .card.incorrect .revealed {
-  background-color: rgb(216, 11, 11);
+  background-color: rgb(31, 31, 31);
 }
 
 .card.disabled {
@@ -12535,7 +12540,6 @@ header .navContainer ul li.user-tab a .profile-picture img {
   max-height: 60vh;
   width: auto;
   height: auto;
-  padding: 1rem;
   box-sizing: border-box;
   object-fit: contain;
 }
@@ -12741,6 +12745,27 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 .youtube-wrapper iframe {
   position: absolute;
+}
+
+.answerbox {
+  width: 100%;
+}
+.answerbox .input-container {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+.answerbox .input-container .give-up-btn.small {
+  font-size: 0.8em;
+  padding: 0.5rem 1rem;
+  /* other small button styles */
+  width: auto;
+  border-radius: 8px 0 0 8px;
+  background-color: var(--danger-color);
+}
+.answerbox .input-container .user-answer {
+  border-radius: 0 8px 8px 0;
 }
 
 .uploader {
@@ -13301,7 +13326,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
 }
 
 :root {
-  --player-primary-color: var(--primary-color);
+  --player-primary-color: #5bb65f;
   --player-secondary-color: #6c757d;
   --player-text-color: #474747;
   --player-bg-color: #bbbbbb;

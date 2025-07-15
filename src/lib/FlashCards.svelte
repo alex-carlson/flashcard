@@ -26,6 +26,7 @@
 	import Loading from './components/Loading.svelte';
 	import { mapCards } from '$lib/api/utils';
 	import { getScoreMessage } from './api/quizScore';
+	import { setUserBio } from '../stores/user';
 	export let collectionId = null;
 	export let isPartyMode = false;
 
@@ -384,6 +385,7 @@
 						{toggleReveal}
 						{updateCards}
 						on:correctAnswer={(e) => dispatch('correctAnswer', e.detail)}
+						on:giveUp={(e) => setRevealed(e.detail.index, true)}
 					/>
 				{/each}
 			</div>

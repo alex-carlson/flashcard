@@ -5,6 +5,8 @@
 	import ProfilePicture from './ProfilePicture.svelte';
 	import YoutubeAudioPlayer from '$lib/YoutubeAudioPlayer.svelte';
 	import { areStringsClose } from '$lib/api/utils';
+	import Fa from 'svelte-fa';
+	import { faFlag } from '@fortawesome/free-solid-svg-icons';
 
 	export let item = {
 		type: 'text',
@@ -24,6 +26,10 @@
 	export let updateCards = () => {};
 
 	const dispatch = createEventDispatcher();
+
+	function handleGiveUp() {
+		dispatch('giveUp', { index: i });
+	}
 
 	function handleInput(e) {
 		if (!item) return;
@@ -85,16 +91,20 @@
 						{item.title
 							? item.title
 							: (() => {
-								let [title, setTitle] = [item._ytTitle, t => item._ytTitle = t];
-								if (!title && item.audio) {
-									fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${item.audio}`)
-										.then(r => r.json())
-										.then(data => setTitle(data.title))
-										.catch(() => setTitle(''));
-								}
-								return title || item.audio.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-							})()
-						}
+									let [title, setTitle] = [item._ytTitle, (t) => (item._ytTitle = t)];
+									if (!title && item.audio) {
+										fetch(
+											`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${item.audio}`
+										)
+											.then((r) => r.json())
+											.then((data) => setTitle(data.title))
+											.catch(() => setTitle(''));
+									}
+									return (
+										title ||
+										item.audio.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+									);
+								})()}
 					</div>
 				</div>
 			{/if}
@@ -111,31 +121,44 @@
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
-		{#if currentMode === 'TRUE_FALSE'}
-			<Options {cards} currentCardIndex={i} numberOfOptions="2" {shuffleTrigger} />
-		{:else if currentMode === 'MULTIPLE_CHOICE'}
-			<Options {cards} currentCardIndex={i} numberOfOptions="4" {shuffleTrigger} />
-		{:else if currentMode === 'FILL_IN_THE_BLANK'}
-			{#if item.answerer}
-				<ProfilePicture userId={item.answerer} size={32} class="answerer" />
+		<div class="answerbox mt-2">
+			{#if currentMode === 'TRUE_FALSE'}
+				<Options {cards} currentCardIndex={i} numberOfOptions="2" {shuffleTrigger} />
+			{:else if currentMode === 'MULTIPLE_CHOICE'}
+				<Options {cards} currentCardIndex={i} numberOfOptions="4" {shuffleTrigger} />
+			{:else if currentMode === 'FILL_IN_THE_BLANK'}
+				{#if item.answerer}
+					<ProfilePicture userId={item.answerer} size={32} class="answerer" />
+				{/if}
+				<span
+					class={`answer ${item.revealed ? 'revealed' : 'hidden'}`}
+					style="transform: scale(1);"
+				>
+					{item.answer}
+				</span>
+				<div class="input-container">
+					{#if !item.revealed}
+						<button class="give-up-btn small" on:click|stopPropagation={handleGiveUp} tabindex="-1">
+							<Fa icon={faFlag} />
+						</button>
+					{/if}
+					<input
+						class="user-answer"
+						style="box-sizing: border-box;"
+						type="text"
+						placeholder="Type your answer here..."
+						bind:value={item.userAnswer}
+						on:input={handleInput}
+					/>
+				</div>
+			{:else}
+				<span
+					class={`answer black ${item.revealed ? 'revealed' : 'hidden'}`}
+					style="transform: scale(1);"
+				>
+					{item.answer || 'Loading'}
+				</span>
 			{/if}
-			<span class={`answer ${item.revealed ? 'revealed' : 'hidden'}`} style="transform: scale(1);">
-				{item.answer}
-			</span>
-			<input
-				style="box-sizing: border-box;"
-				type="text"
-				placeholder="Type your answer here..."
-				bind:value={item.userAnswer}
-				on:input={handleInput}
-			/>
-		{:else}
-			<span
-				class={`answer black ${item.revealed ? 'revealed' : 'hidden'}`}
-				style="transform: scale(1);"
-			>
-				{item.answer || 'Loading'}
-			</span>
-		{/if}
+		</div>
 	</div>
 {/if}

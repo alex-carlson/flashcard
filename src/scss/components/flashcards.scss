@@ -36,6 +36,10 @@
     font-size: 12px;
 }
 
+.flashcards.vertical {
+    gap: 3rem;
+}
+
 .card {
     overflow: hidden;
     text-align: center;
@@ -48,11 +52,11 @@
     position: relative;
     cursor: pointer;
     background-color: white;
-    border-radius: 8px;
     width: 100%;
     box-sizing: border-box;
     padding: 0;
     gap: 0;
+    border: 0;
 }
 
 .card.revealed img {
@@ -67,11 +71,12 @@
 }
 
 .card.revealed .revealed {
+    width: 100%;
     background-color: rgb(10, 121, 34);
 }
 
 .card.incorrect .revealed {
-    background-color: rgb(216, 11, 11);
+    background-color: rgb(31, 31, 31);
 }
 
 .card.disabled {
@@ -114,7 +119,6 @@
     max-height: 60vh;
     width: auto;
     height: auto;
-    padding: 1rem;
     box-sizing: border-box;
     object-fit: contain;
 }
@@ -327,4 +331,28 @@
 
 .youtube-wrapper iframe {
     position: absolute;
+}
+
+.answerbox {
+    width: 100%;
+
+    .input-container {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+
+        .give-up-btn.small {
+            font-size: 0.8em;
+            padding: 0.5rem 1rem;
+            /* other small button styles */
+            width: auto;
+            border-radius: 8px 0 0 8px;
+            background-color: var(--danger-color);
+        }
+
+        .user-answer {
+            border-radius: 0 8px 8px 0;
+        }
+    }
 }

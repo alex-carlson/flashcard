@@ -11,9 +11,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"scss": "npm run scss:build",
-		"scss:build": "sass --load-path=node_modules src/scss/custom.scss static/app.css --no-source-map --style=compressed --quiet-deps",
-		"scss:watch": "sass --watch --load-path=node_modules src/scss/custom.scss:static/app.css --style=expanded --source-map --quiet-deps",
-		"scss:dev": "sass --load-path=node_modules src/scss/custom.scss static/app.css --style=expanded --source-map --quiet-deps",
+		"scss:build": "sass --load-path=node_modules src/scss/custom.scss static/app.css --no-source-map --style=compressed",
+		"scss:watch": "sass --watch --load-path=node_modules src/scss/custom.scss:static/app.css --style=expanded --source-map",
+		"scss:dev": "sass --load-path=node_modules src/scss/custom.scss static/app.css --style=expanded --source-map",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"test:e2e": "playwright test"
