@@ -165,21 +165,21 @@ export async function uploadAudio(item) {
     const author_id = usr.public_id;
 
     const formData = new FormData();
-    formData.append('uuid', uuidv4());
-    formData.append('url', item.url);
+    const uuid = item.uuid || uuidv4(); // Use provided uuid or generate a new one
     formData.append('folder', `${username}/${item.category}`);
-    formData.append('answer', item.answer);
-    formData.append('category', item.category);
     formData.append('author', username);
     formData.append('author_id', author_id);
     formData.append('type', 'audio');
-    console.log('Uploading audio data:', {
-        uuid: formData.get('uuid'),
-        url: formData.get('url'),
-        folder: formData.get('folder'),
-        answer: formData.get('answer'),
-        category: formData.get('category')
-    });
+    formData.append('id', uuid);
+
+    // Append all properties from item to formData
+    for (const [key, value] of Object.entries(item)) {
+        if (value !== undefined && value !== null) {
+            formData.append(key, value);
+        }
+    }
+
+    console.log('Uploading audio data:', formData);
 
     try {
         const result = await apiFetch('/items/add-audio', 'POST', formData, true);

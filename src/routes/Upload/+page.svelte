@@ -442,10 +442,12 @@
 							console.log('AudioUploader addSong event:', e);
 							const audioData = {
 								...e.detail,
-								url: e.detail.id,
+								url: e.detail.videoId,
+								audio: e.detail.videoId,
 								category: collection.category,
 								answer: e.detail.title
 							};
+							console.log('Audio data to upload:', audioData);
 							const newItems = await uploadAudio(audioData);
 							if (newItems) {
 								collection.items = newItems[0].items;
