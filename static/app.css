@@ -13175,6 +13175,35 @@ header .navContainer ul li.user-tab a .profile-picture img {
   font-size: 1rem;
   overflow-x: auto;
 }
+.partymode .preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.partymode .preview .thumbnail {
+  max-width: 120px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+.partymode .preview .thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+.partymode .preview .details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
 
 .modal {
   position: fixed;

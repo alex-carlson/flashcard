@@ -81,4 +81,37 @@
         font-size: 1rem;
         overflow-x: auto;
     }
+
+    .preview {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center; // Center the items horizontally
+
+        .thumbnail {
+            max-width: 120px; // Set a fixed width for the thumbnail
+            max-height: 100px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            margin-right: 1rem; // Space between thumbnail and details
+            flex-shrink: 0; // Prevent shrinking
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 0.5rem;
+            }
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+        }
+    }
 }

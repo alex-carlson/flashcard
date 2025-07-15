@@ -12,13 +12,12 @@
 	import { addToast } from '$stores/toast.js';
 	import Fa from 'svelte-fa';
 	import Beer from '$lib/components/Beer.svelte';
+	import { fetchCollectionById } from '$lib/api/collections';
 
 	let party_id = null;
 	let partyData = null;
-	let author_id = null;
 	let authorName = null; // Assuming you might want to display the author's name
 	let collectionName = null; // Assuming you might want to display the collection name
-	let slug = null;
 	let flashCardsRef;
 	let isHost = false;
 	let collection = null;
@@ -155,14 +154,29 @@
 			};
 			updatePre();
 		});
-
-		socketInstance.on('collection-changed', (data) => {
+		socketInstance.on('collection-changed', async (data) => {
 			console.log('Collection changed:', data);
 			// updated partydata with data
 			partyData = {
 				...partyData,
 				...data
 			};
+			try {
+				const d = await fetchCollectionById(data.collectionId);
+				if (d) {
+					console.log('Collection data:', d);
+					collection = d;
+					collectionName = d.category;
+					authorName = d.author; // Assuming you have authorName in the collection data
+				} else {
+					collectionName = null;
+					authorName = null;
+				}
+			} catch (error) {
+				console.error('Error fetching collection data:', error);
+				collectionName = null;
+				authorName = null;
+			}
 			updatePre();
 		});
 	}
@@ -210,10 +224,8 @@
 		try {
 			const response = await fetch(`${import.meta.env.VITE_API_URL}/party/${party_id}`);
 			const data = await response.json();
-			console.log('Party data:', data);
 			document.title = `Party - ${data.name || 'Unknown Party'}`;
 			partyData = data;
-			console.log('Party data fetched:', partyData);
 			updatePre();
 
 			partyData.hostId = data.hostId;
@@ -267,13 +279,13 @@
 
 <div class="container white partymode">
 	<div class="padding">
-		<pre class="debug-box padding" id="party-data"></pre>
+		<pre class="debug-box padding" id="party-data" style="display: none"></pre>
 		<h1 class="room-label">{party_id}</h1>
 
 		<!-- Connected players -->
 		{#if partyData?.players?.length > 0 && !partyData.isStarted}
 			<p>Connected players:</p>
-			<ul class="players-list">
+			<ul class="players-list py-3">
 				{#each partyData.players as player}
 					<li><ProfilePicture userId={player} size={32} /></li>
 				{/each}
@@ -282,11 +294,25 @@
 
 		<!-- Category Picker -->
 		{#if partyData && !partyData.isStarted && !partyData.isFinished}
-			<div class="categoryPicker padding">
+			<div class="categoryPicker padding py-5">
 				{#if isHost}
+					{#if collection}
+						<div class="preview">
+							<div class="thumbnail">
+								<img src={collection.thumbnail} alt={collection.category} />
+							</div>
+							<div class="details">
+								<h3>Category: {collection.category}</h3>
+								<p>Author: {collection.author}</p>
+							</div>
+						</div>
+					{/if}
 					<Search
 						on:SearchItemClicked={(e) => {
-							collection = e.detail;
+							socketInstance.emit('set-collection', {
+								code: party_id,
+								collectionId: e.detail.id
+							});
 						}}
 					/>
 					<h3>Not sure what to pick?</h3>
@@ -300,8 +326,15 @@
 						}}
 					/>
 				{:else if collectionName}
-					<h3>Category: {collectionName}</h3>
-					<p>Author: {authorName}</p>
+					<div class="preview">
+						<div class="thumbnail">
+							<img src={collection.thumbnail} alt={collection.category} />
+						</div>
+						<div class="details">
+							<h3>Category: {collection.category}</h3>
+							<p>Author: {collection.author}</p>
+						</div>
+					</div>
 				{:else}
 					<p>No category selected yet.</p>
 				{/if}

@@ -31,7 +31,7 @@
 
 <div class="randomCollections">
 	{#await randomItemsPromise then data}
-		<div class="grid condensed card-grid">
+		<div class="grid list condensed card-grid">
 			<ul>
 				{#each data as collection}
 					<CollectionCard {collection} onNavigate={(col) => onCollectionClick(col)} />
