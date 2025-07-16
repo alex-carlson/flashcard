@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher, onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import CollectionCard from './components/CollectionCard.svelte';
 	import {
 		fetchLatestCollections,
@@ -7,24 +8,52 @@
 		fetchPopularCollections,
 		fetchCollections
 	} from './api/collections';
+	import { fetchUser } from './api/user';
 	import Loading from './components/Loading.svelte';
 	export let list = true;
 	export let grid = true;
 	export let condensed = false;
 	export let sortmode = 'default'; // 'default', 'latest', 'popular', 'random'
 	export let limit = 12; // null for no limit, or a number to limit results
+	export let onSelectCollection = null; // Allow parent to override selection behavior
 	export let collections = []; // Optional: pass collections directly instead of fetching
+
 	let fetchedCollections = [];
 	let isLoading = false; // Start as false, will be set to true when actually loading
 	let error = null;
 	let isCollapsed = true;
 	let hasInitialized = false;
 	const dispatch = createEventDispatcher();
-	function selectCollection(collection) {
+
+	async function selectCollection(collection) {
 		if (condensed) {
 			isCollapsed = true;
 		}
+
+		// If parent provided a custom handler, use it
+		if (onSelectCollection) {
+			onSelectCollection(collection);
+			return;
+		}
+
+		// Dispatch event for any listeners
 		dispatch('selectCollection', collection.id);
+
+		// Default behavior: navigate to quiz page
+		try {
+			const user = await fetchUser(collection.author_public_id);
+			const author_slug = user.username_slug || user.username || 'unknown-author';
+			const url = `/quiz/${author_slug}/${collection.slug}`;
+			const state = { collectionId: collection.id };
+
+			goto(url, { state });
+		} catch (error) {
+			console.error('Error fetching user for navigation:', error);
+			// Fallback navigation if user fetch fails
+			const url = `/quiz/unknown-author/${collection.slug}`;
+			const state = { collectionId: collection.id };
+			goto(url, { state });
+		}
 	}
 	// Fetch collections on component mount
 	onMount(async () => {
@@ -81,6 +110,11 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	// Retry function for error states
+	async function retryLoad() {
+		await loadCollections();
 	}
 
 	$: processedCollections = (() => {

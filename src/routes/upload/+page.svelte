@@ -176,7 +176,10 @@
 				grid
 				list
 				limit={-1}
-				on:selectCollection={(e) => setCollection(e.detail)}
+				onSelectCollection={(e) => {
+					console.log('Selected collection:', e);
+					setCollection(e.id);
+				}}
 			/>
 		</div>
 		{#if collection === null}
