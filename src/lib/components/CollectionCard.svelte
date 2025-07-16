@@ -45,7 +45,7 @@
 				<div class="card-image placeholder"></div>
 			{/if}
 		</div>
-		<div class="card-content">
+		<div class="card-content p-3">
 			<h2 class="card-title">{collection.category}</h2>
 			<div class="card-meta">
 				<span class="card-questions">{collection.itemsLength} questions</span>
@@ -54,3 +54,26 @@
 		</div>
 	</a>
 </li>
+
+<style>
+	.card-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		height: 100%;
+	}
+
+	.card-meta {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+	}
+
+	.collection-card-link {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+</style>

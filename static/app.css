@@ -12090,6 +12090,7 @@ ul img {
   align-items: stretch;
   gap: 4px;
   height: 100%;
+  max-width: 320px;
 }
 .list.grid ul li a {
   display: flex;
@@ -12185,6 +12186,7 @@ ul img {
   padding: 4px;
   font-size: 14px;
   width: 100%;
+  min-height: 80px;
 }
 .list.condensed ul li a {
   display: flex;
@@ -12192,6 +12194,7 @@ ul img {
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  min-height: inherit;
 }
 .list.condensed ul li a .card-image-container img {
   width: 120px;

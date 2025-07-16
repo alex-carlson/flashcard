@@ -50,7 +50,14 @@
 		const mimeType = getMimeType(originalFormat);
 		const fileExtension = originalFormat.toLowerCase();
 
+		// Get the original image dimensions
+		const imageData = cropper.getImageData();
+		const canvasWidth = Math.round(imageData.naturalWidth);
+		const canvasHeight = Math.round(imageData.naturalHeight);
+
 		const canvas = cropper.getCroppedCanvas({
+			width: canvasWidth,
+			height: canvasHeight,
 			imageSmoothingEnabled: true,
 			imageSmoothingQuality: 'high'
 		});

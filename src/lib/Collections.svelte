@@ -1,34 +1,145 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
-	import LazyLoadImage from './LazyLoadImage.svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import CollectionCard from './components/CollectionCard.svelte';
-	export let collections = [];
+	import {
+		fetchLatestCollections,
+		fetchRandomCollections,
+		fetchPopularCollections,
+		fetchCollections
+	} from './api/collections';
+	import Loading from './components/Loading.svelte';
+	export let list = true;
+	export let grid = true;
+	export let condensed = false;
+	export let sortmode = 'default'; // 'default', 'latest', 'popular', 'random'
+	export let limit = 12; // null for no limit, or a number to limit results
+	export let collections = []; // Optional: pass collections directly instead of fetching
+	let fetchedCollections = [];
+	let isLoading = false; // Start as false, will be set to true when actually loading
+	let error = null;
 	let isCollapsed = true;
-
+	let hasInitialized = false;
 	const dispatch = createEventDispatcher();
-
-	function selectCollection(id) {
-		// Dispatch collection ID to parent
-		// close the collection list
-		isCollapsed = true;
-		dispatch('selectCollection', id);
+	function selectCollection(collection) {
+		if (condensed) {
+			isCollapsed = true;
+		}
+		dispatch('selectCollection', collection.id);
 	}
+	// Fetch collections on component mount
+	onMount(async () => {
+		// Only fetch if no collections were passed as props
+		if (collections.length === 0) {
+			await loadCollections();
+		} else {
+			isLoading = false;
+		}
+		hasInitialized = true;
+	});
+
+	async function loadCollections() {
+		// Prevent duplicate calls while already loading
+		if (isLoading) {
+			return;
+		}
+
+		isLoading = true;
+		error = null;
+
+		try {
+			let data;
+
+			if (limit === null || limit === -1) {
+				data = await fetchCollections();
+			} else {
+				switch (sortmode) {
+					case 'latest':
+						data = await fetchLatestCollections(limit || 12);
+						break;
+					case 'popular':
+						data = await fetchPopularCollections(limit || 10);
+						break;
+					case 'random':
+						data = await fetchRandomCollections(limit || 10);
+						break;
+					default:
+						data = await fetchLatestCollections(limit || 12);
+						break;
+				}
+			}
+
+			if (data) {
+				fetchedCollections = data;
+			} else {
+				fetchedCollections = [];
+				error = 'Failed to load collections';
+			}
+		} catch (err) {
+			console.error('Error loading collections:', err);
+			error = 'Failed to load collections';
+			fetchedCollections = [];
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	$: processedCollections = (() => {
+		// Don't process until we have either passed collections or have finished loading
+		if (collections.length === 0 && (isLoading || !hasInitialized)) {
+			return [];
+		}
+
+		// Use passed collections or fetched collections
+		const sourceCollections = collections.length > 0 ? collections : fetchedCollections;
+		let sorted = [...sourceCollections];
+
+		// Apply limit only if not already limited by API
+		if (limit && limit > 0 && sorted.length > limit) {
+			sorted = sorted.slice(0, limit);
+		}
+
+		return sorted;
+	})();
+
+	// Determine layout classes (additive)
+	$: layoutClass = (() => {
+		let classes = [];
+		if (condensed) classes.push('condensed');
+		if (grid) classes.push('grid');
+		if (list) classes.push('list');
+		return classes.join(' ');
+	})();
 </script>
 
-<div class="list condensed">
-	<button
-		on:click={() => (isCollapsed = !isCollapsed)}
-		on:touchend|preventDefault={() => (isCollapsed = !isCollapsed)}
-	>
-		{isCollapsed ? 'Show Collections' : 'Hide Collections'}
-	</button>
-	{#if !isCollapsed}
-		{#if collections.length === 0}
-			<p>No collections available</p>
+<div class="collections-container {layoutClass}">
+	{#if condensed}
+		<button
+			class="toggle-button"
+			on:click={() => (isCollapsed = !isCollapsed)}
+			on:touchend|preventDefault={() => (isCollapsed = !isCollapsed)}
+		>
+			{isCollapsed ? 'Show Collections' : 'Hide Collections'}
+		</button>
+	{/if}
+	{#if !condensed || !isCollapsed}
+		{#if isLoading || (!hasInitialized && collections.length === 0)}
+			<div class="loading-state white rounded">
+				<Loading />
+				<p>Loading collections...</p>
+			</div>
+		{:else if error}
+			<div class="error-state">
+				<p>{error}</p>
+				<button class="retry-button" on:click={retryLoad}>Retry</button>
+			</div>
+		{:else if processedCollections.length === 0}
+			<div class="empty-state">
+				<p>No collections available</p>
+			</div>
 		{:else}
-			<ul class="py-3">
-				{#each collections as collection}
-					<CollectionCard {collection} onNavigate={() => selectCollection(collection.id)} />
+			<ul class="collections-list">
+				{#each processedCollections as collection}
+					<CollectionCard {collection} onNavigate={selectCollection} />
 				{/each}
 			</ul>
 		{/if}
@@ -36,6 +147,111 @@
 </div>
 
 <style>
+	.collections-container {
+		width: 100%;
+	}
+
+	.toggle-button {
+		background: #007bff;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		transition: background-color 0.2s ease;
+	}
+
+	.toggle-button:hover {
+		background: #0056b3;
+	}
+
+	.collections-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	/* Grid layout */
+	.collections-list.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 1rem;
+		padding: 1rem 0;
+	}
+
+	/* List layout */
+	.collections-list.list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 1rem 0;
+	}
+
+	/* Condensed layout */
+	.collections-list.condensed {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.5rem 0;
+	}
+
+	.collections-container.condensed .collections-list {
+		max-height: 300px;
+		overflow-y: auto;
+	}
+	.empty-state {
+		text-align: center;
+		padding: 2rem;
+		color: #666;
+		font-style: italic;
+	}
+
+	.loading-state {
+		text-align: center;
+		padding: 2rem;
+		color: #666;
+	}
+
+	.error-state {
+		text-align: center;
+		padding: 2rem;
+		color: #d32f2f;
+	}
+
+	.retry-button {
+		background: #007bff;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		margin-top: 1rem;
+		font-size: 0.9rem;
+		transition: background-color 0.2s ease;
+	}
+
+	.retry-button:hover {
+		background: #0056b3;
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 768px) {
+		.collections-list.grid {
+			grid-template-columns: 1fr;
+			gap: 0.5rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.collections-list.grid {
+			grid-template-columns: 1fr;
+			gap: 0.5rem;
+			padding: 0.5rem 0;
+		}
+	}
+
 	.placeholder {
 		display: flex;
 		align-items: center;

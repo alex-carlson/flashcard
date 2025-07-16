@@ -108,7 +108,10 @@
 		console.log('Cropped event received:', event);
 		const croppedFile = event.detail;
 
-		await uploadChangedImage(croppedFile, 'cropped-image.jpg');
+		//get extension from type
+		const fileExtension = croppedFile.type.split('/')[1] || 'png';
+
+		await uploadChangedImage(croppedFile, 'cropped-image.' + fileExtension);
 		isCropping = false; // Reset cropping state
 	}
 
@@ -134,21 +137,21 @@
 	function isEditable(image) {
 		if (!image || typeof image !== 'string') return false;
 
+		const editableExtensions = /\.(png|jpe?g|latest)$/i;
+
 		try {
 			const url = new URL(image);
 			const segments = url.pathname.split('/').reverse();
 
 			for (const segment of segments) {
-				const match = segment.match(/\.(png|jpe?g)$/i);
-				if (match) return true;
+				if (editableExtensions.test(segment)) return true;
 			}
 		} catch {
 			// Fallback for non-URL strings
 			const segments = image.split('?')[0].split('#')[0].split('/').reverse();
 
 			for (const segment of segments) {
-				const match = segment.match(/\.(png|jpe?g)$/i);
-				if (match) return true;
+				if (editableExtensions.test(segment)) return true;
 			}
 		}
 

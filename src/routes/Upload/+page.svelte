@@ -170,7 +170,14 @@
 	{:else}
 		<div class="select-quiz mt-4">
 			<h2>Select a Quiz</h2>
-			<Collections {collections} on:selectCollection={(e) => setCollection(e.detail)} />
+			<Collections
+				{collections}
+				condensed
+				grid
+				list
+				limit={-1}
+				on:selectCollection={(e) => setCollection(e.detail)}
+			/>
 		</div>
 		{#if collection === null}
 			<div class="create mt-4">
@@ -186,6 +193,7 @@
 					on:click={async () => {
 						const result = await createCollection(tempCategory);
 						if (result && result.length > 0) {
+							console.log('New collection created:', result);
 							collection = result[0];
 						}
 					}}

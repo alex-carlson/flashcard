@@ -6,10 +6,14 @@
 	const CX = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
 	export let category = '';
 	export let searchTerm = '';
-
 	let query = '';
 	let fileType = 'any'; // Default to any file type
 	export let suggestions = [];
+	let debounceTimer;
+	let throttleTimer;
+	let lastFetchTime = 0;
+	const DEBOUNCE_DELAY = 1000; // 1 second after user stops typing
+	const THROTTLE_DELAY = 5000; // 5 seconds maximum between calls during active typing
 
 	// Update query when category or searchTerm changes
 	$: query = [category, searchTerm].filter(Boolean).join(' ');
@@ -17,26 +21,56 @@
 	// Log when category or searchTerm changes
 	$: console.log('Category:', category, 'SearchTerm:', searchTerm);
 
-	// on searchTerm change, fetch suggestions
-	$: if (query.length > category.length + 3) {
-		fetchSuggestions();
+	// Debounced search function
+	function debouncedFetch() {
+		// Clear existing timers
+		if (debounceTimer) clearTimeout(debounceTimer);
+		if (throttleTimer) clearTimeout(throttleTimer);
+
+		const now = Date.now();
+		const timeSinceLastFetch = now - lastFetchTime;
+
+		// If it's been more than THROTTLE_DELAY since last fetch, fetch immediately
+		if (timeSinceLastFetch >= THROTTLE_DELAY) {
+			fetchSuggestions();
+			lastFetchTime = now;
+		} else {
+			// Set up debounce timer
+			debounceTimer = setTimeout(() => {
+				fetchSuggestions();
+				lastFetchTime = Date.now();
+			}, DEBOUNCE_DELAY);
+
+			// Set up throttle timer as backup
+			const remainingThrottleTime = THROTTLE_DELAY - timeSinceLastFetch;
+			throttleTimer = setTimeout(() => {
+				if (debounceTimer) clearTimeout(debounceTimer);
+				fetchSuggestions();
+				lastFetchTime = Date.now();
+			}, remainingThrottleTime);
+		}
 	}
 
-	// if fileType changed, fetch suggestions
+	// on searchTerm change, fetch suggestions with debouncing
+	$: if (query.length > category.length + 3) {
+		debouncedFetch();
+	}
+
+	// if fileType changed, fetch suggestions immediately
 	$: if (fileType && query.length > category.length + 3) {
 		fetchSuggestions();
+		lastFetchTime = Date.now();
 	}
-
 	export async function fetchSuggestions() {
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
-		const pngQuery = 'transparent isolated no background';
 		let fullQuery = query;
 		if (fileType === 'png') {
 			fullQuery += ' transparent isolated no background';
 		}
 
-		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery + ' filetype:' + fileType)}&searchType=image&key=${API_KEY}&cx=${CX}`;
-		// Add file type filter if not 'any'
+		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}`;
+
+		// Add file type filter only if not 'any'
 		if (fileType !== 'any') {
 			url += `&fileType=${fileType}`;
 		}
@@ -47,14 +81,14 @@
 
 			if (data.items) {
 				suggestions = data.items
-					.filter((item) => item.link && item.link.endsWith(`.${fileType}`)) // Filter by file type
+					.filter((item) => item.link && item.image && item.image.thumbnailLink)
 					.slice(0, 10)
 					.map((item) => ({
 						title: item.title,
-						thumbnail: item.link || item.image.thumbnailLink,
-						url: item.link
+						thumbnail: item.image.thumbnailLink,
+						url: item.link,
+						loaded: false // Track if full image is loaded
 					}));
-				// imageSuggestions.set(suggestions); // Remove or comment if not defined
 			} else {
 				suggestions = [];
 			}
@@ -69,10 +103,10 @@
 	function handleAddImage(url) {
 		dispatch('addImage', url);
 	}
-
 	function handleFileTypeChange() {
 		if (query.length > category.length + 3) {
 			fetchSuggestions();
+			lastFetchTime = Date.now();
 		}
 	}
 </script>
@@ -95,7 +129,24 @@
 			<div class="suggestion">
 				{#each suggestions as suggestion}
 					<div class="suggestion-item">
-						<img src={suggestion.thumbnail} alt={suggestion.title} />
+						<img
+							src={suggestion.thumbnail}
+							alt={suggestion.title}
+							loading="lazy"
+							on:load={() => {
+								const img = new window.Image();
+								img.src = suggestion.url;
+								img.onload = () => (suggestion.loaded = true);
+							}}
+						/>
+						{#if suggestion.loaded}
+							<img
+								src={suggestion.url}
+								alt={suggestion.title}
+								class="full-image"
+								style="display: block;"
+							/>
+						{/if}
 						<p>{suggestion.title}</p>
 						<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
 					</div>

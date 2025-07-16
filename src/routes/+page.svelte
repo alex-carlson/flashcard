@@ -2,10 +2,8 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-
-	import Search from '$lib/Search.svelte';
-	import Latest from '$lib/Latest.svelte';
-	import Beer from '$lib/components/Beer.svelte';
+	import Collections from '$lib/Collections.svelte';
+	import Tags from '$lib/components/Tags.svelte';
 
 	const taglines = [
 		'The best place on the whole internet for doing trivia (probably)',
@@ -43,10 +41,26 @@
 	});
 </script>
 
-<div class="container my-3">
+<div class="image-section py-5">
+	<div class="image-content my-5 container text-center">
+		<!-- <h1 class="my-3">Quizzems</h1> -->
+		<p class="drop-quote">{tagline}</p>
+	</div>
+</div>
+
+<div class="container my-5">
 	<h2 class="my-3">Latest Collections</h2>
-	<Latest />
+	<Collections sortmode="latest" />
+</div>
+
+<!-- <div class="container p-3">
+	<h2>Popular Categories</h2>
+	<Tags />
+</div> -->
+<div class="container my-5">
+	<h2 class="my-3">Most Popular Collections</h2>
+	<Collections sortmode="popular" />
 	<div class="mt-3 mb-5">
-		<a href="/explore">See More...</a>
+		<a href="/explore?sort=popular">See More...</a>
 	</div>
 </div>

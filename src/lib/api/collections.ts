@@ -75,6 +75,19 @@ export async function fetchRandomCollections(limit = 10): Promise<Collection[] |
     }
 }
 
+// fetch popular collections
+export async function fetchPopularCollections(limit = 10): Promise<Collection[] | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/popular?limit=${limit}`;
+    try {
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error("Failed to fetch popular collections");
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching popular collections:", error);
+        return undefined;
+    }
+}
+
 // Fetch a collection by author and collection id
 export async function fetchCollectionById(
     collection_id: string,
@@ -84,6 +97,7 @@ export async function fetchCollectionById(
         ? `/collections/user/collection/${collection_id}`
         : `/collections/user/public/${collection_id}`;
     try {
+        console.log("Fetching collection from API:", url);
         const data = await apiFetch(url, 'GET', null, false, protectedCollection);
         return data;
     } catch (error) {
@@ -102,6 +116,18 @@ export async function fetchCollectionByAuthorAndSlug(
         return data.id;
     } catch (error) {
         console.error("Error fetching collection by author slug:", error);
+        return undefined;
+    }
+}
+
+export async function fetchTags(): Promise<string[] | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/tags/popular`;
+    try {
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error("Failed to fetch tags");
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching tags:", error);
         return undefined;
     }
 }

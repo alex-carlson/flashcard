@@ -14,6 +14,7 @@
 	let totalPages = 0;
 	let totalCount = 0;
 	let isLoading = true;
+
 	async function fetchPaginatedCollections(
 		pageNum = 1,
 		limit = 20,

@@ -43,11 +43,18 @@
 	let isComplete = false;
 	let showModal = false;
 	let currentMode = 'FILL_IN_THE_BLANK';
-	let isLoading = true;
+	let isLoading = false;
 	let loadingError = null;
+	let hasInitialized = false;
 
 	const dispatch = createEventDispatcher(); // function to fetch collection from id
 	async function fetchCollection() {
+		// Prevent multiple simultaneous calls
+		if (isLoading || hasInitialized) {
+			return;
+		}
+
+		console.log('Fetching collection:', collectionId);
 		isLoading = true;
 		loadingError = null;
 
@@ -104,6 +111,7 @@
 				currentMode = 'FILL_IN_THE_BLANK';
 			}
 
+			hasInitialized = true;
 			isLoading = false;
 		} catch (error) {
 			console.error('Error fetching collection:', error);
@@ -292,23 +300,46 @@
 		isComplete = true;
 	}
 	onMount(() => {
-		if (collectionId) {
+		console.log(
+			'FlashCards mounted with collectionId:',
+			collectionId,
+			'hasInitialized:',
+			hasInitialized
+		);
+		if (collectionId && !hasInitialized) {
 			fetchCollection();
 		}
 	});
+
 	// Reactive statement to watch for collectionId changes
-	$: if (collectionId && !cards.length) {
-		fetchCollection();
+	$: {
+		console.log(
+			'Reactive statement triggered - collectionId:',
+			collectionId,
+			'hasInitialized:',
+			hasInitialized,
+			'isLoading:',
+			isLoading
+		);
+		if (collectionId && !hasInitialized && !isLoading) {
+			fetchCollection();
+		}
 	}
 </script>
 
 <div class="container white pt-3">
-	{#if isLoading}
+	{#if isLoading || (!hasInitialized && collectionId)}
 		<Loading />
 	{:else if loadingError}
 		<div class="error-container">
 			<p>Error: {loadingError}</p>
-			<button on:click={fetchCollection} class="retry-button">
+			<button
+				on:click={() => {
+					hasInitialized = false;
+					fetchCollection();
+				}}
+				class="retry-button"
+			>
 				<Fa icon={faRotateBack} />
 				Retry
 			</button>
