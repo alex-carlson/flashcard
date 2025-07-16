@@ -66,9 +66,10 @@ export async function getCollectionMetadataFromId(collectionId) {
 export function areStringsClose(a, b, threshold = 0.8) {
     const preprocess = (str) =>
         str
-            .replace(/\bthe\b/gi, "") // remove "the"
             .trim()
             .toLowerCase()
+            .replace(/\b(the|and|a|an|of|in|on|at|to|for|with|by|from|as|is|are|was|were|be|been|has|have|had|do|does|did|but|or|nor|so|yet|if|then|else|when|while|about|into|over|after|before|between|under|again|further|once)\b/gi, "") // remove common stopwords
+            .replace(/[^\w\s]|_/g, "") // remove all punctuation
             .replace(/\s+/g, "") // remove all spaces
             .replace(/([^s])s\b/g, "$1"); // remove trailing 's' if not 'ss'
 

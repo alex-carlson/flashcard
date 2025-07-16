@@ -12,6 +12,7 @@ export interface User {
   email?: string;
   uid?: string;
   token?: string | null;
+  profilePictureUrl?: string;
 }
 
 export const user = writable<User | null>(null);
@@ -32,9 +33,7 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
       console.log('No user profile found, waiting 1 second and retrying...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       userWithProfile = await fetchUser(sessionUser.id);
-    }
-
-    // If still no profile, create a fallback user object with basic info
+    }    // If still no profile, create a fallback user object with basic info
     if (!userWithProfile) {
       console.warn('No user profile found after retry, creating fallback user object');
       return {
@@ -45,10 +44,9 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
         email: sessionUser.email as string,
         uid: sessionUser.id as string,
         token,
+        profilePictureUrl: generateProfilePictureUrl(sessionUser.id as string),
       };
-    }
-
-    return {
+    } return {
       ...sessionUser,
       bio: userWithProfile.bio || '',
       username: userWithProfile.username || '',
@@ -57,6 +55,7 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
       public_id: userWithProfile.public_id || sessionUser.public_id,
       uid: userWithProfile.public_id || sessionUser.public_id, // For backward compatibility
       email: sessionUser.email as string,
+      profilePictureUrl: generateProfilePictureUrl(userWithProfile.id || sessionUser.id),
     };
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -69,6 +68,7 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
       email: sessionUser.email as string,
       uid: sessionUser.id as string,
       token,
+      profilePictureUrl: generateProfilePictureUrl(sessionUser.id as string),
     };
   }
 }
@@ -233,4 +233,26 @@ export async function setUserDisplayName(userId: string, displayName: string) {
     console.error('Error updating username:', error);
     return null;
   }
+}
+
+// Update profile picture URL
+export function updateProfilePictureUrl(userId: string) {
+  user.update(currentUser => {
+    if (currentUser) {
+      return {
+        ...currentUser,
+        profilePictureUrl: generateProfilePictureUrl(userId)
+      };
+    }
+    return currentUser;
+  });
+}
+
+// Helper function to generate profile picture URL
+function generateProfilePictureUrl(userId: string): string {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const bucketName = 'profilepictures';
+  return userId
+    ? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg`
+    : '/avatar.png';
 }

@@ -1,20 +1,33 @@
 <script>
+	import { user, updateProfilePictureUrl } from '../stores/user';
+
 	export let userId;
 	export let isRound = true;
 	export let size = 100;
+
 	const baseUrl = import.meta.env.VITE_SUPABASE_URL;
 	const bucketName = 'profilepictures';
-	const imageUrl = userId
-		? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg`
-		: '/avatar.png';
+
+	// Get image URL from store if available, otherwise generate it
+	$: imageUrl =
+		$user?.id === userId && $user?.profilePictureUrl
+			? $user.profilePictureUrl
+			: userId
+				? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg`
+				: '/avatar.png';
 
 	// export a function to refresh the image
 	export const refreshImage = () => {
-		const img = document.querySelector('.profile-picture img');
-		if (img) {
-			img.src = userId
-				? `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg`
-				: '/avatar.png';
+		if (userId) {
+			// Update the store with new timestamp to force reload
+			const newUrl = `${baseUrl}/storage/v1/object/public/${bucketName}/${userId}/avatar.jpg?t=${Date.now()}`;
+			console.log('Refreshing profile picture URL:', newUrl);
+			updateProfilePictureUrl(userId);
+			// Also update the DOM directly for immediate feedback
+			const img = document.querySelector('.profile-picture img');
+			if (img && img instanceof HTMLImageElement) {
+				img.src = newUrl;
+			}
 		}
 	};
 

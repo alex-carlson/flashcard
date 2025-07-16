@@ -12768,6 +12768,52 @@ header .navContainer ul li.user-tab a .profile-picture img {
   border-radius: 0 8px 8px 0;
 }
 
+.headline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.headline .thumbnail {
+  flex: 0 0 auto;
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.headline .thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.headline .details {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: auto;
+  max-width: 100%;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .headline {
+    flex-direction: column;
+    align-items: center;
+  }
+  .headline .thumbnail {
+    width: 100%;
+    height: auto;
+    margin-bottom: 0.5rem;
+  }
+  .headline .details {
+    width: auto;
+    align-items: center;
+    text-align: center;
+  }
+}
+
 .uploader {
   display: flex;
 }
@@ -13238,32 +13284,114 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 .modal {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
-.modal .modal-dialog {
-  border-radius: 8px;
-  margin: 0.5rem;
+  padding: 1rem;
   box-sizing: border-box;
 }
-.modal .modal-footer {
+.modal .modal-dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  margin: 0;
+  position: relative;
+}
+.modal .modal-dialog .modal-content {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  height: 100%;
+}
+.modal .modal-dialog .modal-content .modal-header {
   padding: 1rem;
-  background-color: #f1f1f1;
-  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #e9ecef;
+  background-color: white;
 }
-.modal .modal-footer button {
-  margin-left: 0.5rem;
+.modal .modal-dialog .modal-content .modal-header .modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
 }
-.modal .modal-footer button:first-child {
-  margin-left: 0;
+.modal .modal-dialog .modal-content .modal-body {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  background-color: white;
+  color: #333;
+}
+.modal .modal-dialog .modal-content .modal-body p {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+.modal .modal-dialog .modal-content .modal-body p:last-child {
+  margin-bottom: 0;
+}
+.modal .modal-dialog .modal-content .modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  border-radius: 0 0 8px 8px;
+}
+.modal .modal-dialog .modal-content .modal-footer button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  color: white;
+  width: auto;
+  flex: 0 0 auto;
+}
+.modal .modal-dialog .modal-content .modal-footer button.btn-secondary, .modal .modal-dialog .modal-content .modal-footer button[class*=gray] {
+  background-color: #333;
+  color: white;
+}
+.modal .modal-dialog .modal-content .modal-footer button.btn-secondary:hover, .modal .modal-dialog .modal-content .modal-footer button[class*=gray]:hover {
+  background-color: #555;
+}
+.modal .modal-dialog .modal-content .modal-footer button[class*=blue] {
+  background-color: #007bff;
+  color: white;
+}
+.modal .modal-dialog .modal-content .modal-footer button[class*=blue]:hover {
+  background-color: #0056b3;
+}
+.modal .modal-dialog .modal-content .modal-footer button.bg-gray-300 {
+  background-color: #333 !important;
+  color: white !important;
+}
+.modal .modal-dialog .modal-content .modal-footer button.bg-gray-300:hover {
+  background-color: #555 !important;
+}
+.modal .modal-dialog .modal-content .modal-footer button.text-black {
+  color: white !important;
 }
 
+@media (max-width: 576px) {
+  .modal {
+    padding: 0.5rem;
+  }
+  .modal .modal-dialog {
+    max-width: 100%;
+    margin: 0;
+  }
+}
 .scores .pagination {
   display: flex;
   flex-wrap: wrap;

@@ -26,7 +26,6 @@
 	import Loading from './components/Loading.svelte';
 	import { mapCards } from '$lib/api/utils';
 	import { getScoreMessage } from './api/quizScore';
-	import { setUserBio } from '../stores/user';
 	export let collectionId = null;
 	export let isPartyMode = false;
 
@@ -34,6 +33,7 @@
 	let author = null;
 	let collectionName = null;
 	let collectionDescription = null;
+	let collectionThumbnail = null;
 	let cards = [];
 	let isGrid = false;
 	let isFullscreen = false;
@@ -80,6 +80,7 @@
 			author_slug = authorData.username_slug;
 			collectionName = data.category;
 			collectionDescription = data.description;
+			collectionThumbnail = data.thumbnail;
 
 			// set page tab title to collectionName
 			document.title = `${collectionName} - ${author}`;
@@ -227,44 +228,6 @@
 		});
 	}
 
-	function scaleCards(event) {
-		const scaleValue = parseFloat(event.target.value); // Extract numeric value
-		const grid = document.querySelector('.flashcards');
-		const cards = document.querySelectorAll('.card');
-		const answers = document.querySelectorAll('.card span');
-		cards.forEach((card) => {
-			if (isGrid) {
-				card.style.width = `${300 * scaleValue}px`;
-			} else {
-				// set with auto
-				card.style.width = 'auto';
-			}
-		});
-		answers.forEach((answer) => {
-			if (isGrid) {
-				answer.style.fontSize = `${32 * scaleValue}px`;
-			} else {
-				// set with auto
-				answer.style.fontSize = '32px';
-			}
-		});
-		grid.style.setProperty('--card-size', `${300 * scaleValue}px`);
-	}
-
-	function selectOption(e, item) {
-		const value = e.target.value; // Get the selected value
-
-		if (value === 'Hide') {
-			item.hidden = !item.hidden; // Toggle the hidden state
-		} else if (value === 'Reset') {
-			item.scale = 1; // Reset the scale
-		} else if (value === 'Reveal') {
-			item.revealed = true; // Reveal the answer
-		}
-
-		updateCards(); // Trigger reactivity to update the UI
-	}
-
 	function SetMode(mode) {
 		currentMode = mode;
 
@@ -279,8 +242,24 @@
 		cards = [...cards];
 	}
 
+	function onCorrectAnswer(event) {
+		const { index, answer } = event;
+		console.log(event);
+		cards[index].revealed = true;
+		cards[index].userAnswer = answer;
+
+		console.log('Correct answer for card at index:', index, 'with answer:', answer);
+
+		// Check if all cards are answered
+		if (cards.every((card) => card.revealed)) {
+			onCompleteQuiz();
+		}
+		dispatch('correctAnswer', event.detail);
+	}
+
 	function onCompleteQuiz() {
 		// show an alert with the number of correct answers
+		console.log('Quiz completed, calculating score...');
 		const correctAnswers = cards.filter(
 			(card) => card.revealed && card.userAnswer === card.answer
 		).length;
@@ -288,11 +267,6 @@
 		const percentage = Math.round((correctAnswers / cards.length) * 100);
 
 		if ($user) {
-			console.log('Completing quiz with content:', {
-				userId: $user.id,
-				collectionId,
-				token: $user.token
-			});
 			completeQuiz($user.id, collectionId, percentage, $user.token);
 		}
 
@@ -355,23 +329,30 @@
 
 		{#if cards.length > 0}
 			<div class="headline my-3">
-				<h1>{collectionName}</h1>
-				<p>
-					by <a href={`/author/${author_slug}`}>{author}</a>
-				</p>
+				{#if collectionThumbnail}
+					<div class="thumbnail">
+						<img src={collectionThumbnail} alt={collectionName} />
+					</div>
+				{/if}
+				<div class="details">
+					<h1>{collectionName}</h1>
+					<p>
+						by <a href={`/author/${author_slug}`}>{author}</a>
+					</p>
+				</div>
 				{#if collectionDescription && collectionDescription.length > 0}
 					<p class="description">{collectionDescription}</p>
 				{/if}
-				{#if !isPartyMode}
-					<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
-						{#each Object.keys(Modes) as mode}
-							<option value={mode}>
-								{Modes[mode]}
-							</option>
-						{/each}
-					</select>
-				{/if}
 			</div>
+			{#if !isPartyMode}
+				<select class="mt-3" name="mode" id="mode" on:change={() => SetMode(event.target.value)}>
+					{#each Object.keys(Modes) as mode}
+						<option value={mode}>
+							{Modes[mode]}
+						</option>
+					{/each}
+				</select>
+			{/if}
 
 			<div class={'flashcards ' + (isGrid ? 'grid' : 'vertical')}>
 				{#each cards as item, i}
@@ -384,7 +365,7 @@
 						{onCardLoad}
 						{toggleReveal}
 						{updateCards}
-						on:correctAnswer={(e) => dispatch('correctAnswer', e.detail)}
+						on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: cards[i].answer })}
 						on:giveUp={(e) => setRevealed(e.detail.index, true)}
 					/>
 				{/each}
@@ -413,7 +394,6 @@
 	{/if}
 
 	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>
-
 	<Modal
 		bind:show={showModal}
 		title="Quiz Completed"
@@ -424,6 +404,7 @@
 					100
 			)
 		)}
+		effect={cards.every((card) => card.revealed) ? 'confetti' : 'none'}
 		onClose={() => {
 			showModal = false;
 			// reveal all cards

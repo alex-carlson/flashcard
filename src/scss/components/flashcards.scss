@@ -356,3 +356,53 @@
         }
     }
 }
+
+.headline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+
+    .thumbnail {
+        flex: 0 0 auto;
+        width: 128px;
+        height: 128px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .details {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        width: auto;
+        max-width: 100%;
+        text-align: left;
+    }
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        align-items: center;
+
+        .thumbnail {
+            width: 100%;
+            height: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        .details {
+            width: auto;
+            align-items: center;
+            text-align: center;
+        }
+    }
+}

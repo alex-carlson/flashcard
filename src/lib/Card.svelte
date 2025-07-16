@@ -35,7 +35,7 @@
 		if (!item) return;
 		clearTimeout(item._debounceTimeout);
 		item._debounceTimeout = setTimeout(() => {
-			if (areStringsClose(item.userAnswer, item.answer, 0.9)) {
+			if (areStringsClose(item.userAnswer, item.answer, 1)) {
 				item.revealed = true;
 				item.userAnswer = item.answer;
 				e.target.value = item.answer;

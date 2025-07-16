@@ -157,7 +157,7 @@
 </script>
 
 <li class={isReordering ? 'item reorder' : 'item'} draggable={isReordering}>
-	{#if editableItemId === item.id}
+	{#if editableItemId === item.id && item.id != null}
 		<div class="editing">
 			{#if item.question != null}
 				<input

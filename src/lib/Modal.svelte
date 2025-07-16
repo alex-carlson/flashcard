@@ -1,7 +1,15 @@
 <script>
+	import Confetti from './components/Confetti.svelte';
 	export let show = false;
 	export let title = '';
 	export let message = '';
+	export const Effect = {
+		NONE: 'none',
+		CONFETTI: 'confetti',
+		TROMBONE: 'trombone',
+		AIRHORN: 'airhorn'
+	};
+	export let effect = Effect.NONE;
 	export let onClose = () => {};
 	export let buttons = [
 		{
@@ -20,7 +28,7 @@
 
 {#if show}
 	<div
-		class="modal fade show d-block"
+		class="modal"
 		tabindex="-1"
 		role="dialog"
 		on:click={handleBackgroundClick}
@@ -28,7 +36,10 @@
 			if (e.key === 'Escape') onClose();
 		}}
 	>
-		<div class="modal-dialog white padding">
+		{#if effect === Effect.CONFETTI}
+			<Confetti />
+		{/if}
+		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h2 class="modal-title">{title}</h2>
