@@ -3,6 +3,7 @@
 	import { fetchUser, fetchUserBySlug, fetchUserCollections } from '$lib/api/user';
 	import { page } from '$app/stores';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
+	import Loading from '$lib/components/Loading.svelte';
 
 	export let data;
 
@@ -127,12 +128,12 @@
 </svelte:head>
 
 {#if author}
-	<div class="container p-4 mb-4">
-		<div class="row align-items-center white rounded">
-			<div class="col-auto">
+	<div class="container mb-4">
+		<div class="row align-items-center align-items-md-center white p-4">
+			<div class="col-12 col-md-auto text-center text-md-start mb-3 mb-md-0">
 				<ProfilePicture userId={userData.id} size={150} isRound={true} />
 			</div>
-			<div class="col">
+			<div class="col-12 col-md text-center text-md-start">
 				<h2 class="mb-1">{author}</h2>
 				<p class="mb-2">{collections.length} quizzes published</p>
 				{#if bio && bio.length > 0}
@@ -151,7 +152,5 @@
 		</ul>
 	</div>
 {:else}
-	<div class="white padding rounded">
-		<p>Loading...</p>
-	</div>
+	<Loading invert={true} />
 {/if}

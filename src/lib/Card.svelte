@@ -73,6 +73,7 @@
 {#if !item.hidden}
 	<div
 		class="card {item.revealed ? 'revealed' : ''} {item.incorrect ? 'incorrect' : ''}"
+		data-card-index={i}
 		role="button"
 		tabindex="-1"
 		on:keydown={(e) => currentMode === 'FLASH_CARDS' && e.key === 'Enter' && toggleReveal(i)}
@@ -82,7 +83,13 @@
 			<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
 			{#if item.revealed}
 				<div class="audio-revealed">
-					<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
+					<a
+						href={`https://www.youtube.com/watch?v=${item.audio}`}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
+					</a>
 					<div class="youtube-title">
 						{item.title}
 					</div>
@@ -127,6 +134,7 @@
 						style="box-sizing: border-box;"
 						type="text"
 						placeholder="Type your answer here..."
+						data-card-index={i}
 						bind:value={item.userAnswer}
 						on:input={handleInput}
 					/>

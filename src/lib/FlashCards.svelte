@@ -21,6 +21,7 @@
 	import { user } from '$stores/user';
 	import { Modes } from './api/constants.js';
 	import { addToast } from '$stores/toast';
+	import { youtubePlayerService } from './api/youtubePlayer.js';
 	import Modal from './Modal.svelte';
 	import Card from './Card.svelte';
 	import Loading from './components/Loading.svelte';
@@ -241,7 +242,6 @@
 
 		cards = [...cards];
 	}
-
 	function onCorrectAnswer(event) {
 		const { index, answer } = event;
 		console.log(event);
@@ -253,7 +253,25 @@
 		// Check if all cards are answered
 		if (cards.every((card) => card.revealed)) {
 			onCompleteQuiz();
+		} else {
+			// Find the next unrevealed card
+			const nextCardIndex = cards.findIndex((card, i) => i > index && !card.revealed);
+
+			if (nextCardIndex !== -1) {
+				const nextCard = cards[nextCardIndex];
+
+				// If the next card is an audio question, auto-play it
+				if (nextCard.type === 'audio' && nextCard.audio) {
+					console.log('Auto-playing next audio question at index:', nextCardIndex);
+					try {
+						youtubePlayerService.loadVideoOnly(nextCard.audio);
+					} catch (error) {
+						console.error('Failed to auto-play next audio question:', error);
+					}
+				}
+			}
 		}
+
 		dispatch('correctAnswer', event.detail);
 	}
 
