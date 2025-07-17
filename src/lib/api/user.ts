@@ -82,3 +82,27 @@ export async function completeQuiz(user_id, quiz_id, percentage, token) {
             return null;  // optionally return null on error
         });
 }
+
+export async function deleteQuizScore(user_id, quiz_id, token) {
+    const url = `${import.meta.env.VITE_API_URL}/users/delete-quiz-score`;
+    console.log("Deleting quiz score for user:", user_id, "Quiz ID:", quiz_id);
+    return fetch(url, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_id, quiz_id }),
+    })
+        .then((response) => {
+            console.log(response);
+            if (!response.ok) {
+                throw new Error("Failed to delete quiz score");
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            console.error("Error deleting quiz score:", error);
+            return null;
+        });
+}
