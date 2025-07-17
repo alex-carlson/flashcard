@@ -3,41 +3,44 @@
 	import ProfilePicture from '$lib/ProfilePicture.svelte';
 	import { user, logOutUser } from '$stores/user';
 	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/api/utils';
-	import { fetchUserCollections } from '$lib/api/user';
+	import { fetchUser, fetchUserCollections } from '$lib/api/user';
 
-	let scores = [];
+	type Score = {
+		quiz_id: string;
+		percentage: number;
+		// add other properties from the score object as needed
+		collectionName?: string;
+		author_id?: string;
+		slug?: string;
+	};
+
+	let scores: Score[] = [];
 	let activeTab = 'settings';
 
-	async function getQuizScores() {
+	async function getQuizScores(): Promise<Score[]> {
 		if ($user) {
-			const data = await getUserQuizScores($user.id);
-			scores = await Promise.all(
-				data.map(async (score) => {
-					const metadata = await getCollectionMetadataFromId(score.quiz_id);
+			const data: Score[] = await getUserQuizScores($user.id);
+			const result: Score[] = await Promise.all(
+				data.map(async (score: Score) => {
+					const metadataArr = await getCollectionMetadataFromId(score.quiz_id);
+					const metadata = Array.isArray(metadataArr) ? metadataArr[0] : metadataArr;
+					const userData = await fetchUser(metadata?.author_public_id ?? '');
+					console.log('User Data:', userData);
 					return {
 						...score,
-						collectionName: metadata.category,
-						author_id: metadata.author_id,
-						slug: metadata.slug
+						collectionName: metadata?.category ?? 'Unknown',
+						author_id: metadata?.author_public_id ?? '',
+						slug: metadata?.slug ?? '',
+						author_slug: userData?.username_slug ?? ''
 					};
 				})
 			);
 			// Sort scores by percentage, highest to lowest
-			scores.sort((a, b) => b.percentage - a.percentage);
+			result.sort((a, b) => b.percentage - a.percentage);
+			scores = result;
+			return result;
 		}
-	}
-
-	async function getUserCollections() {
-		if ($user) {
-			const data = await fetchUserCollections($user.public_id);
-			console.log(data);
-			collections = data.map((collection) => ({
-				id: collection.id,
-				title: collection.category,
-				items: collection.items,
-				slug: collection.slug
-			}));
-		}
+		return [];
 	}
 
 	$: if ($user) {
@@ -74,7 +77,7 @@
 						class="nav-link {activeTab === 'scores' ? 'active' : ''}"
 						on:click={async () => {
 							activeTab = 'scores';
-							await getQuizScores();
+							scores = await getQuizScores();
 						}}
 					>
 						Scores
@@ -95,7 +98,7 @@
 						<ul class="list-group mb-3">
 							{#each scores.slice((page - 1) * pageSize, page * pageSize) as score}
 								<li class="list-group-item">
-									<a href="/quiz/{score.author_id}/{score.slug}">
+									<a href="/quiz/{score.author_slug}/{score.slug}">
 										<strong>{score.collectionName}</strong>
 									</a>
 									- {score.percentage}%
