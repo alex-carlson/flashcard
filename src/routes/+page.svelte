@@ -41,14 +41,14 @@
 	});
 </script>
 
-<div class="image-section py-5">
+<div class="image-section pt-5 pb-2">
 	<div class="image-content my-5 container text-center">
 		<!-- <h1 class="my-3">Quizzems</h1> -->
 		<p class="drop-quote">{tagline}</p>
 	</div>
 </div>
 
-<div class="container my-5">
+<div class="container mb-5">
 	<h2 class="my-3">Latest Collections</h2>
 	<Collections sortmode="latest" />
 </div>
@@ -57,6 +57,7 @@
 	<h2>Popular Categories</h2>
 	<Tags />
 </div> -->
+
 <div class="container my-5">
 	<h2 class="my-3">Most Popular Collections</h2>
 	<Collections sortmode="popular" />

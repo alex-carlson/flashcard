@@ -3,7 +3,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: url('/splash.jpg') no-repeat center center;
+    background: url('/splash.jpg') no-repeat center calc(50% + 70px);
     background-size: cover;
     position: relative;
 

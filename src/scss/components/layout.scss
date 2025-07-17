@@ -58,6 +58,11 @@ ul {
             height: 100%;
             max-width: 320px;
 
+            // on screen sizes < 768px, make the list items full width
+            @media (max-width: 600px) {
+                max-width: 100%;
+            }
+
             a {
                 display: flex;
                 flex-direction: column;

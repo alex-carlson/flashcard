@@ -97,7 +97,6 @@ export async function fetchCollectionById(
         ? `/collections/user/collection/${collection_id}`
         : `/collections/user/public/${collection_id}`;
     try {
-        console.log("Fetching collection from API:", url);
         const data = await apiFetch(url, 'GET', null, false, protectedCollection);
         return data;
     } catch (error) {

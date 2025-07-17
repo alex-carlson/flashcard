@@ -12092,6 +12092,11 @@ ul img {
   height: 100%;
   max-width: 320px;
 }
+@media (max-width: 600px) {
+  .list.grid ul li {
+    max-width: 100%;
+  }
+}
 .list.grid ul li a {
   display: flex;
   flex-direction: column;
@@ -12817,6 +12822,38 @@ header .navContainer ul li.user-tab a .profile-picture img {
   }
 }
 
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #dc3545;
+}
+
+.retry-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.retry-button:hover {
+  background-color: #0056b3;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
 .uploader {
   display: flex;
 }
@@ -13110,7 +13147,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: url("/splash.jpg") no-repeat center center;
+  background: url("/splash.jpg") no-repeat center calc(50% + 70px);
   background-size: cover;
   position: relative;
 }

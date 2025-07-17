@@ -25,7 +25,6 @@ export async function getUserName(id) {
 }
 
 export async function getUserQuizScores(id) {
-    console.log('Fetching quiz scores for ID:', id);
     if (id === '0') {
         return null;
     }
