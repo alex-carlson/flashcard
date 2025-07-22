@@ -90,6 +90,19 @@ ul {
         }
     }
 
+    &.condensed {
+        ul {
+            li {
+                a {
+                    .lazy-load {
+                        min-height: 45px;
+                        max-height: 80px;
+                    }
+                }
+            }
+        }
+    }
+
     ul {
         list-style: none;
         padding: 0;
@@ -182,8 +195,8 @@ ul {
             min-height: inherit; // Inherit the minimum height
 
             .card-image-container img {
-                width: 120px;
-                height: 120px;
+                width: 80px;
+                height: 80px;
                 aspect-ratio: 4 / 3;
             }
 

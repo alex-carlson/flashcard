@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import CollectionCard from './components/CollectionCard.svelte';
 	import {
@@ -23,6 +23,7 @@
 	let error = null;
 	let isCollapsed = true;
 	let hasInitialized = false;
+	let windowWidth = 0;
 	const dispatch = createEventDispatcher();
 
 	async function selectCollection(collection) {
@@ -64,7 +65,16 @@
 			isLoading = false;
 		}
 		hasInitialized = true;
+		window.addEventListener('resize', updateWidth);
 	});
+
+	onDestroy(() => {
+		window.removeEventListener('resize', updateWidth);
+	});
+
+	function updateWidth() {
+		windowWidth = window.innerWidth;
+	}
 
 	async function loadCollections() {
 		// Prevent duplicate calls while already loading
@@ -138,7 +148,7 @@
 	// Determine layout classes (additive)
 	$: layoutClass = (() => {
 		let classes = [];
-		if (condensed) classes.push('condensed');
+		if (windowWidth < 650 || condensed) classes.push('condensed');
 		if (grid) classes.push('grid');
 		if (list) classes.push('list');
 		return classes.join(' ');
@@ -231,10 +241,6 @@
 		padding: 0.5rem 0;
 	}
 
-	.collections-container.condensed .collections-list {
-		max-height: 300px;
-		overflow-y: auto;
-	}
 	.empty-state {
 		text-align: center;
 		padding: 2rem;
@@ -278,7 +284,7 @@
 		}
 	}
 
-	@media (max-width: 480px) {
+	@media (max-width: 650px) {
 		.collections-list.grid {
 			grid-template-columns: 1fr;
 			gap: 0.5rem;

@@ -12119,6 +12119,10 @@ ul img {
   aspect-ratio: 4/3;
   display: block;
 }
+.list.condensed ul li a .lazy-load {
+  min-height: 45px;
+  max-height: 80px;
+}
 .list ul {
   list-style: none;
   padding: 0;
@@ -12202,8 +12206,8 @@ ul img {
   min-height: inherit;
 }
 .list.condensed ul li a .card-image-container img {
-  width: 120px;
-  height: 120px;
+  width: 80px;
+  height: 80px;
   aspect-ratio: 4/3;
 }
 .list.condensed ul li a .card-content {
@@ -13147,7 +13151,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: url("/splash.jpg") no-repeat center calc(50% + 70px);
+  background: url("/splash.jpg") no-repeat center center;
   background-size: cover;
   position: relative;
 }

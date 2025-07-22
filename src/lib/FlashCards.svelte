@@ -145,8 +145,8 @@
 		/>
 
 		{#if !isPartyMode}
-			<select class="mt-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
-				{#each Object.entries( { FILL_IN_THE_BLANK: 'Fill in the Blank', MULTIPLE_CHOICE: 'Multiple Choice', FLASHCARD: 'Flashcard' } ) as [mode, label]}
+			<select class="my-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
+				{#each [['FILL_IN_THE_BLANK', 'Fill in the Blank'], ['TRUE_FALSE', '50/50'], ['MULTIPLE_CHOICE', 'Multiple Choice'], ['FLASH_CARDS', 'Flashcard']] as [mode, label]}
 					<option value={mode} selected={mode === $quiz.currentMode}>
 						{label}
 					</option>
