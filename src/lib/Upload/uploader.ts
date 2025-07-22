@@ -86,6 +86,37 @@ export async function reorderItems(prevIndex, newIndex, data) {
     }
 }
 
+export async function shuffleItems(data: { category: string; items: any[] }) {
+    try {
+        console.log('Shuffling items:', data);
+        const currentUser = getCurrentUser();
+        const items = [...data.items];
+        const shuffledItems = items.sort(() => Math.random() - 0.5);
+        console.log('Shuffling items:', { original: items, shuffled: shuffledItems });
+        const payload = {
+            category: data.category,
+            items: shuffledItems,
+            author_id: currentUser.public_id,
+        };
+
+        const result = await apiFetch('/items/reorder', 'POST', payload);
+        addToast({
+            message: 'Items shuffled successfully!',
+            type: 'success',
+            duration: 3000
+        });
+        return result;
+    } catch (error) {
+        console.error('Error shuffling items:', error);
+        addToast({
+            message: 'Failed to shuffle items. Please try again.',
+            type: 'error',
+            duration: 3000
+        });
+        return null;
+    }
+}
+
 // Delete collection
 export async function deleteCollection(collectionId, onSuccess = () => { }) {
     try {

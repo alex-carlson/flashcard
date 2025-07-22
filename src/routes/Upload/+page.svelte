@@ -15,7 +15,8 @@
 		createCollection,
 		confirmDelete,
 		saveEdit,
-		reorderItems
+		reorderItems,
+		shuffleItems
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
@@ -539,6 +540,19 @@
 							>Done</button
 						>
 					{/if}
+					<button
+						class="btn btn-outline-secondary"
+						on:click={async () => {
+							const shuffled = await shuffleItems({
+								items: collection.items,
+								category: collection.category
+							});
+							if (shuffled && shuffled.length > 0) {
+								collection.items = shuffled[0].items;
+								collection.itemsLength = shuffled[0].items.length;
+							}
+						}}>Shuffle</button
+					>
 				{/if}
 				<button
 					class="btn btn-danger"
