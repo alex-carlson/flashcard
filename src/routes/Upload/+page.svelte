@@ -310,10 +310,22 @@
 									}
 								}}
 								on:updateItem={(e) => {
-									// Update the specific item in the collection
 									const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
 									if (itemIndex !== -1) {
-										collection.items[itemIndex] = { ...collection.items[itemIndex], ...e.detail };
+										const updatedItem = {
+											...collection.items[itemIndex],
+											...e.detail
+										};
+
+										// If the image was updated, append a cache-busting param
+										if (updatedItem.image) {
+											const timestamp = Date.now();
+											const url = new URL(updatedItem.image, window.location.origin);
+											url.searchParams.set('v', timestamp);
+											updatedItem.image = url.toString();
+										}
+
+										collection.items[itemIndex] = updatedItem;
 										collection.items = [...collection.items]; // Trigger reactivity
 									}
 								}}

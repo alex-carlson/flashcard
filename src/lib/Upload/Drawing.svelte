@@ -378,6 +378,10 @@
 		display: block;
 	}
 
+	.drawing-container {
+		background-color: #badbdb;
+	}
+
 	.drawing-controls {
 		display: flex;
 		gap: 15px;

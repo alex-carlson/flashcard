@@ -129,22 +129,23 @@
 			<div class="suggestion">
 				{#each suggestions as suggestion}
 					<div class="suggestion-item">
-						<img
-							src={suggestion.thumbnail}
-							alt={suggestion.title}
-							loading="lazy"
-							on:load={() => {
-								const img = new window.Image();
-								img.src = suggestion.url;
-								img.onload = () => (suggestion.loaded = true);
-							}}
-						/>
 						{#if suggestion.loaded}
 							<img
 								src={suggestion.url}
 								alt={suggestion.title}
 								class="full-image"
 								style="display: block;"
+							/>
+						{:else}
+							<img
+								src={suggestion.thumbnail}
+								alt={suggestion.title}
+								loading="lazy"
+								on:load={() => {
+									const img = new window.Image();
+									img.src = suggestion.url;
+									img.onload = () => (suggestion.loaded = true);
+								}}
 							/>
 						{/if}
 						<p>{suggestion.title}</p>
