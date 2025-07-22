@@ -13,7 +13,7 @@
 
 		const { default: Cropper } = await import('cropperjs');
 
-		// Load CSS dynamically (or import it in app.css)
+		// Load CSS dynamically
 		if (!document.querySelector('link[href*="cropper.min.css"]')) {
 			const link = document.createElement('link');
 			link.rel = 'stylesheet';
@@ -21,7 +21,6 @@
 			document.head.appendChild(link);
 		}
 
-		// Wait for image to be fully loaded
 		if (!image.complete) {
 			await new Promise((resolve, reject) => {
 				image.onload = resolve;
@@ -30,27 +29,40 @@
 		}
 
 		cropper = new Cropper(image, {
-			viewMode: 2,
-			autoCropArea: 1,
-			dragMode: 'move',
-			toggleDragModeOnDblclick: false
+			viewMode: 1, // Respect the aspect ratio of the container
+			autoCropArea: 1, // Fill the whole image
+			dragMode: 'crop', // Allow dragging crop box
+			zoomable: false, // Disable zooming
+			scalable: false, // Disable scaling
+			toggleDragModeOnDblclick: false,
+			background: false,
+			movable: false,
+			cropBoxMovable: true, // Allow moving crop box
+			cropBoxResizable: true, // Allow resizing crop box (drag anchor points)
+			ready() {
+				// Force it to zoom to fill the container width
+				const containerData = cropper.getContainerData();
+				const imageData = cropper.getImageData();
+				const scale = containerData.width / imageData.naturalWidth;
+				cropper.zoomTo(scale);
+			}
 		});
 	});
 
 	onDestroy(() => {
 		if (cropper) {
+			cropper.destroy();
 			cropper = null;
 		}
 	});
+
 	function getCroppedImage() {
 		if (!cropper) return null;
 
-		// Detect the original image format
 		const originalFormat = getImageFormat(src);
 		const mimeType = getMimeType(originalFormat);
 		const fileExtension = originalFormat.toLowerCase();
 
-		// Get the original image dimensions
 		const imageData = cropper.getImageData();
 		const canvasWidth = Math.round(imageData.naturalWidth);
 		const canvasHeight = Math.round(imageData.naturalHeight);
@@ -62,7 +74,6 @@
 			imageSmoothingQuality: 'high'
 		});
 
-		// Use appropriate quality based on format
 		const quality = mimeType === 'image/jpeg' ? 0.9 : undefined;
 
 		return new Promise((resolve) => {
@@ -83,13 +94,10 @@
 	}
 
 	function getImageFormat(imageSrc) {
-		// Extract format from URL or data URI
 		if (imageSrc.startsWith('data:')) {
 			const match = imageSrc.match(/^data:image\/([^;]+)/);
 			return match ? match[1] : 'jpg';
 		}
-
-		// Extract from file extension
 		const extension = imageSrc.split('.').pop()?.toLowerCase();
 		return extension || 'jpg';
 	}
@@ -107,22 +115,32 @@
 	}
 </script>
 
-<div class="cropper-container">
-	<img bind:this={image} {src} alt="To crop" style="max-width: 100%;" />
+<div class="cropper">
+	<img bind:this={image} {src} alt="To crop" style="max-width: 100%; display: block;" />
 
 	<div class="cropper-actions">
-		<button class="btn btn-primary" on:click={getCroppedImage}> Crop & Save </button>
-		<button class="btn btn-secondary" on:click={() => dispatch('cancel')}> Cancel </button>
+		<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
+		<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>
 	</div>
 </div>
 
 <style>
-	.cropper-container {
+	.cropper {
 		position: relative;
+		width: 100%;
+		max-width: 100%;
+		height: auto;
 	}
 
 	.cropper-actions {
 		margin-top: 10px;
 		text-align: center;
+	}
+	.cropper-container {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 </style>

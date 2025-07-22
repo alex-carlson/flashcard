@@ -137,21 +137,29 @@
 	function isEditable(image) {
 		if (!image || typeof image !== 'string') return false;
 
-		const editableExtensions = /\.(png|jpe?g|latest)$/i;
+		// Still raster image extensions (case insensitive)
+		// Exclude known animated formats like gif
+		const stillRasterExtensions = /\.(bmp|png|jpe?g|webp|latest)$/i;
+		const animatedExtensions = /\.(gif|apng|svg)$/i; // svg is vector, usually not editable as raster
 
 		try {
 			const url = new URL(image);
 			const segments = url.pathname.split('/').reverse();
 
 			for (const segment of segments) {
-				if (editableExtensions.test(segment)) return true;
+				// If it matches an animated extension, return false immediately
+				if (animatedExtensions.test(segment)) return false;
+
+				if (stillRasterExtensions.test(segment)) return true;
 			}
 		} catch {
 			// Fallback for non-URL strings
 			const segments = image.split('?')[0].split('#')[0].split('/').reverse();
 
 			for (const segment of segments) {
-				if (editableExtensions.test(segment)) return true;
+				if (animatedExtensions.test(segment)) return false;
+
+				if (stillRasterExtensions.test(segment)) return true;
 			}
 		}
 
