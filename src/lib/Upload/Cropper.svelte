@@ -29,21 +29,26 @@
 		}
 
 		cropper = new Cropper(image, {
-			viewMode: 1, // Respect the aspect ratio of the container
-			autoCropArea: 1, // Fill the whole image
-			dragMode: 'crop', // Allow dragging crop box
-			zoomable: false, // Disable zooming
-			scalable: false, // Disable scaling
+			viewMode: 1,
+			autoCropArea: 1,
+			dragMode: 'crop',
+			zoomable: false,
+			scalable: false,
 			toggleDragModeOnDblclick: false,
 			background: false,
 			movable: false,
-			cropBoxMovable: true, // Allow moving crop box
-			cropBoxResizable: true, // Allow resizing crop box (drag anchor points)
+			cropBoxMovable: true,
+			cropBoxResizable: true,
 			ready() {
-				// Force it to zoom to fill the container width
+				// Fill both width and height of the cropper container
 				const containerData = cropper.getContainerData();
 				const imageData = cropper.getImageData();
-				const scale = containerData.width / imageData.naturalWidth;
+
+				// Calculate scale to fill both width and height
+				const scaleW = containerData.width / imageData.naturalWidth;
+				const scaleH = containerData.height / imageData.naturalHeight;
+				const scale = Math.max(scaleW, scaleH); // Use the larger scale to fill
+
 				cropper.zoomTo(scale);
 			}
 		});
@@ -115,32 +120,43 @@
 	}
 </script>
 
-<div class="cropper">
-	<img bind:this={image} {src} alt="To crop" style="max-width: 100%; display: block;" />
-
-	<div class="cropper-actions">
-		<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
-		<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>
+<div class="cropper-container">
+	<div class="cropper">
+		<img bind:this={image} {src} alt="To crop" style="max-width: 100%; display: block;" />
+		<div class="cropper-actions">
+			<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
+			<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>
+		</div>
 	</div>
 </div>
 
 <style>
+	.cropper-container {
+		width: 100vw;
+		max-width: 100vw;
+		height: 80vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f8f9fa;
+		overflow: hidden;
+	}
+
 	.cropper {
 		position: relative;
-		width: 100%;
-		max-width: 100%;
-		height: auto;
+		width: 90vw;
+		max-width: 900px;
+		height: 70vh;
+		background: #fff;
+		box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.cropper-actions {
 		margin-top: 10px;
 		text-align: center;
-	}
-	.cropper-container {
-		width: 100%;
-		height: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
 </style>

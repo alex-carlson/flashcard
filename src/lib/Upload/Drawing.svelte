@@ -335,7 +335,7 @@
 
 				<label class="d-flex align-items-center gap-2 m-0">
 					Brush Size:
-					<input type="range" min="1" max="50" bind:value={width} />
+					<input type="range" min="1" max="200" bind:value={width} />
 					<span>{width}px</span>
 				</label>
 			</div>
