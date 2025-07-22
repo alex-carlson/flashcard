@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import CollectionCard from './components/CollectionCard.svelte';
 	import {
 		fetchLatestCollections,
@@ -65,11 +66,16 @@
 			isLoading = false;
 		}
 		hasInitialized = true;
-		window.addEventListener('resize', updateWidth);
+		if (browser) {
+			updateWidth();
+			window.addEventListener('resize', updateWidth);
+		}
 	});
 
 	onDestroy(() => {
-		window.removeEventListener('resize', updateWidth);
+		if (browser) {
+			window.removeEventListener('resize', updateWidth);
+		}
 	});
 
 	function updateWidth() {
