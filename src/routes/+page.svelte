@@ -48,14 +48,14 @@
 	</div>
 </div>
 
-<div class="container mb-5">
-	<h2 class="my-3">Latest Collections</h2>
-	<Collections sortmode="latest" />
-</div>
-
-<div class="container p-3">
+<div class="container p-3 my-5">
 	<h2>Popular Categories</h2>
 	<Tags />
+</div>
+
+<div class="container my-5">
+	<h2 class="my-3">Latest Collections</h2>
+	<Collections sortmode="latest" />
 </div>
 
 <div class="container my-5">
