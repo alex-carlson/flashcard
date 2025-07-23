@@ -38,6 +38,8 @@
 	let itemUploader; // Reference to the item FileUpload component
 	let suggestedTags = [];
 
+	let tagDebounceTimeout;
+
 	$: if ($user?.public_id) {
 		console.log('User public_id:', $user.public_id);
 		loadCollections();
@@ -169,18 +171,12 @@
 		}
 	}
 
-	async function fetchRecommendedTags(query) {
+	async function fetchRecommendedTags(data) {
 		try {
-			// turn query into a comma separated list
-			query = query
-				.split(' ')
-				.map((word) => word.trim())
-				.filter(Boolean)
-				.join(',');
-			console.log('Fetching recommended tags for query:', query);
-			const response = await apiFetch('/collections/tags/recommended?' + query, 'GET');
-			if (response && Array.isArray(response.tags)) {
-				return response.tags;
+			const response = await apiFetch('/collections/tags/recommended', 'POST', { query: data });
+			if (response && Array.isArray(response)) {
+				// Map to just tag strings if response is array of objects
+				return response.map((t) => (typeof t === 'string' ? t : t.tag));
 			}
 			return [];
 		} catch (error) {
@@ -192,10 +188,22 @@
 	$: if (tempCategory || tempDescription) {
 		const query = [tempCategory, tempDescription].filter(Boolean).join(' ');
 		if (query.length > 3) {
-			fetchRecommendedTags(query).then((tags) => {
-				suggestedTags = tags;
-			});
+			clearTimeout(tagDebounceTimeout);
+			tagDebounceTimeout = setTimeout(() => {
+				fetchRecommendedTags(query).then((tags) => {
+					// Convert all tags to lowercase
+					tags = tags.map((t) => t.toLowerCase());
+					// Get current tags as lowercase array
+					const currentTags = tempTags
+						.split(',')
+						.map((t) => t.trim().toLowerCase())
+						.filter(Boolean);
+					// Filter out tags already present
+					suggestedTags = tags.filter((t) => !currentTags.includes(t));
+				});
+			}, 400); // 400ms debounce
 		} else {
+			clearTimeout(tagDebounceTimeout);
 			suggestedTags = [];
 		}
 	}

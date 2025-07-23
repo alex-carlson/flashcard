@@ -25,7 +25,6 @@
 			} else {
 				collections = [];
 			}
-			console.log('Fetched collections:', collections);
 		} catch (e) {
 			error = 'Failed to load collections for this tag.';
 			collections = [];
