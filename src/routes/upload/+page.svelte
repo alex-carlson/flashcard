@@ -31,10 +31,12 @@
 	let item = {};
 	let tempCategory = '';
 	let tempDescription = '';
+	let tempTags = '';
 	let answerInput; // Reference to the answer input field
 	let questionInput; // Reference to the question input field
 	let thumbnailUploader; // Reference to the thumbnail FileUpload component
 	let itemUploader; // Reference to the item FileUpload component
+	let suggestedTags = [];
 
 	$: if ($user?.public_id) {
 		console.log('User public_id:', $user.public_id);
@@ -79,6 +81,13 @@
 				item.category = collection.category || '';
 				tempCategory = collection.category || '';
 				tempDescription = collection.description || '';
+				tempTags = Array.isArray(collection.tags)
+					? collection.tags.join(', ')
+					: typeof collection.tags === 'string'
+						? collection.tags.includes('[')
+							? JSON.parse(collection.tags).join(', ')
+							: collection.tags
+						: '';
 				isPublic = !collection.private || false;
 
 				// Initialize items array if it doesn't exist
@@ -137,7 +146,7 @@
 	async function updateCollection() {
 		const data = {
 			private: !isPublic || collection.private,
-			tags: collection.tags || [],
+			tags: tempTags || '',
 			category: tempCategory || collection.category || '',
 			description: tempDescription || collection.description || ''
 		};
@@ -157,6 +166,37 @@
 				type: 'error',
 				message: 'Failed to update collection. Please try again.'
 			});
+		}
+	}
+
+	async function fetchRecommendedTags(query) {
+		try {
+			// turn query into a comma separated list
+			query = query
+				.split(' ')
+				.map((word) => word.trim())
+				.filter(Boolean)
+				.join(',');
+			console.log('Fetching recommended tags for query:', query);
+			const response = await apiFetch('/collections/tags/recommended?' + query, 'GET');
+			if (response && Array.isArray(response.tags)) {
+				return response.tags;
+			}
+			return [];
+		} catch (error) {
+			console.error('Error fetching recommended tags:', error);
+			return [];
+		}
+	}
+
+	$: if (tempCategory || tempDescription) {
+		const query = [tempCategory, tempDescription].filter(Boolean).join(' ');
+		if (query.length > 3) {
+			fetchRecommendedTags(query).then((tags) => {
+				suggestedTags = tags;
+			});
+		} else {
+			suggestedTags = [];
 		}
 	}
 </script>
@@ -247,15 +287,34 @@
 							bind:value={tempDescription}
 							placeholder="Category Description (Optional)"
 						></textarea>
-						<!-- add tags field -->
 						<input
 							type="text"
 							class="form-control mb-2"
 							placeholder="Add tags (comma-separated)"
-							on:change={(e) => {
-								collection.tags = e.target.value.split(',').map((tag) => tag.trim());
-							}}
+							bind:value={tempTags}
 						/>
+						{#if suggestedTags.length > 0}
+							<div class="suggested-tags mb-2">
+								<span class="me-2 text-muted">Suggestions:</span>
+								{#each suggestedTags as tag}
+									<button
+										type="button"
+										class="btn btn-sm btn-outline-secondary me-1 mb-1"
+										on:click={() => {
+											const tagsArr = tempTags
+												.split(',')
+												.map((t) => t.trim())
+												.filter(Boolean);
+											if (!tagsArr.includes(tag)) {
+												tempTags = tagsArr.concat(tag).join(', ');
+											}
+										}}
+									>
+										{tag}
+									</button>
+								{/each}
+							</div>
+						{/if}
 						<form
 							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
 							on:submit|preventDefault

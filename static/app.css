@@ -12875,6 +12875,12 @@ header .navContainer ul li.user-tab a .profile-picture img {
 .uploader ul li .reorder button {
   color: black;
 }
+.uploader .suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
 
 .audio-uploader ul {
   display: flex;

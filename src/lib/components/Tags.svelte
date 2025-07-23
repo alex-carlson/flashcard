@@ -18,10 +18,10 @@
 <div class="tags">
 	{#if tags.length > 0}
 		<ul>
-			{#each tags as tag}
+			{#each tags as item}
 				<li>
-					<a href={`/tags/${tag}`} class="tag">
-						{tag}
+					<a href={`/tags/${item.tag}`} class="tag">
+						{item.tag} ({item.count})
 					</a>
 				</li>
 			{/each}
