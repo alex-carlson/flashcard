@@ -50,17 +50,20 @@
 
 <div class="container p-3 my-5">
 	<h2>Popular Categories</h2>
-	<Tags />
+	<p>Find something that tickles your fancy!</p>
+	<Tags count={5} centered={true} />
 </div>
 
 <div class="container my-5">
 	<h2 class="my-3">Latest Collections</h2>
-	<Collections sortmode="latest" />
+	<p>See what's new!</p>
+	<Collections sortmode="latest" limit={4} />
 </div>
 
 <div class="container my-5">
 	<h2 class="my-3">Most Popular Collections</h2>
-	<Collections sortmode="popular" />
+	<p>What's everyone up to?</p>
+	<Collections sortmode="popular" limit={4} />
 	<div class="mt-3 mb-5">
 		<a href="/explore?sort=popular">See More...</a>
 	</div>

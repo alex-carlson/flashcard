@@ -119,8 +119,8 @@ export async function fetchCollectionByAuthorAndSlug(
     }
 }
 
-export async function fetchTags(): Promise<string[] | undefined> {
-    const url = `${import.meta.env.VITE_API_URL}/collections/tags/popular`;
+export async function fetchTags(limit = 10): Promise<string[] | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/tags/popular?limit=${limit}`;
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch tags");

@@ -155,20 +155,22 @@
 		{/if}
 
 		<div class={'flashcards ' + ($quiz.isGrid ? 'grid' : 'vertical')}>
-			{#each $quiz.cards as item, i (item.id || i)}
-				<Card
-					{item}
-					{i}
-					cards={$quiz.cards}
-					currentMode={$quiz.currentMode}
-					shuffleTrigger={$quiz.shuffleTrigger}
-					{onCardLoad}
-					{toggleReveal}
-					updateCards={() => {}}
-					on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
-					on:giveUp={(e) => setRevealed(e.detail.index, true)}
-				/>
-			{/each}
+			{#if $quiz.hasInitialized}
+				{#each $quiz.cards as item, i (item.id || i)}
+					<Card
+						{item}
+						{i}
+						cards={$quiz.cards}
+						currentMode={$quiz.currentMode}
+						shuffleTrigger={$quiz.shuffleTrigger}
+						{onCardLoad}
+						{toggleReveal}
+						updateCards={() => {}}
+						on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
+						on:giveUp={(e) => setRevealed(e.detail.index, true)}
+					/>
+				{/each}
+			{/if}
 		</div>
 
 		<QuizActions
@@ -177,10 +179,6 @@
 			onCompleteQuiz={() => quiz.completeQuiz($user?.id, $user?.token)}
 			{isPartyMode}
 		/>
-	{:else if !$quiz.isLoading && !$quiz.loadingError}
-		<div class="empty-state">
-			<p>No cards available in this collection.</p>
-		</div>
 	{/if}
 
 	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>

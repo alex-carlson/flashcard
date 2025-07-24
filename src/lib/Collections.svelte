@@ -173,10 +173,11 @@
 	{/if}
 	{#if !condensed || !isCollapsed}
 		{#if isLoading || (!hasInitialized && collections.length === 0)}
-			<div class="loading-state white rounded">
-				<Loading />
-				<p>Loading collections...</p>
-			</div>
+			<ul class="collections-list {grid ? 'grid' : list ? 'list' : ''}">
+				{#each Array(limit && limit > 0 ? limit : 12) as _, i}
+					<CollectionCard />
+				{/each}
+			</ul>
 		{:else if error}
 			<div class="error-state">
 				<p>{error}</p>
@@ -322,20 +323,5 @@
 		border-radius: 4px;
 		background: #eee;
 		margin-bottom: 0.4em;
-	}
-
-	.shimmer {
-		background: linear-gradient(45deg, #e0e0e0 0%, #cccccc 20%, #e0e0e0 40%, #e0e0e0 100%);
-		background-size: 200% 100%;
-		animation: shimmer 2.4s infinite;
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: -200% 0;
-		}
-		100% {
-			background-position: 200% 0;
-		}
 	}
 </style>

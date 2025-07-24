@@ -1,14 +1,15 @@
 <script>
 	import { onMount } from 'svelte';
 	import { fetchTags } from '$lib/api/collections';
+	export let count = 10; // Default number of tags to fetch
+	export let centered = false; // Whether to center the tags
 
 	let tags = [];
 
 	// on mount, fetch tags from the API
 	onMount(async () => {
 		try {
-			tags = await fetchTags();
-			console.log('Fetched tags:', tags);
+			tags = await fetchTags(count);
 		} catch (error) {
 			console.error('Error fetching tags:', error);
 		}
@@ -17,7 +18,7 @@
 
 <div class="tags">
 	{#if tags.length > 0}
-		<ul>
+		<ul class={centered ? 'centered' : ''}>
 			{#each tags as item}
 				<li>
 					<a href={`/tags/${item.tag}`} class="tag">
@@ -75,5 +76,9 @@
 		color: #6c757d;
 		font-style: italic;
 		margin: 0;
+	}
+
+	.centered {
+		justify-content: center;
 	}
 </style>
