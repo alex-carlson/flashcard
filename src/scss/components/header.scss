@@ -29,6 +29,15 @@ header {
 
             @media (max-width: 700px) {
                 gap: 0.7rem;
+
+                li {
+                    margin: 0 2px;
+                    font-size: 0.85em;
+
+                    a {
+                        font-size: 0.85em;
+                    }
+                }
             }
 
             li {

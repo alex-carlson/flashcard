@@ -41,27 +41,27 @@
 	});
 </script>
 
-<div class="image-section pt-5 pb-2">
-	<div class="image-content my-5 container text-center">
+<div class="image-section pt-3 pb-2">
+	<div class="image-content my-3 container text-center">
 		<!-- <h1 class="my-3">Quizzems</h1> -->
 		<img class="mb-5" src="/logo.png" alt="" />
 		<p class="drop-quote">{tagline}</p>
 	</div>
 </div>
 
-<div class="container p-3 my-5">
+<div class="container p-3">
 	<h2>Popular Categories</h2>
 	<p>Find something that tickles your fancy!</p>
 	<Tags count={5} centered={true} />
 </div>
 
-<div class="container my-5">
+<div class="container">
 	<h2 class="my-3">Latest Collections</h2>
 	<p>See what's new!</p>
 	<Collections sortmode="latest" limit={4} />
 </div>
 
-<div class="container my-5">
+<div class="container">
 	<h2 class="my-3">Most Popular Collections</h2>
 	<p>What's everyone up to?</p>
 	<Collections sortmode="popular" limit={4} />

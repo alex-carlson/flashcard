@@ -12415,6 +12415,13 @@ header .navContainer ul {
   header .navContainer ul {
     gap: 0.7rem;
   }
+  header .navContainer ul li {
+    margin: 0 2px;
+    font-size: 0.85em;
+  }
+  header .navContainer ul li a {
+    font-size: 0.85em;
+  }
 }
 header .navContainer ul li {
   margin: 0 4px;
@@ -13231,37 +13238,11 @@ header .navContainer ul li.user-tab a .profile-picture img {
   }
 }
 .image-section .image-content img {
+  width: 100%;
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
   display: block;
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.image-section .image-content img:hover {
-  animation: wiggle 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes wiggle {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  15% {
-    transform: rotate(-3deg) scale(1.01);
-  }
-  30% {
-    transform: rotate(3deg) scale(1.01);
-  }
-  45% {
-    transform: rotate(-2deg) scale(1.01);
-  }
-  60% {
-    transform: rotate(2deg) scale(1.01);
-  }
-  75% {
-    transform: rotate(-1deg) scale(1);
-  }
-  100% {
-    transform: rotate(0deg) scale(1);
-  }
 }
 .image-section .image-content .drop-quote {
   animation: fadeInUp 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
@@ -13735,7 +13716,7 @@ body .drop-quote {
   color: var(--bg-header-color);
 }
 body a {
-  color: var(--bg-text-color);
+  color: var(--bg-header-color);
 }
 
 .white {
