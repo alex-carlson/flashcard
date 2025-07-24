@@ -33,10 +33,6 @@
 </div>
 
 <style>
-	.tags {
-		margin: 1rem 0;
-	}
-
 	.tags ul {
 		list-style: none;
 		padding: 0;
