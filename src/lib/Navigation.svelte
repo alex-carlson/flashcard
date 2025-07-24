@@ -11,6 +11,7 @@
 		faSignInAlt,
 		faCompass
 	} from '@fortawesome/free-solid-svg-icons';
+	import { page } from '$app/stores';
 
 	// Navigation links with icons and alt text
 	const navLinks = [
@@ -31,8 +32,8 @@
 <div class="navContainer">
 	<nav>
 		<ul>
-			{#each navLinks as { href, label, icon, alt }}
-				<li>
+			{#each navLinks as { href, label, icon, alt, path }}
+				<li class:active={$page.url.pathname === path}>
 					<a {href} aria-label={alt} title={label} class="nav-link-vertical">
 						<Fa {icon} class="fa-icon-large" />
 						<span class="nav-label-small">{label}</span>
