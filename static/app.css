@@ -12409,9 +12409,15 @@ header .navContainer ul {
   align-items: center;
   margin: 0;
   padding: 0.5rem;
+  gap: 2.2rem;
+}
+@media (max-width: 700px) {
+  header .navContainer ul {
+    gap: 0.7rem;
+  }
 }
 header .navContainer ul li {
-  margin: 0 1rem;
+  margin: 0 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13083,10 +13089,12 @@ header .navContainer ul li.user-tab a .profile-picture img {
   margin: 2rem auto;
   justify-content: center;
   flex-wrap: wrap;
-  max-width: 100%;
+  max-width: max-content;
   padding: 0 1rem;
 }
 .paginationControls button {
+  display: inline-block;
+  width: auto;
   padding: 0.5rem 0.75rem;
   border: 1px solid #ddd;
   background: white;
@@ -13207,20 +13215,56 @@ header .navContainer ul li.user-tab a .profile-picture img {
   position: relative;
   z-index: 2;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
-.image-section .image-content h1,
-.image-section .image-content p {
-  color: var(--bg-text-color);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.image-section .image-content h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  margin-top: 0;
+.image-section .image-content img {
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.image-section .image-content a {
-  color: var(--primary-color);
+.image-section .image-content img:hover {
+  animation: wiggle 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  15% {
+    transform: rotate(-3deg) scale(1.01);
+  }
+  30% {
+    transform: rotate(3deg) scale(1.01);
+  }
+  45% {
+    transform: rotate(-2deg) scale(1.01);
+  }
+  60% {
+    transform: rotate(2deg) scale(1.01);
+  }
+  75% {
+    transform: rotate(-1deg) scale(1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
 }
 .image-section .image-content .drop-quote {
+  animation: fadeInUp 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
   font-size: 1.4rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -13657,7 +13701,8 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 :root {
   --bg-color: #6F1D1B;
-  --bg-text-color: #FCE343;
+  --bg-text-color: #d4d4d4;
+  --bg-header-color: #FCE343;
   --text-color: #2b2b2b;
   --button-color: #2b2b2b;
   --button-secondary-color: #b4b4b4;
@@ -13679,6 +13724,15 @@ header .navContainer ul li.user-tab a .profile-picture img {
 body {
   background-color: var(--bg-color);
   color: var(--bg-text-color);
+}
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body .drop-quote {
+  color: var(--bg-header-color);
 }
 body a {
   color: var(--bg-text-color);

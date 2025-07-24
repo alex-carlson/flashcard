@@ -6,7 +6,7 @@
 {#if $user}
 	<li class="user-tab">
 		<a href="/dashboard" class="user-link">
-			<ProfilePicture userId={$user.id} size={30} isRound={true} />
+			<ProfilePicture userId={$user.id} size={48} isRound={true} />
 		</a>
 	</li>
 {/if}

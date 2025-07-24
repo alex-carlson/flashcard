@@ -34,7 +34,8 @@
 // CSS custom properties and global styles
 :root {
     --bg-color: #6F1D1B;
-    --bg-text-color: #FCE343;
+    --bg-text-color: #d4d4d4;
+    --bg-header-color: #FCE343;
     --text-color: #2b2b2b;
     --button-color: #2b2b2b;
     --button-secondary-color: #b4b4b4;
@@ -57,6 +58,15 @@ body {
     background-color: var(--bg-color);
     color: var(--bg-text-color);
 
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .drop-quote {
+        color: var(--bg-header-color);
+    }
 
     a {
         color: var(--bg-text-color);

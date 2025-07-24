@@ -12,7 +12,19 @@
 	// Local state for pending changes (before apply)
 	let pendingSortOption = sortOption;
 	let pendingSortOrder = sortOrder;
+
+	import { tick } from 'svelte';
 	let pendingFilterText = '';
+	let filterDebounceTimeout;
+
+	// Debounced filter dispatch
+	$: if (pendingFilterText !== '' && typeof applyFilters === 'function') {
+		clearTimeout(filterDebounceTimeout);
+		filterDebounceTimeout = setTimeout(async () => {
+			await tick();
+			applyFilters();
+		}, 400);
+	}
 
 	// Update pending values when props change
 	$: pendingSortOption = sortOption;

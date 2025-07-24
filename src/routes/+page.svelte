@@ -44,6 +44,7 @@
 <div class="image-section pt-5 pb-2">
 	<div class="image-content my-5 container text-center">
 		<!-- <h1 class="my-3">Quizzems</h1> -->
+		<img class="mb-5" src="/logo.png" alt="" />
 		<p class="drop-quote">{tagline}</p>
 	</div>
 </div>
