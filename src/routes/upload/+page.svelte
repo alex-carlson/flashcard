@@ -147,7 +147,7 @@
 
 	async function updateCollection() {
 		const data = {
-			private: !isPublic || collection.private,
+			private: !isPublic, // isPublic is true for public, so private is the inverse
 			tags: tempTags || '',
 			category: tempCategory || collection.category || '',
 			description: tempDescription || collection.description || ''
@@ -213,7 +213,7 @@
 	<title>Manage Collections</title>
 </svelte:head>
 
-<div class="container form white padding uploader">
+<div class="form white uploader pb-3 col-12 col-md-10 col-lg-8 mx-auto">
 	{#if !user}
 		<p><a href="/login">Log in</a> to manage your collections.</p>
 	{:else}
@@ -246,7 +246,10 @@
 						const result = await createCollection(tempCategory);
 						if (result && result.length > 0) {
 							console.log('New collection created:', result);
-							collection = result[0];
+							await loadCollections();
+							// Find the new collection by id and set it
+							const newCol = result[0];
+							collection = collections.find((c) => c.id === newCol.id) || newCol;
 						}
 					}}
 				>
@@ -326,7 +329,6 @@
 						<form
 							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
 							on:submit|preventDefault
-							on:change={setVisible}
 						>
 							<label for="privacy-toggle" class="form-label me-5 mb-0">Privacy</label>
 							<input
@@ -418,7 +420,7 @@
 				</ul>
 			</div>
 
-			<div class="uploader card p-3 mb-4">
+			<div class="uploader card mb-4">
 				<h4 class="mb-3">Add New Question</h4>
 
 				<ul class="nav nav-tabs mb-3">
@@ -508,8 +510,9 @@
 									const currentScrollY = window.scrollY;
 
 									item.file = e.detail;
+									item.category = collection.category;
 									const newItem = await uploadData(item, undefined, false);
-									if (newItem) {
+									if (newItem && newItem[0] && newItem[0].items) {
 										// Update collection data
 										collection.items = newItem[0].items;
 										collection.itemsLength = newItem[0].items.length;
@@ -522,6 +525,11 @@
 										// Clear form data
 										item.file = null;
 										item.answer = '';
+									} else {
+										addToast({
+											type: 'error',
+											message: 'Failed to add image. Please try again.'
+										});
 									}
 								}}
 							/>

@@ -10,7 +10,6 @@
 		fetchCollections
 	} from './api/collections';
 	import { fetchUser } from './api/user';
-	import Loading from './components/Loading.svelte';
 	export let list = true;
 	export let grid = true;
 	export let condensed = false;

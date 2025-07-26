@@ -50,7 +50,15 @@
 
 <div class="container mb-5">
 	<h2>The quiz of the day is...</h2>
-	<Collections sortmode="random-daily" limit={1} on:searched={loadSearchedPage} />
+	<div class="white rounded p-2">
+		<Collections
+			grid={true}
+			list={false}
+			sortmode="random-daily"
+			limit={1}
+			on:searched={loadSearchedPage}
+		/>
+	</div>
 </div>
 
 <div class="container">

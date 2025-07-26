@@ -82,7 +82,6 @@
 			if (data.items) {
 				suggestions = data.items
 					.filter((item) => item.link && item.image && item.image.thumbnailLink)
-					.slice(0, 10)
 					.map((item) => ({
 						title: item.title,
 						thumbnail: item.image.thumbnailLink,
@@ -129,25 +128,7 @@
 			<div class="suggestion">
 				{#each suggestions as suggestion}
 					<div class="suggestion-item">
-						{#if suggestion.loaded}
-							<img
-								src={suggestion.url}
-								alt={suggestion.title}
-								class="full-image"
-								style="display: block;"
-							/>
-						{:else}
-							<img
-								src={suggestion.thumbnail}
-								alt={suggestion.title}
-								loading="lazy"
-								on:load={() => {
-									const img = new window.Image();
-									img.src = suggestion.url;
-									img.onload = () => (suggestion.loaded = true);
-								}}
-							/>
-						{/if}
+						<img src={suggestion.thumbnail} alt={suggestion.title} loading="lazy" />
 						<p>{suggestion.title}</p>
 						<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
 					</div>

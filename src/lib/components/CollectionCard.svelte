@@ -5,6 +5,10 @@
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
 	import { goto } from '$app/navigation';
 	import { fetchUser } from '$lib/api/user';
+	import { afterUpdate, onMount } from 'svelte';
+
+	let titleEl;
+	let scale = 1;
 
 	async function defaultGotoPageWithState(author_id, slug) {
 		try {
@@ -30,6 +34,30 @@
 			defaultGotoPageWithState(collection.author_public_id, collection.slug);
 		}
 	}
+
+	function resizeText() {
+		if (!titleEl) return;
+
+		const container = titleEl.parentElement;
+		const containerWidth = container.offsetWidth;
+		const containerHeight = container.offsetHeight;
+		const contentWidth = titleEl.scrollWidth;
+		const contentHeight = titleEl.scrollHeight;
+
+		const widthScale = containerWidth / contentWidth;
+		const heightScale = containerHeight / contentHeight;
+
+		scale = Math.min(widthScale, heightScale, 1);
+	}
+
+	onMount(() => {
+		resizeText();
+		window.addEventListener('resize', resizeText);
+	});
+
+	afterUpdate(() => {
+		resizeText();
+	});
 </script>
 
 <li>
@@ -44,8 +72,11 @@
 					<LazyLoadImage imageUrl={collection.thumbnail} tempSize="100%" />
 				{/if}
 			</div>
-			<div class="card-content p-3">
-				<h2 class="card-title">{collection.category}</h2>
+			<div class="card-content">
+				<div class="fit-text-container">
+					<h2 bind:this={titleEl} class="fit-text">{collection.category}</h2>
+				</div>
+
 				<div class="card-meta">
 					<span class="card-questions">{collection.itemsLength} questions</span>
 					<span class="card-date">{formatTimestamp(collection.created_at)}</span>
@@ -57,8 +88,8 @@
 			<div class="card-image-container">
 				<div class="card-image placeholder shimmer"></div>
 			</div>
-			<div class="card-content p-3">
-				<h2 class="card-title shimmer placeholder" style="width: 80%; height: 1.5em"></h2>
+			<div class="card-content">
+				<h2 class="card-title shimmer placeholder fit-title" style="width: 80%; height: 1.5em"></h2>
 				<div class="card-meta wd-100 mt-2" style="width: 100%;">
 					<span class="card-questions shimmer placeholder" style="width: 40%; height: 1em;"></span>
 					<span class="card-date shimmer placeholder" style="width: 30%; height: 1em;"></span>
@@ -112,5 +143,32 @@
 
 	.placeholder {
 		border-radius: 0.3em;
+	}
+
+	.fit-text-container {
+		height: 3em; /* Fixed height */
+		overflow: hidden;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+	}
+
+	.fit-text {
+		margin: 0;
+		white-space: normal;
+		transform-origin: center center;
+		display: inline-block;
+		transform: scale(var(--scale));
+		font-size: 1.3rem;
+		line-height: 1.2;
+		text-align: center;
+		max-width: 100%;
+		--scale: 1;
+	}
+
+	/* We use inline style to apply scale dynamically */
+	:global(.fit-text) {
+		transform: scale(var(--scale));
 	}
 </style>
