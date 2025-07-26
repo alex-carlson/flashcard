@@ -63,8 +63,15 @@ export async function fetchLatestCollections(limit = 12): Promise<Collection[] |
 }
 
 // Fetch random collections
-export async function fetchRandomCollections(limit = 10): Promise<Collection[] | undefined> {
-    const url = `${import.meta.env.VITE_API_URL}/collections/random/${limit}`;
+export async function fetchRandomCollections(limit = 10, daily = false): Promise<Collection[] | undefined> {
+    let url = `${import.meta.env.VITE_API_URL}/collections/random?limit=${limit}`;
+
+    if (daily) {
+        url = `${import.meta.env.VITE_API_URL}/collections/random-daily`;
+    }
+
+    console.log("Fetching random collections from:", url);
+
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch random collections");

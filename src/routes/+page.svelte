@@ -43,25 +43,27 @@
 
 <div class="image-section py-3">
 	<div class="image-content my-3 container text-center">
-		<!-- <h1 class="my-3">Quizzems</h1> -->
 		<img class="my-2" src="/logo_yellow.png" alt="" />
 		<!-- <p class="drop-quote">{tagline}</p> -->
 	</div>
 </div>
 
-<div class="container">
-	<h2>Popular Categories</h2>
-	<Tags count={5} centered={true} />
+<div class="container mb-5">
+	<h2>The quiz of the day is...</h2>
+	<Collections sortmode="random-daily" limit={1} on:searched={loadSearchedPage} />
 </div>
 
-<div class="container mt-3">
+<div class="container">
+	<h2>Popular Categories</h2>
+</div>
+<Tags count={12} centered={true} />
+
+<div class="container mt-5">
 	<h2>Latest Collections</h2>
 	<Collections sortmode="latest" limit={4} />
 </div>
 
 <div class="container">
-	<h2 class="mt-3">Most Popular Collections</h2>
-	<Collections sortmode="popular" limit={4} />
 	<div class="mt-3 mb-5">
 		<a href="/explore?sort=popular">See More...</a>
 	</div>

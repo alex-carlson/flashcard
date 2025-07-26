@@ -107,6 +107,10 @@
 					case 'random':
 						data = await fetchRandomCollections(limit || 10);
 						break;
+					case 'random-daily':
+						const daily = await fetchRandomCollections(limit || 1, true); // Daily random
+						data = daily ? [daily] : [];
+						break;
 					default:
 						data = await fetchLatestCollections(limit || 12);
 						break;
