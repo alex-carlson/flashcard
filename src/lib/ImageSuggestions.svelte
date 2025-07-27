@@ -111,43 +111,56 @@
 </script>
 
 <div class="suggestions">
-	{#if query.length > category.length + 3}
-		<div class="search-controls">
-			<h6>Search results for: {query}</h6>
-			<div class="file-type-selector">
-				<label for="fileType">File Type:</label>
-				<select id="fileType" bind:value={fileType} on:change={handleFileTypeChange}>
-					<option value="any">Any</option>
-					<option value="png">PNG</option>
-					<option value="jpg">JPG</option>
-					<option value="gif">GIF</option>
-				</select>
-			</div>
+	<div class="search-controls">
+		<label for="searchOverride">Search Override:</label>
+		<input
+		name="searchOverride"
+		type="text"
+		bind:value={query}
+		placeholder="Search for images..."
+		on:input={debouncedFetch}
+		class="search-input"
+		/>
+		<h6 class="mt-2">Showing results for {query}</h6>
+		<div class="file-type-selector">
+			<label for="fileType">File Type:</label>
+			<select id="fileType" bind:value={fileType} on:change={handleFileTypeChange}>
+				<option value="any">Any</option>
+				<option value="png">PNG</option>
+				<option value="jpg">JPG</option>
+				<option value="gif">GIF</option>
+			</select>
 		</div>
-		<div class="scroll-wrapper">
-			<div class="suggestion">
-				{#each suggestions as suggestion, i}
-					<div class="suggestion-item">
-						<img
-							src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
-							alt={suggestion.title}
-							loading="lazy"
-							on:load={() => {
-								if (!suggestion.loaded) {
-									const img = new window.Image();
-									img.src = suggestion.url;
-									img.onload = () => {
-										suggestions[i].loaded = true;
-										suggestions = [...suggestions];
-									};
-								}
-							}}
-						/>
-						<p>{suggestion.title}</p>
-						<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
-					</div>
-				{/each}
-			</div>
+	</div>
+	<div class="scroll-wrapper">
+		<div class="suggestion">
+			{#each suggestions as suggestion, i}
+				<div class="suggestion-item">
+					<img
+						src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
+						alt={suggestion.title}
+						loading="lazy"
+						on:load={() => {
+							if (!suggestion.loaded && !suggestion.url.includes('nocookie')) {
+								const img = new window.Image();
+								img.src = suggestion.url;
+								img.onload = () => {
+									suggestions[i].loaded = true;
+									suggestions = [...suggestions];
+								};
+							}
+						}}
+						on:error={(e) => {
+							// fallback to thumbnail if main image fails
+							suggestions[i].loaded = false;
+							suggestions = [...suggestions];
+							e.target.src = suggestion.thumbnail;
+						}}
+					/>
+					<p>{suggestion.title}</p>
+					<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
+				</div>
+			{/each}
 		</div>
-	{/if}
+	</div>
 </div>
