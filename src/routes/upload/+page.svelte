@@ -483,6 +483,7 @@
 										});
 										item.file = null;
 										item.answer = '';
+										item.extra = '';
 										// Clear the FileUpload component
 										if (itemUploader && typeof itemUploader.clearImage === 'function') {
 											itemUploader.clearImage();
