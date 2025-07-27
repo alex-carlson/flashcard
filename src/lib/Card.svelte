@@ -123,6 +123,9 @@
 				>
 					{item.answer}
 				</span>
+				{#if item.extra && item.revealed}
+					<span class="extra">{item.extra}</span>
+				{/if}
 				<div class="input-container">
 					{#if !item.revealed}
 						<button class="give-up-btn small" on:click|stopPropagation={handleGiveUp} tabindex="-1">

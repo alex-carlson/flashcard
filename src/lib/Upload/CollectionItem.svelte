@@ -200,6 +200,7 @@
 				{/if}
 			{/if}
 			<input id="editedAnswer" type="text" bind:value={item.answer} placeholder="Enter an answer" />
+			<input id="editedExtra" type="text" bind:value={item.extra} placeholder="Enter extra info" />
 			<div class="vertical">
 				<button class="success" on:click={saveEditHandler}><Fa icon={faFloppyDisk} /></button>
 				<button class="danger" on:click={(editableItemId = null)}><Fa icon={faBan} /></button>
@@ -222,7 +223,10 @@
 		{:else}
 			<img class="preview" src={item.file || item.image} alt="Preview" />
 		{/if}
-		<span>{item.answer}</span>
+		<div class="answer-field vertical">
+			<span>{item.answer}</span>
+			<span>{item.extra}</span>
+		</div>
 		{#if isReordering}
 			<div class="reorder">
 				<button on:click={() => reorderItemHandler(index, index - 1)}>

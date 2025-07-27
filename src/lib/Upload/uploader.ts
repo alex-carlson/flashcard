@@ -155,7 +155,8 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 author_id: usr.uid,
                 author: usr.username,
                 category: item.category,
-                answer: item.answer
+                answer: item.answer,
+                extra: item.extra || null
             };
             const result = await apiFetch('/items/upload-url', 'POST', data);
             return result;

@@ -13010,6 +13010,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
   object-fit: contain;
 }
 .uploads ul li span,
+.uploads ul li .answer-field,
 .uploads ul li input[type=text] {
   flex: 1;
 }

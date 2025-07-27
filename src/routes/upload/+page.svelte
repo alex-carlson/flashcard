@@ -466,6 +466,7 @@
 								bind:this={answerInput}
 								placeholder="Enter an answer"
 							/>
+							<input type="text" name="extra" id="extra" bind:value={item.extra} class="form-control mb-2" placeholder="Extra info (optional)" />
 
 							<button
 								type="button"

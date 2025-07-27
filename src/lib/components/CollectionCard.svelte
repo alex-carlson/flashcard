@@ -125,12 +125,6 @@
 		will-change: transform;
 	}
 
-	li:hover {
-		transform: scale(1.035) rotate(-2deg);
-		box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08);
-		z-index: 2;
-	}
-
 	.card-image.placeholder {
 		width: 100%;
 		aspect-ratio: 4 / 3;
