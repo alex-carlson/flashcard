@@ -187,12 +187,17 @@
 		title="Quiz Completed"
 		message={getScoreMessage($stats.percentage)}
 		effect={$stats.isComplete ? 'confetti' : 'none'}
-		onClose={() => quiz.closeModal()}
+		onClose={() => {
+			quiz.revealCards();
+			quiz.closeModal();
+		}}
 		buttons={[
 			{
-				text: 'Close',
-				action: () => quiz.closeModal(),
-				class: 'bg-gray-300 text-black'
+				text: 'Retry',
+				action: () => {
+					quiz.retry();
+				},
+				class: 'bg-yellow-400 text-black'
 			},
 			{
 				text: 'Leaderboards',

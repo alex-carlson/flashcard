@@ -233,14 +233,36 @@ export function createQuizStore() {
     function closeModal(): void {
         update(state => ({
             ...state,
-            showModal: false,
+            showModal: false
+        }));
+    } 
+
+    function revealCards(): void {
+        console.log('Revealing all cards');
+        update(state => ({
+            ...state,
             cards: state.cards.map(card => ({
                 ...card,
                 revealed: true,
                 incorrect: card?.userAnswer !== card?.answer
             }))
         }));
-    } return {
+    }
+
+    function resetCardsToInitialState(): void {
+        update(state => ({
+            ...state,
+            cards: state.cards.map(card => ({
+                ...card,
+                hidden: false,
+                scale: 1,
+                revealed: false,
+                userAnswer: ''
+            })),
+            isComplete: false
+        }));
+    }
+    return {
         subscribe,
         stats,
         update,
@@ -252,8 +274,12 @@ export function createQuizStore() {
         setMode,
         completeQuiz: completeQuizAction,
         closeModal,
+        revealCards,
+        resetCardsToInitialState,
         retry: () => {
+            resetCardsToInitialState();
             update(state => ({ ...state, hasInitialized: false }));
+            closeModal();
         }
     };
 }
