@@ -126,9 +126,23 @@
 		</div>
 		<div class="scroll-wrapper">
 			<div class="suggestion">
-				{#each suggestions as suggestion}
+				{#each suggestions as suggestion, i}
 					<div class="suggestion-item">
-						<img src={suggestion.thumbnail} alt={suggestion.title} loading="lazy" />
+						<img
+							src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
+							alt={suggestion.title}
+							loading="lazy"
+							on:load={() => {
+								if (!suggestion.loaded) {
+									const img = new window.Image();
+									img.src = suggestion.url;
+									img.onload = () => {
+										suggestions[i].loaded = true;
+										suggestions = [...suggestions];
+									};
+								}
+							}}
+						/>
 						<p>{suggestion.title}</p>
 						<button on:click={() => handleAddImage(suggestion.url)}>Add</button>
 					</div>
