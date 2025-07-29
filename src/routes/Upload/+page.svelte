@@ -466,10 +466,8 @@
 									item.collection_id = collection.id;
 									const newItems = await uploadData(item, undefined, false);
 									if (newItems) {
-										console.log('New item added:', newItems);
 										collection.questions = newItems[0].questions;
 										collection.itemsLength = newItems[0].questions.length;
-										console.log('Collection data: ', collection);
 										addToast({
 											type: 'success',
 											message: 'Item added successfully!'
