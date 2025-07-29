@@ -12,8 +12,9 @@
 	let debounceTimer;
 	let throttleTimer;
 	let lastFetchTime = 0;
-	const DEBOUNCE_DELAY = 1000; // 1 second after user stops typing
-	const THROTTLE_DELAY = 5000; // 5 seconds maximum between calls during active typing
+	// Increased debounce and throttle to reduce API calls
+	const DEBOUNCE_DELAY = 1800; // 1.8 seconds after user stops typing
+	const THROTTLE_DELAY = 10000; // 10 seconds minimum between calls for same query
 
 	// Update query when category or searchTerm changes
 	$: query = [category, searchTerm].filter(Boolean).join(' ');
@@ -21,9 +22,12 @@
 	// Log when category or searchTerm changes
 	$: console.log('Category:', category, 'SearchTerm:', searchTerm);
 
-	// Debounced search function
+	// In-memory cache for query+fileType -> suggestions
+	const suggestionCache = new Map();
+	// Track in-flight fetches to avoid duplicate calls
+	const inflightFetches = new Map();
+
 	function debouncedFetch() {
-		// Clear existing timers
 		if (debounceTimer) clearTimeout(debounceTimer);
 		if (throttleTimer) clearTimeout(throttleTimer);
 
@@ -35,13 +39,11 @@
 			fetchSuggestions();
 			lastFetchTime = now;
 		} else {
-			// Set up debounce timer
 			debounceTimer = setTimeout(() => {
 				fetchSuggestions();
 				lastFetchTime = Date.now();
 			}, DEBOUNCE_DELAY);
 
-			// Set up throttle timer as backup
 			const remainingThrottleTime = THROTTLE_DELAY - timeSinceLastFetch;
 			throttleTimer = setTimeout(() => {
 				if (debounceTimer) clearTimeout(debounceTimer);
@@ -62,15 +64,24 @@
 		lastFetchTime = Date.now();
 	}
 	export async function fetchSuggestions() {
-		// if filetype is png, add transparent, no background, isolated, etc. to the query
+		// Use a cache key based on query and fileType
 		let fullQuery = query;
 		if (fileType === 'png') {
 			fullQuery += ' transparent isolated no background';
 		}
+		const cacheKey = `${fullQuery}|${fileType}`;
+		// Use cache if available
+		if (suggestionCache.has(cacheKey)) {
+			suggestions = suggestionCache.get(cacheKey);
+			return;
+		}
+		// If a fetch for this key is in progress, don't start another
+		if (inflightFetches.has(cacheKey)) {
+			return;
+		}
+		inflightFetches.set(cacheKey, true);
 
 		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}`;
-
-		// Add file type filter only if not 'any'
 		if (fileType !== 'any') {
 			url += `&fileType=${fileType}`;
 		}
@@ -80,16 +91,19 @@
 			const data = await res.json();
 
 			if (data.items) {
-				suggestions = data.items
+				const result = data.items
 					.filter((item) => item.link && item.image && item.image.thumbnailLink)
 					.map((item) => ({
 						title: item.title,
 						thumbnail: item.image.thumbnailLink,
 						url: item.link,
-						loaded: false // Track if full image is loaded
+						loaded: false
 					}));
+				suggestions = result;
+				suggestionCache.set(cacheKey, result);
 			} else {
 				suggestions = [];
+				suggestionCache.set(cacheKey, []);
 			}
 		} catch (e) {
 			console.error('Image search failed:', e);
@@ -97,6 +111,8 @@
 				type: 'error',
 				message: 'Failed to fetch image suggestions. Please try again later.'
 			});
+		} finally {
+			inflightFetches.delete(cacheKey);
 		}
 	}
 	function handleAddImage(url) {
@@ -114,12 +130,12 @@
 	<div class="search-controls">
 		<label for="searchOverride">Search Override:</label>
 		<input
-		name="searchOverride"
-		type="text"
-		bind:value={query}
-		placeholder="Search for images..."
-		on:input={debouncedFetch}
-		class="search-input"
+			name="searchOverride"
+			type="text"
+			bind:value={query}
+			placeholder="Search for images..."
+			on:input={debouncedFetch}
+			class="search-input"
 		/>
 		<h6 class="mt-2">Showing results for {query}</h6>
 		<div class="file-type-selector">

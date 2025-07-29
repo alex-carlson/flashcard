@@ -222,11 +222,16 @@ export async function uploadAudio(item) {
 
     const formData = new FormData();
     const uuid = item.uuid || uuidv4(); // Use provided uuid or generate a new one
+    formData.append('id', uuid);
+    // formData.append('collection_id', item.collection_id || null);
+    formData.append('type', 'audio');
+    // formData.append('prompt', item.prompt || item.file.name);
+    // formData.append('answer', item.answer || '');
     formData.append('folder', `${username}/${item.category}`);
     formData.append('author', username);
-    formData.append('author_id', author_id);
-    formData.append('type', 'audio');
-    formData.append('id', uuid);
+    // formData.append('author_id', author_id);
+    // formData.append('title', item.title || '');
+    // formData.append('thumbnail', item.thumbnail || '');
 
     // Append all properties from item to formData
     for (const [key, value] of Object.entries(item)) {
@@ -255,12 +260,15 @@ export async function uploadQuestion(data) {
     const d = {
         uuid: uuidv4(),
         question: data.question,
+        prompt: data.question,
         folder: `${username}/${data.category}`,
         answer: data.answer,
         category: data.category,
         author: username,
         author_id: usr.uid,
-        author_uuid: usr.id
+        author_uuid: usr.id,
+        collection_id: data.collection_id || null,
+        extra: data.extra || null,
     };
 
     console.log('Uploading question data:', d);

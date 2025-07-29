@@ -548,17 +548,27 @@
 								url: e.detail.videoId,
 								audio: e.detail.videoId,
 								category: collection.category,
-								answer: e.detail.title
+								answer: e.detail.title,
+								collection_id: collection.id,
+								type: 'audio',
+								author_id: $user.public_id,
+								prompt: e.detail.videoId,
+								audio_thumbnail: cacheBuster(
+									`https://img.youtube.com/vi/${e.detail.videoId}/default.jpg`
+								),
+								audio_title: e.detail.title
 							};
 							console.log('Audio data to upload:', audioData);
 							const newItems = await uploadAudio(audioData);
-							if (newItems) {
-								collection.questions = newItems[0].questions;
-								collection.itemsLength = newItems[0].questions.length;
+							console.log('New items after audio upload:', newItems);
+							if (newItems && newItems.question) {
+								collection.questions = newItems.question.id;
+								collection.itemsLength = collection.questions.length;
 								addToast({
 									type: 'success',
 									message: 'Audio added successfully!'
 								});
+								refreshCollection();
 							}
 						}}
 					/>
@@ -589,10 +599,13 @@
 										});
 										return;
 									}
-									const newItems = await uploadQuestion(item);
-									if (newItems) {
-										collection.questions = newItems[0].questions;
-										collection.itemsLength = newItems[0].questions.length;
+									item.collection_id = collection.id;
+									console.log('Adding question:', item);
+									const newItem = await uploadQuestion(item);
+									if (newItem && newItem.question.id) {
+										// Add the new question's id to the questions array
+										collection.questions = [...(collection.questions || []), newItem.question.id];
+										collection.itemsLength = collection.questions.length;
 										addToast({
 											type: 'success',
 											message: 'Question added successfully!'
@@ -601,6 +614,7 @@
 										item.answer = '';
 										// Focus and scroll to question input for next item
 										setTimeout(focusQuestionInput, 100);
+										refreshCollection();
 									}
 								}}>Add Question</button
 							>
