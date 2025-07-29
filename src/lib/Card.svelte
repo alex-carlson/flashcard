@@ -80,24 +80,24 @@
 		on:click={() => currentMode === 'FLASH_CARDS' && toggleReveal(i)}
 	>
 		{#if item.type === 'audio'}
-			<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
+			<YoutubeAudioPlayer videoId={item.prompt} />
 			{#if item.revealed}
 				<div class="audio-revealed">
 					<a
-						href={`https://www.youtube.com/watch?v=${item.audio}`}
+						href={`https://www.youtube.com/watch?v=${item.prompt}`}
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
+						<img src={item.audio_thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
 					</a>
 					<div class="youtube-title">
-						{item.title}
+						{item.audio_title}
 					</div>
 				</div>
 			{/if}
 		{:else if item.type === 'image'}
 			<LazyLoadImage
-				imageUrl={item.imageUrl}
+				imageUrl={item.prompt}
 				on:load={() => onCardLoad(i)}
 				on:error={() => {
 					item.hidden = true;
@@ -105,7 +105,7 @@
 				}}
 			/>
 		{:else if item.type === 'text'}
-			<h2 class="p-3">{item.question || 'Loading'}</h2>
+			<h2 class="p-3">{item.prompt || 'Loading'}</h2>
 		{/if}
 
 		<div class="answerbox mt-2">

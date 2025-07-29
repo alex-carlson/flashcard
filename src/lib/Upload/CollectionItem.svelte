@@ -11,19 +11,32 @@
 		faChevronUp,
 		faChevronDown
 	} from '@fortawesome/free-solid-svg-icons';
-	import { uploadData } from './uploader.js';
+	import { SaveImageEdit, uploadData } from './uploader.js';
+	import { getCurrentUser } from '../api/supabaseClient';
 	import { addToast } from '../../stores/toast.js';
-	export let item;
+	import { apiFetch } from '../api/fetchdata';
+	export let itemId;
 	export let index;
 	export let editableItemId;
 	export let isReordering;
 	export let collection; // Add collection prop to get category
+	let item;
 	let isCropping = false; // Track if cropping is active
 	let isDrawing = false; // Track if drawing is active
+	let lastFetchedId = null;
 	const dispatch = createEventDispatcher();
 
+	$: if (collection && itemId != null && itemId !== lastFetchedId) {
+		lastFetchedId = itemId;
+		(async () => {
+			item = await apiFetch(`/items/${itemId}`);
+			console.log('Fetched item:', item);
+		})();
+	}
+
 	function removeItemHandler() {
-		dispatch('removeItem', item.id);
+		console.log('Removing item with ID:', itemId);
+		dispatch('removeItem', itemId);
 	}
 
 	function reorderItemHandler(prevIndex, newIndex) {
@@ -57,43 +70,36 @@
 		}
 	}
 
-	async function uploadChangedImage(file, fileName = null) {
+	async function uploadChangedImage(file) {
 		try {
-			// Set the originalname property on the file
-			if (file && typeof file === 'object') {
-				const defaultFileName = fileName || file.name || 'modified-image.jpg';
-				file.originalname = defaultFileName;
+			console.log('Uploading file:', file, 'size:', file.size, 'type:', file.type);
+			const formData = new FormData();
+			formData.append('uuid', itemId);
+			formData.append('file', file); // This must be the cropped file
+			formData.append('folder', '/');
+			formData.append('forceJpeg', false);
+			formData.append('author_id', collection.author_uuid);
+
+			for (const [key, value] of formData.entries()) {
+				console.log(`formData[${key}] =`, value);
 			}
 
-			// Create a temporary item object with the new file
-			const tempItem = {
-				...item,
-				file: file,
-				// Keep the existing answer
-				answer: item.answer,
-				// Add category from collection
-				category: collection?.category || item.category
-			};
-
-			console.log('Temporary item for upload:', tempItem);
-
 			// Upload the new image
-			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
+			const result = await SaveImageEdit(formData); // false indicates this is an update
 
-			if (result && result.length > 0) {
-				// Update the item with the new image URL
-				const updatedItem = result[0].items.find((i) => i.id === item.id);
-				if (updatedItem) {
-					item.image = updatedItem.image;
+			console.log('Image upload result:', result);
 
-					addToast({
-						type: 'success',
-						message: 'Image updated successfully!'
-					});
+			if (result) {
+				item.thumbnail = result.url;
+				item.prompt = result.url; // Update the prompt with the new image URL
+				item.image = result.url; // Update the image field
 
-					// Dispatch event to parent to update the collection
-					dispatch('updateItem', { id: item.id, image: item.image });
-				}
+				addToast({
+					type: 'success',
+					message: 'Image updated successfully!'
+				});
+
+				dispatch('updateItem', item);
 			}
 		} catch (error) {
 			console.error('Error updating image:', error);
@@ -107,12 +113,9 @@
 	async function onCropped(event) {
 		console.log('Cropped event received:', event);
 		const croppedFile = event.detail;
-
-		//get extension from type
-		const fileExtension = croppedFile.type.split('/')[1] || 'png';
-
-		await uploadChangedImage(croppedFile, 'cropped-image.' + fileExtension);
-		isCropping = false; // Reset cropping state
+		console.log('Cropped file:', croppedFile, 'size:', croppedFile.size, 'type:', croppedFile.type);
+		await uploadChangedImage(croppedFile);
+		isCropping = false;
 	}
 
 	async function onSave(event) {
@@ -168,7 +171,17 @@
 </script>
 
 <li class={isReordering ? 'item reorder' : 'item'} draggable={isReordering}>
-	{#if editableItemId === item.id && item.id != null}
+	{#if itemId == null}
+		<div class="loading">Loading...</div>
+	{:else if item == null}
+		<div class="error">Item not found</div>
+		<!-- add remove button -->
+		<div class="vertical">
+			<button class="remove danger" on:click={() => removeItemHandler(itemId)}>
+				<Fa icon={faTrashCan} />
+			</button>
+		</div>
+	{:else if editableItemId === item.id && item.id != null}
 		<div class="editing">
 			{#if item.question != null}
 				<input
@@ -184,19 +197,17 @@
 					bind:value={item.audio}
 					placeholder="Enter an audio URL"
 				/>
-			{:else}
-				<img src={item.image} alt="To crop" class="border" />
+			{:else if isEditable(item.prompt)}
+				<img src={item.prompt} alt="To crop" class="border" />
 				{#if !isCropping && !isDrawing}
 					<div class="actions my-3">
-						{#if isEditable(item.image)}
-							<button class="btn btn-secondary" on:click={() => (isCropping = true)}>Crop</button>
-							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Edit</button>
-						{/if}
+						<button class="btn btn-secondary" on:click={() => (isCropping = true)}>Crop</button>
+						<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Edit</button>
 					</div>
 				{:else if isCropping}
-					<Cropper src={item.image} on:cropped={onCropped} on:cancel={onCancel} />
+					<Cropper src={item.prompt} on:cropped={onCropped} on:cancel={onCancel} />
 				{:else if isDrawing}
-					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
+					<Drawing src={item.prompt} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
 			<input id="editedAnswer" type="text" bind:value={item.answer} placeholder="Enter an answer" />
@@ -207,9 +218,9 @@
 			</div>
 		</div>
 	{:else}
-		{#if item.question != null}
-			<span class="question">{item.question}</span>
-		{:else if item.audio != null}
+		{#if item.type == 'text'}
+			<span class="question">{item.prompt}</span>
+		{:else if item.type == 'audio'}
 			<div class="audio">
 				{#if item.thumbnail}
 					<img src={item.thumbnail} alt={item.answer} />
@@ -221,7 +232,7 @@
 				{/if}
 			</div>
 		{:else}
-			<img class="preview" src={item.file || item.image} alt="Preview" />
+			<img class="preview" src={`${item.prompt}`} alt="Preview" />
 		{/if}
 		<div class="answer-field vertical">
 			<span>{item.answer}</span>

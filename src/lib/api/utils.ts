@@ -136,6 +136,40 @@ export function mapCards(rawItems) {
         });
 }
 
+export async function mapCardsById(collectionId) {
+    // Step 1: Fetch the questions array from collections_v2
+    const { data: collectionData, error: collectionError } = await supabase
+        .from('collections_v2')
+        .select('questions')
+        .eq('id', collectionId)
+        .single();
+
+    if (collectionError) {
+        console.error('Error fetching collection:', collectionError);
+        return [];
+    }
+
+    const questionIds = collectionData?.questions;
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+        return [];
+    }
+
+    // Step 2: Fetch questions by IDs
+    const { data: questionsData, error: questionsError } = await supabase
+        .from('questions')
+        .select('*')
+        .in('id', questionIds);
+
+    if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
+        return [];
+    }
+
+    console.log('Fetched questions:', questionsData);
+
+    return questionsData || [];
+}
+
 export function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     return date.toLocaleDateString(undefined, {

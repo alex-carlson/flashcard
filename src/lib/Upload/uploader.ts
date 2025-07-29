@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
-import { on } from 'svelte/events';
 import { addToast } from '$stores/toast';
 
 // Helper function to safely get current user
@@ -138,26 +137,51 @@ export function confirmDelete(id, onSuccess = () => { }) {
     }
 }
 
+export async function SaveImageEdit(data) {
+
+    try {
+        const result = await apiFetch('/items/edited-image', 'POST', data, true);
+        console.log('Image edit saved:', result);
+        addToast({
+            message: 'Image edit saved successfully!',
+            type: 'success',
+            duration: 3000
+        });
+        return result;
+    } catch (error) {
+        console.error('Error saving image edit:', error);
+        addToast({
+            message: 'Failed to save image edit. Please try again.',
+            type: 'error',
+            duration: 3000
+        });
+        throw error;
+    }
+}
+
 // Upload data
 export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
     const usr = getCurrentUser();
 
     // If file is a URL (string), call /upload-url
     if (typeof item.file === 'string') {
-        console.log('Detected URL upload:', item.file);
         try {
+            console.log("Item data:", item);
             const data = {
                 uuid,
                 url: item.file,
+                prompt: item.file,
                 folder: `${usr.username}/${item.category}`,
                 forceJpeg: forceJpg,
                 author_uuid: usr.id,
                 author_id: usr.uid,
                 author: usr.username,
                 category: item.category,
+                collection_id: item.collection_id,
                 answer: item.answer,
                 extra: item.extra || null
             };
+            console.log('Uploading URL data:', data);
             const result = await apiFetch('/items/upload-url', 'POST', data);
             return result;
         } catch (error) {

@@ -47,7 +47,6 @@
 	}
 
 	image.onload = drawImageToCanvas;
-	image.crossOrigin = 'anonymous'; // Enable CORS for image loading
 	onMount(() => {
 		if (src) {
 			// Set crossOrigin before setting src

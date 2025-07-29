@@ -21,37 +21,45 @@
 			document.head.appendChild(link);
 		}
 
-		if (!image.complete) {
-			await new Promise((resolve, reject) => {
-				image.onload = resolve;
-				image.onerror = reject;
-			});
-		}
-
-		cropper = new Cropper(image, {
-			viewMode: 1,
-			autoCropArea: 1,
-			dragMode: 'crop',
-			zoomable: false,
-			scalable: false,
-			toggleDragModeOnDblclick: false,
-			background: false,
-			movable: false,
-			cropBoxMovable: true,
-			cropBoxResizable: true,
-			ready() {
-				// Fill both width and height of the cropper container
-				const containerData = cropper.getContainerData();
-				const imageData = cropper.getImageData();
-
-				// Calculate scale to fill both width and height
-				const scaleW = containerData.width / imageData.naturalWidth;
-				const scaleH = containerData.height / imageData.naturalHeight;
-				const scale = Math.max(scaleW, scaleH); // Use the larger scale to fill
-
-				cropper.zoomTo(scale);
+		try {
+			if (!image.complete) {
+				await new Promise((resolve, reject) => {
+					image.onload = resolve;
+					image.onerror = (e) => {
+						console.error('Image failed to load in Cropper:', e);
+						reject(e);
+					};
+				});
 			}
-		});
+
+			cropper = new Cropper(image, {
+				viewMode: 1,
+				autoCropArea: 1,
+				dragMode: 'crop',
+				zoomable: false,
+				scalable: false,
+				toggleDragModeOnDblclick: false,
+				background: false,
+				movable: false,
+				cropBoxMovable: true,
+				cropBoxResizable: true,
+				ready() {
+					// Fill both width and height of the cropper container
+					const containerData = cropper.getContainerData();
+					const imageData = cropper.getImageData();
+
+					// Calculate scale to fill both width and height
+					const scaleW = containerData.width / imageData.naturalWidth;
+					const scaleH = containerData.height / imageData.naturalHeight;
+					const scale = Math.max(scaleW, scaleH); // Use the larger scale to fill
+
+					cropper.zoomTo(scale);
+				}
+			});
+		} catch (e) {
+			console.error('Failed to initialize cropper due to image load error:', e);
+			// Optionally, dispatch an error event or set an error state
+		}
 	});
 
 	onDestroy(() => {
@@ -122,7 +130,13 @@
 
 <div class="cropper-container">
 	<div class="cropper">
-		<img bind:this={image} {src} alt="To crop" style="max-width: 100%; display: block;" />
+		<img
+			bind:this={image}
+			{src}
+			alt="To crop"
+			crossorigin="anonymous"
+			style="max-width: 100%; display: block;"
+		/>
 		<div class="cropper-actions">
 			<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
 			<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>

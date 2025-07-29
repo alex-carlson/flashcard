@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { fetchCollectionById } from '$lib/api/collections';
 import { fetchUser, completeQuiz } from '$lib/api/user';
-import { mapCards } from '$lib/api/utils';
+import { mapCardsById } from '$lib/api/utils';
 import { addToast } from './toast';
 
 // Types
@@ -80,20 +80,38 @@ export function createQuizStore() {
     }; const { subscribe, update } = writable(initialState);
 
     // Derived stats
-    const stats = derived({ subscribe }, ($state): QuizStats => {
-        const cards = $state.cards || [];
-        return {
-            total: cards.length,
-            answered: cards.filter(c => c?.revealed).length,
-            correct: cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length,
-            percentage: cards.length > 0
-                ? Math.round((cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length / cards.length) * 100)
-                : 0,
-            areAnyRevealed: cards.some(card => card?.revealed),
-            canReset: cards.some(card => card?.scale !== 1 || card?.hidden),
-            isComplete: cards.length > 0 && cards.every(card => card?.revealed)
-        };
-    });
+    // Wait until the store has initialized (i.e., after async loadCollection)
+    const stats = derived(
+        { subscribe },
+        ($state, set) => {
+            // If not initialized, don't emit stats yet
+            if (!$state.hasInitialized) {
+                return;
+            }
+            const cards = $state.cards || [];
+            set({
+                total: cards.length,
+                answered: cards.filter(c => c?.revealed).length,
+                correct: cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length,
+                percentage: cards.length > 0
+                    ? Math.round((cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length / cards.length) * 100)
+                    : 0,
+                areAnyRevealed: cards.some(card => card?.revealed),
+                canReset: cards.some(card => card?.scale !== 1 || card?.hidden),
+                isComplete: cards.length > 0 && cards.every(card => card?.revealed)
+            });
+        },
+        // Initial value (before hasInitialized)
+        {
+            total: 0,
+            answered: 0,
+            correct: 0,
+            percentage: 0,
+            areAnyRevealed: false,
+            canReset: false,
+            isComplete: false
+        }
+    );
 
     async function loadCollection(collectionId: string | null): Promise<void> {
         if (!collectionId) {
@@ -124,14 +142,16 @@ export function createQuizStore() {
 
             const authorData = await fetchUser(data.author_public_id);
 
-            if (!data.items || data.items.length === 0) {
+            if (!data.questions || data.questions.length === 0) {
                 addToast({
                     type: 'warning',
                     message: 'This collection has no items'
                 });
             }
 
-            const cards = mapCards(data.items || []); update(state => ({
+            const cards = await mapCardsById(collectionId);
+
+            update(state => ({
                 ...state,
                 cards,
                 collection: {
@@ -235,7 +255,7 @@ export function createQuizStore() {
             ...state,
             showModal: false
         }));
-    } 
+    }
 
     function revealCards(): void {
         console.log('Revealing all cards');

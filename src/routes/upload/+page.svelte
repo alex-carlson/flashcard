@@ -40,7 +40,10 @@
 
 	let tagDebounceTimeout;
 
-	$: if ($user?.public_id) {
+	// Only load collections when $user?.public_id is set and changes
+	let lastLoadedUserId = null;
+	$: if ($user?.public_id && $user.public_id !== lastLoadedUserId) {
+		lastLoadedUserId = $user.public_id;
 		console.log('User public_id:', $user.public_id);
 		loadCollections();
 	}
@@ -93,13 +96,12 @@
 				isPublic = !collection.private || false;
 
 				// Initialize items array if it doesn't exist
-				if (!collection.items) {
-					collection.items = [];
+				if (!collection.questions) {
+					collection.questions = [];
 				}
 
 				// Set items length
-				collection.itemsLength = collection.items ? collection.items.length : 0;
-
+				collection.itemsLength = collection.questions ? collection.questions.length : 0;
 				console.log('Collection set with', collection.itemsLength, 'items');
 			} else {
 				console.error('No collection data received');
@@ -117,32 +119,20 @@
 		}
 	}
 
+	function refreshCollection() {
+		if (collection && collection.id) {
+			setCollection(collection.id);
+		} else {
+			console.warn('No collection set to refresh');
+		}
+	}
+
 	function handleCollectionDeleted(newCollection) {
 		collection = null;
 		addToast({
 			type: 'success',
 			message: 'Collection deleted successfully!'
 		});
-	}
-
-	async function setVisible(event) {
-		const data = {
-			category: collection.category,
-			author_public_id: $user.public_id,
-			visible: event.target.checked
-		};
-
-		console.log('Setting visibility:', data);
-
-		try {
-			await apiFetch('/collections/setVisible', 'POST', data);
-		} catch (error) {
-			console.error('Error setting visibility:', error);
-			addToast({
-				type: 'error',
-				message: 'Failed to update visibility. Please try again.'
-			});
-		}
 	}
 
 	async function updateCollection() {
@@ -183,6 +173,13 @@
 			console.error('Error fetching recommended tags:', error);
 			return [];
 		}
+	}
+
+	function cacheBuster(url) {
+		const timestamp = Date.now();
+		const cacheBustedUrl = new URL(url, window.location.origin);
+		cacheBustedUrl.searchParams.set('v', timestamp);
+		return cacheBustedUrl.toString();
 	}
 
 	$: if (tempCategory || tempDescription) {
@@ -245,7 +242,7 @@
 					on:click={async () => {
 						const result = await createCollection(tempCategory);
 						if (result && result.length > 0) {
-							console.log('New collection created:', result);
+							console.log('New collection created');
 							await loadCollections();
 							// Find the new collection by id and set it
 							const newCol = result[0];
@@ -351,19 +348,20 @@
 			<div class="uploads py-2">
 				<h4>Questions</h4>
 				<ul class="items-list list-group mb-4">
-					{#if collection.items && collection.items.length > 0}
-						{#each collection.items as item, index (item.id)}
+					{#if collection.questions && collection.questions.length > 0}
+						{#each collection.questions as question, index (question)}
 							<CollectionItem
-								{item}
+								itemId={question}
 								{index}
 								{collection}
 								bind:editableItemId
-								on:removeItem={async () => {
-									const updatedItems = await removeItem(item.id, collection.category);
+								on:removeItem={async (e) => {
+									console.log('Remove item event:', e.detail);
+									const updatedItems = await removeItem(e.detail, collection.category);
 									if (updatedItems) {
 										console.log('updatedItems:', updatedItems);
-										collection.items = updatedItems.items;
-										collection.itemsLength = updatedItems.items.length;
+										collection.questions = updatedItems.questions;
+										collection.itemsLength = updatedItems.questions.length;
 									}
 								}}
 								on:saveEdit={async (e) => {
@@ -371,6 +369,7 @@
 									const d = {
 										collection: collection.category,
 										author_id: $user.public_id,
+										id: e.detail.id,
 										...e.detail
 									};
 									console.log('Data to save:', d);
@@ -380,24 +379,9 @@
 									}
 								}}
 								on:updateItem={(e) => {
-									const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
-									if (itemIndex !== -1) {
-										const updatedItem = {
-											...collection.items[itemIndex],
-											...e.detail
-										};
-
-										// If the image was updated, append a cache-busting param
-										if (updatedItem.image) {
-											const timestamp = Date.now();
-											const url = new URL(updatedItem.image, window.location.origin);
-											url.searchParams.set('v', timestamp);
-											updatedItem.image = url.toString();
-										}
-
-										collection.items[itemIndex] = updatedItem;
-										collection.items = [...collection.items]; // Trigger reactivity
-									}
+									const itemData = e.detail;
+									console.log('Update item event:', itemData);
+									refreshCollection();
 								}}
 								on:reorderItem={async (e) => {
 									const result = await reorderItems(
@@ -407,8 +391,8 @@
 									);
 									if (result) {
 										console.log('Reordered items:', result);
-										collection.items = result[0].items;
-										collection.itemsLength = result[0].items.length;
+										collection.questions = result[0].questions;
+										collection.itemsLength = result[0].questions.length;
 									}
 								}}
 								{isReordering}
@@ -466,17 +450,26 @@
 								bind:this={answerInput}
 								placeholder="Enter an answer"
 							/>
-							<input type="text" name="extra" id="extra" bind:value={item.extra} class="form-control mb-2" placeholder="Extra info (optional)" />
+							<input
+								type="text"
+								name="extra"
+								id="extra"
+								bind:value={item.extra}
+								class="form-control mb-2"
+								placeholder="Extra info (optional)"
+							/>
 
 							<button
 								type="button"
 								class="btn btn-success mt-2"
 								on:click={async () => {
+									item.collection_id = collection.id;
 									const newItems = await uploadData(item, undefined, false);
 									if (newItems) {
 										console.log('New item added:', newItems);
-										collection.items = newItems[0].items;
-										collection.itemsLength = newItems[0].items.length;
+										collection.questions = newItems[0].questions;
+										collection.itemsLength = newItems[0].questions.length;
+										console.log('Collection data: ', collection);
 										addToast({
 											type: 'success',
 											message: 'Item added successfully!'
@@ -513,12 +506,20 @@
 
 									item.file = e.detail;
 									item.category = collection.category;
+									item.collection_id = collection.id;
 									console.log('Adding image from suggestions:', item);
 									const newItem = await uploadData(item, undefined, false);
-									if (newItem && newItem[0] && newItem[0].items) {
-										// Update collection data
-										collection.items = newItem[0].items;
-										collection.itemsLength = newItem[0].items.length;
+									console.log('New item from suggestions:', newItem);
+									console.log('Collection before adding new item:', collection);
+									if (newItem && newItem.question) {
+										const formattedItem = {
+											id: newItem.question.id,
+											image: import.meta.env.VITE_S3_URL + newItem.question.prompt,
+											answer: newItem.question.answer
+										};
+										// Add the new question to the collection items
+										collection.questions = [...(collection.questions || []), formattedItem.id];
+										collection.itemsLength = collection.questions.length;
 
 										addToast({
 											type: 'success',
@@ -552,8 +553,8 @@
 							console.log('Audio data to upload:', audioData);
 							const newItems = await uploadAudio(audioData);
 							if (newItems) {
-								collection.items = newItems[0].items;
-								collection.itemsLength = newItems[0].items.length;
+								collection.questions = newItems[0].questions;
+								collection.itemsLength = newItems[0].questions.length;
 								addToast({
 									type: 'success',
 									message: 'Audio added successfully!'
@@ -590,8 +591,8 @@
 									}
 									const newItems = await uploadQuestion(item);
 									if (newItems) {
-										collection.items = newItems[0].items;
-										collection.itemsLength = newItems[0].items.length;
+										collection.questions = newItems[0].questions;
+										collection.itemsLength = newItems[0].questions.length;
 										addToast({
 											type: 'success',
 											message: 'Question added successfully!'
@@ -622,12 +623,12 @@
 						class="btn btn-outline-secondary"
 						on:click={async () => {
 							const shuffled = await shuffleItems({
-								items: collection.items,
+								items: collection.questions,
 								category: collection.category
 							});
 							if (shuffled && shuffled.length > 0) {
-								collection.items = shuffled[0].items;
-								collection.itemsLength = shuffled[0].items.length;
+								collection.questions = shuffled[0].questions;
+								collection.itemsLength = shuffled[0].questions.length;
 							}
 						}}>Shuffle</button
 					>
