@@ -1,125 +1,191 @@
 <script>
-    import SortAndFilter from "../../lib/SortAndFilter.svelte";
-    import LazyLoadImage from "../../lib/LazyLoadImage.svelte";
-    import { onMount } from "svelte";
+	import SortAndFilter from '$lib/SortAndFilter.svelte';
+	import { apiFetch } from '$lib/api/fetchdata';
+	import { onMount } from 'svelte';
+	import CollectionCard from '$lib/components/CollectionCard.svelte';
+	import Loading from '$lib/components/Loading.svelte';
+	let collections = [];
+	let filteredCollections = [];
+	let page = 1;
+	let sortOption = 'date';
+	let sortOrder = 'desc';
+	let filterText = '';
+	let itemsPerPage = 20;
+	let totalPages = 0;
+	let totalCount = 0;
+	let isLoading = true;
 
-    let collections = []; // Original collections array
-    let filteredCollections = []; // Array for sorted/filtered collections
-    let page = 0;
-    let sortOption = "name"; // Default sort option
-    let itemsPerPage = 10; // Default items per page
+	async function fetchPaginatedCollections(
+		pageNum = 1,
+		limit = 20,
+		sortMode = 'date',
+		sortOrder = 'desc',
+		filterText = ''
+	) {
+		isLoading = true;
+		try {
+			const url = `/collections/page/${pageNum}/${limit}`;
 
-    document.title = "Explore";
+			// Pass sort and filter parameters in the request body
+			const requestBody = {
+				sortMode,
+				sortOrder,
+				filter: filterText
+			};
 
-    // Fetch all collections
-    async function fetchCollections() {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/collections`,
-                {
-                    method: "GET",
-                },
-            );
+			const response = await apiFetch(url, 'POST', requestBody, false, false);
 
-            if (!response.ok) {
-                throw new Error("Failed to fetch collections");
-            }
+			console.log('Paginated collections response:', response);
 
-            const data = await response.json();
-            collections = data;
-            console.log("Fetched collections:", collections);
-            filteredCollections = data; // Initialize filteredCollections
-        } catch (error) {
-            console.error("Error fetching collections:", error);
-        }
-    }
+			if (response && response.collections) {
+				collections = response.collections;
+				filteredCollections = response.collections;
+				totalCount = response.totalCount || 0;
+				totalPages = response.totalPages || 0;
+			} else {
+				console.warn('No collections in response');
+				collections = [];
+				filteredCollections = [];
+				totalCount = 0;
+				totalPages = 0;
+			}
+		} catch (error) {
+			console.error('Error fetching paginated collections:', error);
+			collections = [];
+			filteredCollections = [];
+			totalCount = 0;
+			totalPages = 0;
+		} finally {
+			isLoading = false;
+		}
+	}
 
-    function nextPage() {
-        if ((page + 1) * itemsPerPage < filteredCollections.length) {
-            page++;
-        }
-    }
+	function goToPage(pageNum) {
+		if (pageNum >= 1 && pageNum <= totalPages && pageNum !== page) {
+			page = pageNum;
+			fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
+		}
+	}
 
-    function prevPage() {
-        if (page > 0) {
-            page--;
-        }
-    }
+	// Generate array of page numbers to show
+	$: pageNumbers = (() => {
+		if (totalPages <= 7) {
+			// Show all pages if 7 or fewer
+			return Array.from({ length: totalPages }, (_, i) => i + 1);
+		}
 
-    function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        });
-    }
+		const pages = [];
+		const current = page;
+		const total = totalPages;
 
-    // Reactive statement for paginated collections
-    $: paginatedCollections = filteredCollections.slice(
-        page * itemsPerPage,
-        (page + 1) * itemsPerPage,
-    );
+		// Always show first page
+		pages.push(1);
 
-    // Reset page to 0 when itemsPerPage changes
-    $: {
-        page = 0;
-    }
+		if (current <= 4) {
+			// Near beginning: 1, 2, 3, 4, 5, ..., last
+			for (let i = 2; i <= Math.min(5, total - 1); i++) {
+				pages.push(i);
+			}
+			if (total > 5) {
+				pages.push('...');
+				pages.push(total);
+			}
+		} else if (current >= total - 3) {
+			// Near end: 1, ..., last-4, last-3, last-2, last-1, last
+			if (total > 5) {
+				pages.push('...');
+			}
+			for (let i = Math.max(total - 4, 2); i <= total; i++) {
+				pages.push(i);
+			}
+		} else {
+			// Middle: 1, ..., current-1, current, current+1, ..., last
+			pages.push('...');
+			for (let i = current - 1; i <= current + 1; i++) {
+				pages.push(i);
+			}
+			pages.push('...');
+			pages.push(total);
+		}
 
-    onMount(() => {
-        fetchCollections();
-    });
+		return pages;
+	})();
+	// Handle items per page change
+	async function handleItemsPerPageChange(event) {
+		const newItemsPerPage = event.detail;
+		if (newItemsPerPage !== itemsPerPage) {
+			itemsPerPage = newItemsPerPage;
+			page = 1; // Reset to first page
+			await fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
+		}
+	}
+
+	// Handle server-side filter changes
+	async function handleServerFilterChange(event) {
+		const {
+			sortMode,
+			sortOrder: newOrder,
+			filterText: newFilter,
+			itemsPerPage: newLimit
+		} = event.detail;
+		// Update current values
+		sortOption = sortMode;
+		sortOrder = newOrder;
+		filterText = newFilter;
+		itemsPerPage = newLimit;
+
+		page = 1; // Reset to first page when filters change
+		await fetchPaginatedCollections(page, itemsPerPage, sortOption, sortOrder, filterText);
+	}
+	onMount(async () => {
+		document.title = 'Explore';
+		isLoading = true;
+		await fetchPaginatedCollections(1, itemsPerPage, sortOption, sortOrder, filterText);
+	});
 </script>
 
 <div class="container white">
-    <h1>Explore</h1>
-    <SortAndFilter
-        collection={collections}
-        bind:sortOption
-        bind:itemsPerPage
-        on:sortAndFilterChange={(event) => {
-            filteredCollections = event.detail; // Update filteredCollections
-            page = 0; // Reset to the first page after sorting/filtering
-        }}
-    />
+	<h1>Explore</h1>
+	<SortAndFilter
+		collection={collections}
+		bind:sortOption
+		bind:itemsPerPage
+		on:sortAndFilterChange={(event) => {
+			filteredCollections = event.detail; // Update filteredCollections
+			page = 0; // Reset to the first page after sorting/filtering
+		}}
+	/>
 
-    <div class="list">
-        <ul>
-            {#each paginatedCollections as collection}
-                <li>
-                    <a href="#/{collection.author_id}/{collection.category}">
-                        {#if collection.items.length > 0}
-                            <LazyLoadImage
-                                imageUrl={collection.items[0].image}
-                            />
-                        {/if}
-                        <p>
-                            {collection.category}
-                            {#if sortOption === "date"}
-                                {formatTimestamp(collection.created_at)}
-                            {:else if sortOption === "size"}
-                                [{collection.items.length}]
-                            {/if}
-                        </p>
-                    </a>
-                </li>
-            {/each}
-        </ul>
-    </div>
+	<div class="list">
+		<ul>
+			{#each paginatedCollections as collection}
+				<li>
+					<a href="#/{collection.author_id}/{collection.category}">
+						{#if collection.items.length > 0}
+							<LazyLoadImage imageUrl={collection.items[0].image} />
+						{/if}
+						<p>
+							{collection.category}
+							{#if sortOption === 'date'}
+								{formatTimestamp(collection.created_at)}
+							{:else if sortOption === 'size'}
+								[{collection.items.length}]
+							{/if}
+						</p>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	</div>
 
-    <!-- Pagination controls -->
-    <div class="paginationControls">
-        <button on:click={prevPage} disabled={page === 0}>Previous</button>
-        <span>
-            Page {page + 1} of {Math.ceil(
-                filteredCollections.length / itemsPerPage,
-            )}
-        </span>
-        <button
-            on:click={nextPage}
-            disabled={(page + 1) * itemsPerPage >= filteredCollections.length}
-        >
-            Next
-        </button>
-    </div>
+	<!-- Pagination controls -->
+	<div class="paginationControls">
+		<button on:click={prevPage} disabled={page === 0}>Previous</button>
+		<span>
+			Page {page + 1} of {Math.ceil(filteredCollections.length / itemsPerPage)}
+		</span>
+		<button on:click={nextPage} disabled={(page + 1) * itemsPerPage >= filteredCollections.length}>
+			Next
+		</button>
+	</div>
 </div>

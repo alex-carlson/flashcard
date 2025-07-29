@@ -357,26 +357,42 @@
         </div>
     {/if}
 
-    {#if cards.length > 0}
-        <div class="headline padding">
-            <h1>{collection}</h1>
-            <p>
-                by <a href={`#/${author_id}`}>{author}</a>
-            </p>
-            {#if !isPartyMode}
-                <select
-                    name="mode"
-                    id="mode"
-                    on:change={() => SetMode(event.target.value)}
-                >
-                    {#each Object.keys(Modes) as mode}
-                        <option value={mode}>
-                            {Modes[mode]}
-                        </option>
-                    {/each}
-                </select>
-            {/if}
-        </div>
+		<QuizHeader
+			collectionName={$quiz.collection.name}
+			author={$quiz.collection.author}
+			authorSlug={$quiz.collection.author_slug}
+			thumbnail={$quiz.collection.thumbnail}
+			description={$quiz.collection.description}
+		/>
+
+		{#if !isPartyMode}
+			<select class="my-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
+				{#each [['FILL_IN_THE_BLANK', 'Fill in the Blank'], ['TRUE_FALSE', '50/50'], ['MULTIPLE_CHOICE', 'Multiple Choice'], ['FLASH_CARDS', 'Flashcard']] as [mode, label]}
+					<option value={mode} selected={mode === $quiz.currentMode}>
+						{label}
+					</option>
+				{/each}
+			</select>
+		{/if}
+
+		<div class={'flashcards ' + ($quiz.isGrid ? 'grid' : 'vertical')}>
+			{#if $quiz.hasInitialized}
+				{#each $quiz.cards as item, i (item)}
+					<Card
+						item={$quiz.cards[i]}
+						{i}
+						cards={$quiz.cards}
+						currentMode={$quiz.currentMode}
+						shuffleTrigger={$quiz.shuffleTrigger}
+						{onCardLoad}
+						{toggleReveal}
+						updateCards={() => {}}
+						on:correctAnswer={() => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
+						on:giveUp={(e) => setRevealed(e.detail.index, true)}
+					/>
+				{/each}
+			{/if}
+		</div>
 
         <div class={"flashcards padding " + (isGrid ? "grid" : "vertical")}>
             {#each cards as item, i}

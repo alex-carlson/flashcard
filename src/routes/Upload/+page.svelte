@@ -1,557 +1,685 @@
 <script>
-    import { user } from "$stores/user";
-    import { getImageUrl, getSession } from "../../lib/supabaseClient";
-    import Collections from "../../lib/Collections.svelte";
-    import FileUpload from "../../lib/Upload/FileUpload.svelte";
-    import AudioUploader from "../../lib/Upload/AudioUploader.svelte";
-    import { onMount } from "svelte";
-    import { v4 as uuidv4 } from "uuid";
-    import Fa from "svelte-fa";
-    import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
-    import ImageSuggestions from "../../lib/ImageSuggestions.svelte";
-    import CollectionItem from "../../lib/Upload/CollectionItem.svelte";
-    let category = "";
-    let tempCategory = "";
-    let tempAnswer = "";
-    let items = [];
-    let errorMessage,
-        successMessage = "";
-    let isPublic = false;
-    let collections = [];
-    let editableItemId = null;
-    let localItem = { id: 1, file: null, answer: "" };
-    let isRenaming = false;
-    let isReordering = false;
-    let collectionType = "Image";
+	import { user } from '$stores/user';
+	import Collections from '$lib/Collections.svelte';
+	import FileUpload from '$lib/Upload/FileUpload.svelte';
+	import AudioUploader from '$lib/Upload/AudioUploader.svelte';
+	import ImageSuggestions from '$lib/ImageSuggestions.svelte';
+	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
+	import { fetchUserCollections, fetchCollectionById } from '$lib/api/collections';
+	import {
+		uploadThumbnail,
+		uploadQuestion,
+		uploadAudio,
+		uploadData,
+		removeItem,
+		createCollection,
+		confirmDelete,
+		saveEdit,
+		reorderItems,
+		shuffleItems
+	} from '$lib/Upload/uploader';
+	import { apiFetch } from '$lib/api/fetchdata';
+	import { addToast } from '../../stores/toast';
+	let collection = null;
+	let questionType = 'Image';
+	let isPublic = false;
+	let editableItemId = null;
+	let isReordering = false;
+	let collections = [];
+	let showImageSuggestions = false;
 
-    document.title = "Manage Collections";
+	let item = {};
+	let tempCategory = '';
+	let tempDescription = '';
+	let tempTags = '';
+	let answerInput; // Reference to the answer input field
+	let questionInput; // Reference to the question input field
+	let thumbnailUploader; // Reference to the thumbnail FileUpload component
+	let itemUploader; // Reference to the item FileUpload component
+	let suggestedTags = [];
 
-    onMount(async () => {
-        const session = await getSession();
-        if (!session) {
-            console.log("No session, skipping fetch");
-            return;
-        }
-        fetchCollections();
-    });
+	let tagDebounceTimeout;
 
-    async function getAuthHeaders() {
-        const session = await getSession();
-        if (!session) {
-            throw new Error("User session not found");
-        }
-        return {
-            Authorization: `Bearer ${session.access_token}`,
-        };
-    }
+	$: if ($user?.public_id) {
+		loadCollections();
+	}
 
-    async function apiFetch(
-        endpoint,
-        method = "GET",
-        body = null,
-        isFormData = false,
-    ) {
-        const headers = await getAuthHeaders();
-        if (!isFormData) headers["Content-Type"] = "application/json";
-        const response = await fetch(
-            `${import.meta.env.VITE_API_URL}${endpoint}`,
-            {
-                method,
-                headers,
-                body: isFormData ? body : body ? JSON.stringify(body) : null,
-            },
-        );
+	let lastUserId = null;
+	let collectionsDirty = false;
 
-        if (!response.ok) {
-            throw new Error(
-                `${method} ${endpoint} failed: ${response.statusText}`,
-            );
-        }
+	// Only call loadCollections if $user.public_id is truthy
+	$: if ($user?.public_id && ($user.public_id !== lastUserId || collectionsDirty)) {
+		lastUserId = $user.public_id;
+		collectionsDirty = false;
+		loadCollections();
+	}
 
-        return response.json();
-    }
+	async function loadCollections() {
+		if (!$user?.public_id) return; // Prevent API call if user is not set
+		try {
+			const result = await fetchUserCollections($user.public_id);
+			collections = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+		} catch (error) {
+			console.error('Error fetching user collections:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to load collections. Please try again later.'
+			});
+		}
+	}
 
-    // Fetch collections
-    async function fetchCollections() {
-        // Wait for $user to be available before fetching
-        if (!$user || !$user.id) {
-            // Retry after a short delay if user is not ready
-            setTimeout(fetchCollections, 100);
-            return;
-        }
-        try {
-            const url = `/collections/user/${$user.id}`;
-            collections = await apiFetch(url);
-            collections.sort(
-                (a, b) => new Date(b.created_at) - new Date(a.created_at),
-            );
-        } catch (error) {
-            console.error("Error fetching collections:", error);
-        }
-    }
+	function focusAnswerInput() {
+		if (answerInput) {
+			answerInput.focus();
+			answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}
 
-    // Fetch collection details
-    async function fetchCollectionData(id) {
-        console.log("Fetching collection data for ID:", id);
-        try {
-            const data = await apiFetch(`/collections/id/${id}`);
-            category = data.category;
-            items = Array.isArray(data.items) ? data.items : [];
-            isPublic = !data.private;
-            isRenaming = false;
-        } catch (error) {
-            console.error("Error fetching collection:", error);
-        }
-    }
+	function focusQuestionInput() {
+		if (questionInput) {
+			questionInput.focus();
+			questionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}
+	async function setCollection(collectionId) {
+		try {
+			const newCollection = await fetchCollectionById(collectionId, true);
 
-    // Create new collection
-    async function createCollection() {
-        try {
-            const username = $user.username;
-            const data = {
-                category: tempCategory,
-                author_id: $user.id,
-                author: username,
-            };
-            console.log("Creating collection with data:", data);
-            const created = await apiFetch(
-                "/collections/createCollection",
-                "POST",
-                data,
-            );
-            collections = [...collections, created];
-            category = tempCategory;
-        } catch (error) {
-            console.error("Error creating collection:", error);
-            errorMessage = "Create failed. Please try again.";
-        }
-    }
+			if (newCollection) {
+				// Set the collection with all its data
+				collection = newCollection;
 
-    // Rename collection
-    async function renameCollection() {
-        isRenaming = false;
-        try {
-            await apiFetch("/collections/renameCollection", "POST", {
-                oldCategory: category,
-                newCategory: tempCategory,
-            });
-            category = tempCategory;
-        } catch (error) {
-            console.error("Error renaming collection:", error);
-            errorMessage = "Rename failed. Please try again.";
-        }
-    }
+				// Set form values
+				item.category = collection.category || '';
+				tempCategory = collection.category || '';
+				tempDescription = collection.description || '';
+				tempTags = Array.isArray(collection.tags)
+					? collection.tags.join(', ')
+					: typeof collection.tags === 'string'
+						? collection.tags.includes('[')
+							? JSON.parse(collection.tags).join(', ')
+							: collection.tags
+						: '';
+				isPublic = !collection.private || false;
 
-    // Remove item
-    async function removeItem(itemId) {
-        try {
-            await apiFetch("/items/remove", "POST", {
-                category,
-                itemId,
-            });
-            items = items.filter((item) => item.id !== itemId);
-        } catch (error) {
-            console.error("Error removing item:", error);
-            errorMessage = "Remove failed. Please try again.";
-        }
-    }
+				// Initialize items array if it doesn't exist
+				if (!collection.items) {
+					collection.items = [];
+				}
 
-    async function saveEdit(item) {
-        console.log("Saving edit for item:", item);
-        try {
-            await apiFetch("/items/edit", "POST", {
-                collection: category,
-                id: item.id,
-                author_id: $user.id,
-                answer: item.answer,
-            });
-            editableItemId = null;
-        } catch (error) {
-            console.error("Error editing item:", error);
-            errorMessage = "Edit failed. Please try again.";
-            // clear error message after 10 seconds
-            setTimeout(() => {
-                errorMessage = ""; // Clear the error message after 10 seconds
-            }, 10000);
-        }
-    }
+				// Set items length
+				collection.itemsLength = collection.items ? collection.items.length : 0;
 
-    // Reorder items
-    async function reorderItems() {
-        try {
-            const itemAnswers = items.map((item) => item.answer);
-            await apiFetch("/items/reorder", "POST", { category, itemAnswers });
-            isReordering = false;
-        } catch (error) {
-            console.error("Error reordering items:", error);
-            errorMessage = "Reorder failed. Please try again.";
-        }
-    }
+				console.log('Collection set to: ', collection);
+			} else {
+				console.error('No collection data received');
+				addToast({
+					type: 'error',
+					message: 'Failed to load collection data. Please try again.'
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching collection:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to load collection. Please try again.'
+			});
+		}
+	}
 
-    // Delete collection
-    async function deleteCollection() {
-        try {
-            const username = $user.username;
-            const data = {
-                collection: category,
-                author_id: $user.id,
-                username: username,
-            };
-            console.log("Deleting collection:", data);
-            await apiFetch(
-                `/collections/${username}/${category}`,
-                "DELETE",
-                data,
-            );
-            collections = collections.filter((c) => c.category !== category);
-            document.location.reload();
-        } catch (error) {
-            console.error("Error deleting collection:", error);
-            errorMessage = "Delete failed. Please try again.";
-        }
-    }
+	function handleCollectionDeleted(newCollection) {
+		collection = null;
+		addToast({
+			type: 'success',
+			message: 'Collection deleted successfully!'
+		});
+		markCollectionsDirty();
+	}
 
-    // show confirm delete popup
-    function confirmDelete() {
-        if (confirm("Are you sure you want to delete this collection?")) {
-            deleteCollection();
-        }
-    }
+	async function setVisible(event) {
+		const data = {
+			category: collection.category,
+			author_public_id: $user.public_id,
+			visible: event.target.checked
+		};
 
-    // Upload data
-    async function uploadData(uuid = uuidv4()) {
-        const username = $user.username;
-        const author_id = $user.id;
+		console.log('Setting visibility:', data);
 
-        // If file is a URL (string), call /upload-url
-        if (typeof localItem.file === "string") {
-            try {
-                const data = {
-                    uuid,
-                    url: localItem.file,
-                    folder: `${username}/${category}`,
-                    answer: localItem.answer,
-                    category,
-                    author: username,
-                    author_id,
-                };
-                console.log("Uploading URL data:", data);
-                const result = await apiFetch(
-                    "/items/upload-url",
-                    "POST",
-                    data,
-                );
-                showSuccessMessage("Upload successful!");
-                const preview = document.querySelector(".preview");
-                if (preview) preview.src = null;
+		try {
+			await apiFetch('/collections/setVisible', 'POST', data);
+		} catch (error) {
+			console.error('Error setting visibility:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to update visibility. Please try again.'
+			});
+		}
+	}
 
-                localItem.answer = "";
-                document.getElementById("answer").value = "";
-                items = result[0]?.items || [];
-                localItem.file = null;
-                if (preview) preview.scrollIntoView({ behavior: "smooth" });
-            } catch (error) {
-                console.error("Error uploading URL data:", error);
-                showErrorMessage("Upload failed. Please try again.");
-            }
-            return;
-        }
+	// Set visibility
+	async function setVisible(event) {
+		const data = {
+			category,
+			author: $user.username,
+			author_id: $user.id,
+			visible: event.target.checked
+		};
 
-        // Otherwise, upload as file
-        const formData = new FormData();
-        formData.append("uuid", uuid);
-        formData.append("file", localItem.file);
-        formData.append("folder", `${username}/${category}`);
-        formData.append("answer", localItem.answer);
-        formData.append("category", category);
-        formData.append("author", username);
-        formData.append("author_id", author_id);
+		try {
+			const result = await apiFetch(`/collections/update/${collection.id}`, 'POST', data, false);
+			if (result) {
+				addToast({
+					type: 'success',
+					message: 'Collection updated successfully!'
+				});
+				markCollectionsDirty();
+				loadCollections();
+			}
+		} catch (error) {
+			console.error('Error updating collection:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to update collection. Please try again.'
+			});
+		}
+	}
 
-        console.log("Uploading data:", {
-            uuid: formData.get("uuid"),
-            file: formData.get("file"),
-            folder: formData.get("folder"),
-            answer: formData.get("answer"),
-            category: formData.get("category"),
-        });
+	async function fetchRecommendedTags(data) {
+		try {
+			const response = await apiFetch('/collections/tags/recommended', 'POST', { query: data });
+			if (response && Array.isArray(response)) {
+				// Map to just tag strings if response is array of objects
+				return response.map((t) => (typeof t === 'string' ? t : t.tag));
+			}
+			return [];
+		} catch (error) {
+			console.error('Error fetching recommended tags:', error);
+			return [];
+		}
+	}
 
-        try {
-            const result = await apiFetch(
-                "/items/upload",
-                "POST",
-                formData,
-                true,
-            );
-            showSuccessMessage("Upload successful!");
-            const preview = document.querySelector(".preview");
-            if (preview) preview.src = null;
+	$: if (tempCategory || tempDescription) {
+		const query = [tempCategory, tempDescription].filter(Boolean).join(' ');
+		if (query.length > 3) {
+			clearTimeout(tagDebounceTimeout);
+			tagDebounceTimeout = setTimeout(() => {
+				fetchRecommendedTags(query).then((tags) => {
+					// Convert all tags to lowercase
+					tags = tags.map((t) => t.toLowerCase());
+					// Get current tags as lowercase array
+					const currentTags = tempTags
+						.split(',')
+						.map((t) => t.trim().toLowerCase())
+						.filter(Boolean);
+					// Filter out tags already present
+					suggestedTags = tags.filter((t) => !currentTags.includes(t));
+				});
+			}, 400); // 400ms debounce
+		} else {
+			clearTimeout(tagDebounceTimeout);
+			suggestedTags = [];
+		}
+	}
 
-            localItem.answer = "";
-            document.getElementById("answer").value = "";
-            items = result[0]?.items || [];
-            localItem.file = null;
-            if (preview) preview.scrollIntoView({ behavior: "smooth" });
-        } catch (error) {
-            console.error("Error uploading data:", error);
-            showErrorMessage("Upload failed. Please try again.");
-        }
-    }
-
-    // Set visibility
-    async function setVisible(event) {
-        const data = {
-            category,
-            author: $user.username,
-            author_id: $user.id,
-            visible: event.target.checked,
-        };
-
-        try {
-            await apiFetch("/collections/setVisible", "POST", data);
-        } catch (error) {
-            console.error("Error setting visibility:", error);
-            errorMessage = "Visibility change failed. Please try again.";
-        }
-    }
-
-    function showSuccessMessage(message) {
-        successMessage = message;
-        setTimeout(() => {
-            successMessage = ""; // Clear the success message after 10 seconds
-        }, 10000);
-    }
-
-    function showErrorMessage(message) {
-        errorMessage = message;
-        setTimeout(() => {
-            errorMessage = ""; // Clear the error message after 10 seconds
-        }, 10000);
-    }
-
-    function ReOrder(prevIndex, newIndex) {
-        console.log("Reordering items");
-        const item = items[prevIndex];
-        items.splice(prevIndex, 1);
-        items.splice(newIndex, 0, item);
-        // update items to rerender
-        items = [...items];
-    }
-
-    function toggleRenaming() {
-        isRenaming = !isRenaming;
-        if (isRenaming) {
-            tempCategory = category;
-        }
-    }
-
-    async function imageUrlToFile(url, filename) {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: blob.type });
-    }
+	// Call this after user updates collections (e.g. after create, update, delete)
+	function markCollectionsDirty() {
+		collectionsDirty = true;
+	}
 </script>
 
-<div class="container form padding uploader">
-    {#if !user}
-        <p><a href="/login">Log in</a> to manager your collections.</p>
-    {:else}
-        {#if category === ""}
-            {#if collections.length > 0}
-                <Collections
-                    {collections}
-                    on:selectCollection={(e) => fetchCollectionData(e.detail)}
-                />
-            {/if}
-            <input
-                type="text"
-                bind:value={tempCategory}
-                placeholder="Category Name"
-            />
-            <button on:click={createCollection}>Create</button>
-        {:else if isRenaming}
-            <input
-                type="text"
-                id="categoryName"
-                bind:value={tempCategory}
-                placeholder="Enter a category"
-            />
-            <button class="secondary" on:click={renameCollection}>Save</button>
-            <button class="warning" on:click={toggleRenaming}>Cancel</button>
-        {:else}
-            <div class="collection-name">
-                {#await getImageUrl(`${$user.username}/${category}/thumbnail`) then url}
-                    <img
-                        src={url}
-                        alt="Thumbnail"
-                        class="thumbnail"
-                    />
-                {:catch error}
-                    <img
-                        src="/avatar.png"
-                        alt="Thumbnail"
-                        class="thumbnail"
-                    />
-                {/await}
-                <h2>{category}</h2>
-                <button class="secondary" on:click={toggleRenaming}>
-                    <Fa icon={faPenToSquare} />
-                </button>
-            </div>
-            <div class="row">
-                <h2>{isPublic ? "Public" : "Private"}</h2>
-                <label class="switch">
-                    <input
-                        type="checkbox"
-                        bind:checked={isPublic}
-                        on:change={setVisible}
-                    />
-                </label>
-            </div>
-            <div class="padding">
-                <h2>Thumbnail</h2>
-                <FileUpload
-                    on:uploadImage={(event) => {
-                        console.log("Thumbnail upload event:", event.detail);
-                        localItem.file = event.detail;
-                        uploadData("thumbnail");
-                    }}
-                />
-            </div>
-        {/if}
-        <div class="list uploads">
-            <ul class="items-list">
-                {#each items as item, index}
-                    <CollectionItem
-                        {item}
-                        {index}
-                        bind:editableItemId
-                        on:removeItem={removeItem(item.id)}
-                        on:saveEdit={(e) => {
-                            console.log("Save edit event:", e.detail);
-                            saveEdit(e.detail);
-                        }}
-                        on:reorderItem={(e) =>
-                            ReOrder(e.detail.prevIndex, e.detail.newIndex)}
-                        {isReordering}
-                        {isRenaming}
-                    />
-                {/each}
-            </ul>
-        </div>
+<svelte:head>
+	<title>Manage Collections</title>
+</svelte:head>
 
-        {#if errorMessage}
-            <p style="color: red">{errorMessage}</p>
-        {/if}
-        {#if successMessage}
-            <p style="color: green">{successMessage}</p>
-        {/if}
+<div class="form white uploader pb-3 col-12 col-md-10 col-lg-8 mx-auto">
+	{#if !user}
+		<p><a href="/login">Log in</a> to manage your collections.</p>
+	{:else}
+		<div class="select-quiz mt-4">
+			<h2>Select a Quiz</h2>
+			{#if collections && collections.length > 0}
+				<Collections
+					{collections}
+					condensed
+					grid
+					list
+					limit={-1}
+					onSelectCollection={(e) => {
+						console.log('Selected collection:', e);
+						setCollection(e.id);
+					}}
+				/>
+			{:else}
+				<div class="text-muted">Loading your collections...</div>
+			{/if}
+		</div>
+		{#if collection === null}
+			<div class="create mt-4">
+				<h2>Create a new Quiz</h2>
+				<input
+					type="text"
+					class="form-control mb-4"
+					bind:value={tempCategory}
+					placeholder="Category Name"
+				/>
+				<button
+					class="btn btn-primary"
+					on:click={async () => {
+						const result = await createCollection(tempCategory);
+						if (result && result.length > 0) {
+							console.log('New collection created:', result);
+							markCollectionsDirty();
+							// ...existing code...
+						}
+					}}
+				>
+					Create
+				</button>
+			</div>
+		{:else}
+			<div class="collection card mb-4 p-3">
+				<div class="collection-info row g-3 align-items-center">
+					<div
+						class="thumbnail-uploader col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
+						style="width: 180px; height: 180px;"
+					>
+						<FileUpload
+							bind:this={thumbnailUploader}
+							on:uploadImage={async (event) => {
+								console.log('Thumbnail upload event:', event.detail);
+								try {
+									const result = await uploadThumbnail(event.detail, collection.category);
+									if (result) {
+										console.log('Thumbnail upload successful:', result);
+										// Clear the image after successful upload
+										if (thumbnailUploader && typeof thumbnailUploader.clearImage === 'function') {
+											thumbnailUploader.clearImage();
+										}
+									}
+								} catch (error) {
+									console.error('Error uploading thumbnail:', error);
+									addToast({
+										type: 'error',
+										message: 'Failed to upload thumbnail. Please try again.'
+									});
+								}
+							}}
+						/>
+					</div>
+					<div class="col-12 col-md">
+						<input
+							type="text"
+							class="form-control mb-2"
+							bind:value={tempCategory}
+							placeholder={collection.category}
+						/>
+						<textarea
+							class="form-control mb-2"
+							bind:value={tempDescription}
+							placeholder="Category Description (Optional)"
+						></textarea>
+						<input
+							type="text"
+							class="form-control mb-2"
+							placeholder="Add tags (comma-separated)"
+							bind:value={tempTags}
+						/>
+						{#if suggestedTags.length > 0}
+							<div class="suggested-tags mb-2">
+								<span class="me-2 text-muted">Suggestions:</span>
+								{#each suggestedTags as tag}
+									<button
+										type="button"
+										class="btn btn-sm btn-outline-secondary me-1 mb-1"
+										on:click={() => {
+											const tagsArr = tempTags
+												.split(',')
+												.map((t) => t.trim())
+												.filter(Boolean);
+											if (!tagsArr.includes(tag)) {
+												tempTags = tagsArr.concat(tag).join(', ');
+											}
+										}}
+									>
+										{tag}
+									</button>
+								{/each}
+							</div>
+						{/if}
+						<form
+							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
+							on:submit|preventDefault
+						>
+							<label for="privacy-toggle" class="form-label me-5 mb-0">Privacy</label>
+							<input
+								id="privacy-toggle"
+								type="checkbox"
+								class="form-check-input"
+								bind:checked={isPublic}
+								aria-label="Privacy"
+							/> <span>{isPublic ? 'Public' : 'Private'}</span>
+							<span class="small-text">({collection.itemsLength} questions)</span>
+						</form>
+						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
+							Save Changes
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
+		{#if collection}
+			<div class="uploads py-2">
+				<h4>Questions</h4>
+				<ul class="items-list list-group mb-4">
+					{#if collection.questions && collection.questions.length > 0}
+						{#each collection.questions as item, index (item)}
+							<CollectionItem
+								itemId={item}
+								{index}
+								{collection}
+								bind:editableItemId
+								on:removeItem={async () => {
+									const updatedItems = await removeItem(item, collection.category);
+									if (updatedItems) {
+										console.log('updatedItems:', updatedItems);
+										collection.questions = updatedItems.questions;
+										collection.itemsLength = updatedItems.questions.length;
+									}
+								}}
+								on:saveEdit={async (e) => {
+									console.log('Save edit event:', e.detail);
+									const d = {
+										collection: collection.category,
+										author_id: $user.public_id,
+										...e.detail
+									};
+									console.log('Data to save:', d);
+									const result = await saveEdit(d);
+									if (result) {
+										collections = result;
+									}
+								}}
+								on:updateItem={(e) => {
+									const itemIndex = collection.questions.findIndex((i) => i.id === e.detail.id);
+									if (itemIndex !== -1) {
+										const updatedItem = {
+											...collection.questions[itemIndex],
+											...e.detail
+										};
 
-        {#if category}
-            <h2>Add item</h2>
+										// If the image was updated, append a cache-busting param
+										if (updatedItem.image) {
+											const timestamp = Date.now();
+											const url = new URL(updatedItem.image, window.location.origin);
+											url.searchParams.set('v', timestamp);
+											updatedItem.image = url.toString();
+										}
 
-            <select bind:value={collectionType}>
-                <option value="Image">Image</option>
-                <option value="Audio">Audio</option>
-                <option value="Question">Question</option>
-            </select>
-            {#if collectionType === "Image"}
-                <!-- on submit form, call UploadFile -->
-                <form class="form">
-                    <FileUpload
-                        on:uploadImage={(event) =>
-                            (localItem.file = event.detail)}
-                    />
-                    {#if localItem.file}
-                        <img
-                            class="preview"
-                            src={localItem.file}
-                            alt="Preview"
-                            style="display: block;"
-                        />
-                    {/if}
-                    <input
-                        id="answer"
-                        type="text"
-                        bind:value={localItem.answer}
-                        placeholder="Enter an answer"
-                        class="answer"
-                    />
-                    <ImageSuggestions
-                        bind:category
-                        on:addImage={async (e) => {
-                            localItem.file = e.detail;
-                            uploadData();
-                            localItem.file = null;
-                            localItem.answer = "";
-                        }}
-                        bind:searchTerm={localItem.answer}
-                    />
-                    <button type="button" class="" on:click={uploadData}
-                        >Add item</button
-                    >
-                </form>
-            {:else if collectionType === "Audio"}
-                <AudioUploader
-                    on:addSong={(e) => {
-                        console.log("AudioUploader addSong event:", e);
-                        uploadAudio(e.detail.title, e.detail.id);
-                    }}
-                />
-            {:else if collectionType === "Question"}
-                <h2>Question</h2>
-                <form class="form">
-                    <input
-                        type="text"
-                        bind:value={localItem.question}
-                        placeholder="Enter a question"
-                    />
-                    <input
-                        type="text"
-                        bind:value={localItem.answer}
-                        placeholder="Enter the answer"
-                    />
-                    <button
-                        type="button"
-                        class=""
-                        on:click={() => {
-                            if (localItem.answer.trim() === "") {
-                                showErrorMessage("Please enter a question.");
-                                return;
-                            }
-                            uploadQuestion();
-                            localItem.question = "";
-                            localItem.answer = "";
-                        }}
-                    >
-                        Add Question
-                    </button>
-                </form>
-            {/if}
-            <div class="button-group">
-                {#if items.length > 1}
-                    {#if !isReordering}
-                        <button
-                            class="secondary"
-                            on:click={() => (isReordering = true)}
-                            >Reorder</button
-                        >
-                    {:else}
-                        <button class="secondary" on:click={reorderItems}
-                            >Done</button
-                        >
-                    {/if}
-                {/if}
-                <button class="danger" on:click={confirmDelete}
-                    >Delete Collection</button
-                >
-            </div>
-        {/if}
-    {/if}
-    <div class="container" style="display: none;">
-        <form action="">
-            <input type="file" name="file" id="file" />
-            <input type="text" name="answer" id="answer" />
-            <button type="submit">Upload</button>
-        </form>
-    </div>
+										collection.questions[itemIndex] = updatedItem;
+										collection.questions = [...collection.questions]; // Trigger reactivity
+									}
+								}}
+								on:reorderItem={async (e) => {
+									const result = await reorderItems(
+										e.detail.prevIndex,
+										e.detail.newIndex,
+										collection
+									);
+									if (result) {
+										console.log('Reordered items:', result);
+										collection.questions = result[0].questions;
+										collection.itemsLength = result[0].questions.length;
+									}
+								}}
+								{isReordering}
+							/>
+						{/each}
+					{:else}
+						<li class="list-group-item text-muted">No questions yet. Add some below!</li>
+					{/if}
+				</ul>
+			</div>
+
+			<div class="uploader card mb-4">
+				<h4 class="mb-3">Add New Question</h4>
+
+				<ul class="nav nav-tabs mb-3">
+					<li class="nav-item">
+						<a
+							class="nav-link {questionType === 'Image' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (questionType = 'Image')}>Image</a
+						>
+					</li>
+					<li class="nav-item">
+						<a
+							class="nav-link {questionType === 'Audio' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (questionType = 'Audio')}>Audio</a
+						>
+					</li>
+					<li class="nav-item">
+						<a
+							class="nav-link {questionType === 'Question' ? 'active' : ''}"
+							href="#"
+							on:click|preventDefault={() => (questionType = 'Question')}>Question</a
+						>
+					</li>
+				</ul>
+				{#if questionType === 'Image'}
+					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
+						<div
+							class="col-12 col-md-auto"
+							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
+						>
+							<FileUpload
+								bind:this={itemUploader}
+								on:uploadImage={(event) => (item.file = event.detail)}
+							/>
+						</div>
+						<div class="col-12 col-md">
+							<input
+								id="answer"
+								type="text"
+								class="form-control mb-2"
+								bind:value={item.answer}
+								bind:this={answerInput}
+								placeholder="Enter an answer"
+							/>
+							<input
+								type="text"
+								name="extra"
+								id="extra"
+								bind:value={item.extra}
+								class="form-control mb-2"
+								placeholder="Extra info (optional)"
+							/>
+
+							<button
+								type="button"
+								class="btn btn-success mt-2"
+								on:click={async () => {
+									const newItems = await uploadData(item, undefined, false);
+									if (newItems) {
+										console.log('New item added:', newItems);
+										collection.questions = newItems[0].questions;
+										collection.itemsLength = newItems[0].questions.length;
+										addToast({
+											type: 'success',
+											message: 'Item added successfully!'
+										});
+										item.file = null;
+										item.answer = '';
+										item.extra = '';
+										// Clear the FileUpload component
+										if (itemUploader && typeof itemUploader.clearImage === 'function') {
+											itemUploader.clearImage();
+										}
+										// Keep suggestions visible if they were already shown
+										// Focus and scroll to answer input for next item
+										setTimeout(focusAnswerInput, 100);
+									}
+								}}>Add item</button
+							>
+
+							<button
+								type="button"
+								class="btn btn-secondary mt-2"
+								on:click={() => (showImageSuggestions = !showImageSuggestions)}
+							>
+								{showImageSuggestions ? 'Hide' : 'Show'} Suggestions
+							</button>
+						</div>
+						{#if showImageSuggestions}
+							<ImageSuggestions
+								category={collection.category}
+								searchTerm={item.answer}
+								on:addImage={async (e) => {
+									// Store current scroll position
+									const currentScrollY = window.scrollY;
+
+									item.file = e.detail;
+									item.collection_id = collection.id;
+									item.category = collection.category;
+									console.log('Adding image from suggestions:', item);
+									const newItem = await uploadData(item, undefined, false);
+									console.log('New item from suggestions:', newItem);
+
+									console.log('Collections: ', collection.questions);
+									if (newItem && newItem.question.id) {
+										// Add the new item to the collection
+										collection.questions = [...(collection.questions ?? []), newItem.question.id];
+										collection.itemsLength = collection.questions.length;
+
+										addToast({
+											type: 'success',
+											message: 'Image added successfully!'
+										});
+
+										// Clear form data
+										item.file = null;
+										item.answer = '';
+										// update collection and redraw
+										if (itemUploader && typeof itemUploader.clearImage === 'function') {
+											itemUploader.clearImage();
+										}
+									} else {
+										addToast({
+											type: 'error',
+											message: 'Failed to add image. Please try again.'
+										});
+									}
+								}}
+							/>
+						{/if}
+					</form>
+				{:else if questionType === 'Audio'}
+					<AudioUploader
+						on:addSong={async (e) => {
+							console.log('AudioUploader addSong event:', e);
+							const audioData = {
+								...e.detail,
+								url: e.detail.videoId,
+								audio: e.detail.videoId,
+								category: collection.category,
+								answer: e.detail.title
+							};
+							console.log('Audio data to upload:', audioData);
+							const newItems = await uploadAudio(audioData);
+							if (newItems) {
+								collection.questions = newItems[0].questions;
+								collection.itemsLength = newItems[0].questions.length;
+								addToast({
+									type: 'success',
+									message: 'Audio added successfully!'
+								});
+							}
+						}}
+					/>
+				{:else if questionType === 'Question'}
+					<form class="form row g-2 align-items-center" on:submit|preventDefault>
+						<div class="col-12">
+							<input
+								type="text"
+								class="form-control mb-2"
+								bind:value={item.question}
+								bind:this={questionInput}
+								placeholder="Enter a question"
+							/>
+							<input
+								type="text"
+								class="form-control mb-2"
+								bind:value={item.answer}
+								placeholder="Enter the answer"
+							/>
+							<button
+								type="button"
+								class="btn btn-success mt-2"
+								on:click={async () => {
+									if ((item.question ?? '').trim() === '') {
+										addToast({
+											type: 'error',
+											message: 'Please enter a question.'
+										});
+										return;
+									}
+									const newItems = await uploadQuestion(item);
+									if (newItems) {
+										collection.questions = newItems[0].questions;
+										collection.itemsLength = newItems[0].questions.length;
+										addToast({
+											type: 'success',
+											message: 'Question added successfully!'
+										});
+										item.question = '';
+										item.answer = '';
+										// Focus and scroll to question input for next item
+										setTimeout(focusQuestionInput, 100);
+									}
+								}}>Add Question</button
+							>
+						</div>
+					</form>
+				{/if}
+			</div>
+			<div class="button-group mt-3 d-flex gap-2">
+				{#if collection.itemsLength && collection.itemsLength > 1}
+					{#if !isReordering}
+						<button class="btn btn-outline-secondary" on:click={() => (isReordering = true)}
+							>Reorder</button
+						>
+					{:else}
+						<button class="btn btn-outline-secondary" on:click={() => (isReordering = false)}
+							>Done</button
+						>
+					{/if}
+					<button
+						class="btn btn-outline-secondary"
+						on:click={async () => {
+							const shuffled = await shuffleItems({
+								items: collection.questions,
+								category: collection.category
+							});
+							if (shuffled && shuffled.length > 0) {
+								collection.questions = shuffled[0].questions;
+								collection.itemsLength = shuffled[0].questions.length;
+							}
+						}}>Shuffle</button
+					>
+				{/if}
+				<button
+					class="btn btn-danger"
+					on:click={() => confirmDelete(collection.id, handleCollectionDeleted)}
+					>Delete Collection</button
+				>
+			</div>
+		{/if}
+	{/if}
+	<div class="container" style="display: none;">
+		<form action="" on:submit|preventDefault>
+			<input type="file" name="file" id="file" />
+			<input type="text" name="answer" id="answer" />
+			<button type="submit">Upload</button>
+		</form>
+	</div>
 </div>
