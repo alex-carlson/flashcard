@@ -264,7 +264,6 @@ export async function uploadThumbnail(data, category) {
 
     try {
         const result = await apiFetch('/items/add-thumbnail', 'POST', formData, true);
-        console.log('Thumbnail upload result:', result);
         addToast({
             message: 'Thumbnail uploaded successfully!',
             type: 'success',
