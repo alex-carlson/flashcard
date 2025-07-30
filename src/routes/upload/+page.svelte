@@ -513,7 +513,6 @@
 
 									item.file = e.detail;
 									item.category = collection.category;
-									console.log('Adding image from suggestions:', item);
 									const newItem = await uploadData(item, undefined, false);
 									if (newItem && newItem[0] && newItem[0].items) {
 										// Update collection data
@@ -528,6 +527,8 @@
 										// Clear form data
 										item.file = null;
 										item.answer = '';
+										// Hide suggestions after adding image
+										showImageSuggestions = false;
 									} else {
 										addToast({
 											type: 'error',

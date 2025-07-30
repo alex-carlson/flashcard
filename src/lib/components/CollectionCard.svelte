@@ -125,6 +125,15 @@
 		will-change: transform;
 	}
 
+	.card-image-container img,
+	:global(.card-image-container) :global(img) {
+		max-height: 500px;
+		width: auto;
+		height: auto;
+		display: block;
+		margin: 0 auto;
+	}
+
 	.card-image.placeholder {
 		width: 100%;
 		aspect-ratio: 4 / 3;
