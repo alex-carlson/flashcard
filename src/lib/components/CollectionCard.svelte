@@ -127,7 +127,7 @@
 
 	.card-image-container img,
 	:global(.card-image-container) :global(img) {
-		max-height: 500px;
+		max-height: 400px;
 		width: auto;
 		height: auto;
 		display: block;
