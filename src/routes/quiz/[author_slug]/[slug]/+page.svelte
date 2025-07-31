@@ -1,12 +1,13 @@
 <script>
-	import FlashCards from '$lib/FlashCards.svelte';
+	export const prerender = false;
 	export let data;
+	import FlashCards from '$lib/FlashCards.svelte';
 	const { category, thumbnail, collectionId, author } = data;
 </script>
 
 <svelte:head>
 	{#if category && author}
-		<title>{category} by {author}!</title>
+		<title>{category} by {author}</title>
 		<meta property="og:title" content="Play {category} by {author}!" />
 		<meta name="twitter:title" content="Play {category} by {author}!" />
 		{#if thumbnail}
