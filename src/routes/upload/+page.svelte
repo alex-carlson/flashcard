@@ -473,7 +473,7 @@
 								class="btn btn-success mt-2"
 								on:click={async () => {
 									const newItems = await uploadData(item, undefined, false);
-									if (newItems) {
+									if (newItems && Array.isArray(newItems) && newItems[0] && newItems[0].items) {
 										console.log('New item added:', newItems);
 										collection.items = newItems[0].items;
 										collection.itemsLength = newItems[0].items.length;
@@ -488,12 +488,20 @@
 										if (itemUploader && typeof itemUploader.clearImage === 'function') {
 											itemUploader.clearImage();
 										}
-										// Keep suggestions visible if they were already shown
+										// Hide suggestions if they are open (for consistency with addImage)
+										showImageSuggestions = false;
 										// Focus and scroll to answer input for next item
 										setTimeout(focusAnswerInput, 100);
+									} else {
+										addToast({
+											type: 'error',
+											message: 'Failed to add item. Please try again.'
+										});
 									}
-								}}>Add item</button
+								}}
 							>
+								Add item
+							</button>
 
 							<button
 								type="button"
