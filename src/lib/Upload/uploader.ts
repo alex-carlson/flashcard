@@ -252,10 +252,16 @@ export async function uploadQuestion(data) {
 export async function uploadThumbnail(data, category) {
     const usr = getCurrentUser();
     const formData = new FormData();
-    formData.append('uuid', 'thumbnail');
+    formData.append('author', usr.username);
+    formData.append('author_uuid', usr.id);
+    formData.append('author_id', usr.public_id);
+    // Sanitize category to allow only alphanumeric, dash, and underscore
+    const safeCategory = category.replace(/[^a-zA-Z0-9-_]/g, '');
+    formData.append('uuid', 'thumbnails/' + safeCategory + '/' + uuidv4());
     formData.append('file', data);
-    formData.append('folder', `${usr.username}/${category}`);
     formData.append('forceJpeg', 'true');
+    formData.append('category', category);
+    formData.append('folder', `/thumbnails/${category}`);
 
     // log form data
     for (const [key, value] of formData.entries()) {
