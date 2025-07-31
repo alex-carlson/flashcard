@@ -20,6 +20,7 @@
 			try {
 				const authorData = await fetchUserBySlug(author_slug);
 				author_id = authorData?.public_id;
+				console.log('fetching collection for author:', author_id, 'category:', category);
 				collectionId = await fetchCollectionByAuthorAndSlug(author_id, category);
 			} catch (error) {
 				console.error('Error fetching collection by author/slug:', error);

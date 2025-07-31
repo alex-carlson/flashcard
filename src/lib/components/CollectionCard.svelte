@@ -64,7 +64,7 @@
 	{#if collection}
 		<a
 			class="collection-card-link"
-			href="/quiz/{collection.author}/{collection.slug}"
+			href="/quiz/{collection.profiles.username}/{collection.slug}"
 			on:click|preventDefault={handleNavigation}
 		>
 			<div class="card-image-container">

@@ -105,7 +105,7 @@
 
 	function retryFetch() {
 		quiz.retry();
-		quiz.loadCollection(collectionId);
+		// quiz.loadCollection(collectionId);
 	}
 	// Lifecycle
 	onMount(() => {

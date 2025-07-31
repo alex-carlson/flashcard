@@ -70,8 +70,6 @@ export async function fetchRandomCollections(limit = 10, daily = false): Promise
         url = `${import.meta.env.VITE_API_URL}/collections/random-daily`;
     }
 
-    console.log("Fetching random collections from:", url);
-
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch random collections");
@@ -118,7 +116,7 @@ export async function fetchCollectionByAuthorAndSlug(
 ): Promise<Collection | undefined> {
     const url = `/collections/user/collection/${authorId}/${slug}`;
     try {
-        let data = await apiFetch(url, 'GET', null, false, false);
+        const data = await apiFetch(url, 'GET', null, false, false);
         return data.id;
     } catch (error) {
         console.error("Error fetching collection by author slug:", error);

@@ -116,13 +116,14 @@ export function createQuizStore() {
         }));
 
         try {
+            console.log('Fetching collection with ID:', collectionId);
             const data = await fetchCollectionById(collectionId);
 
             if (!data) {
                 throw new Error('Collection not found');
             }
 
-            const authorData = await fetchUser(data.author_public_id);
+
 
             if (!data.items || data.items.length === 0) {
                 addToast({
@@ -131,7 +132,9 @@ export function createQuizStore() {
                 });
             }
 
-            const cards = mapCards(data.items || []); update(state => ({
+
+            const cards = mapCards(data.items || []);
+            update(state => ({
                 ...state,
                 cards,
                 collection: {
@@ -139,14 +142,14 @@ export function createQuizStore() {
                     name: data.category || '',
                     description: data.description || '',
                     thumbnail: String(data.thumbnail || ''),
-                    author: authorData.username || '',
-                    author_slug: authorData.username_slug || ''
+                    author: (data.profiles && data.profiles.username) ? data.profiles.username : 'Unknown',
+                    author_slug: (data.profiles && data.profiles.username_slug) ? data.profiles.username_slug : ''
                 },
                 hasInitialized: true,
                 isLoading: false
             }));
 
-            document.title = `${data.category} - ${authorData.username}`;
+            document.title = `${data.category} - ${(data.profiles && data.profiles.username) ? data.profiles.username : 'Unknown'}`;
 
         } catch (error) {
             console.error('Error fetching collection:', error);
@@ -235,7 +238,7 @@ export function createQuizStore() {
             ...state,
             showModal: false
         }));
-    } 
+    }
 
     function revealCards(): void {
         console.log('Revealing all cards');

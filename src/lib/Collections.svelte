@@ -42,7 +42,7 @@
 
 		// Default behavior: navigate to quiz page
 		try {
-			const user = await fetchUser(collection.author_public_id);
+			const user = await fetchUser(collection.profiles.public_id);
 			const author_slug = user.username_slug || user.username || 'unknown-author';
 			const url = `/quiz/${author_slug}/${collection.slug}`;
 			const state = { collectionId: collection.id };
@@ -109,6 +109,7 @@
 					case 'random-daily':
 						const daily = await fetchRandomCollections(limit || 1, true); // Daily random
 						data = daily ? [daily] : [];
+						console.log('Daily random collection:', daily);
 						break;
 					default:
 						data = await fetchLatestCollections(limit || 12);
