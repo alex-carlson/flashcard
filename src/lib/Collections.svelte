@@ -42,6 +42,7 @@
 
 		// Default behavior: navigate to quiz page
 		try {
+			console.log('Navigating to collection:', collection);
 			const user = await fetchUser(collection.profiles.public_id);
 			const author_slug = user.username_slug || user.username || 'unknown-author';
 			const url = `/quiz/${author_slug}/${collection.slug}`;

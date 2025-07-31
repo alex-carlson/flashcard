@@ -1,4 +1,5 @@
 // src/routes/[author_slug]/[slug]/+page.server.ts
+export const prerender = false;
 import { fetchUserBySlug } from '$lib/api/user';
 import { fetchCollectionByAuthorAndSlug, fetchCollectionById } from '$lib/api/collections';
 

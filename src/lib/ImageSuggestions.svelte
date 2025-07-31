@@ -7,9 +7,9 @@
 	export let category = '';
 	export let searchTerm = '';
 	let query = searchTerm || '';
-	let fileType = 'any'; // Default to any file type
+
+	export let fileType = 'any';
 	export let suggestions = [];
-	
 
 	export async function fetchSuggestions() {
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
@@ -32,7 +32,8 @@
 			if (data.error && data.error.errors && data.error.errors[0].reason === 'dailyLimitExceeded') {
 				addToast({
 					type: 'error',
-					message: 'Google Search API quota limit reached. Please try again tomorrow or use another upload method.'
+					message:
+						'Google Search API quota limit reached. Please try again tomorrow or use another upload method.'
 				});
 				suggestions = [];
 				return;

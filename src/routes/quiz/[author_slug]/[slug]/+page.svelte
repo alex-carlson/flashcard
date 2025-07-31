@@ -1,5 +1,4 @@
 <script>
-	export const prerender = false;
 	export let data;
 	import FlashCards from '$lib/FlashCards.svelte';
 	const { category, thumbnail, collectionId, author } = data;

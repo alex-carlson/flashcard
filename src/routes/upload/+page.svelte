@@ -40,6 +40,8 @@
 
 	let tagDebounceTimeout;
 
+	let imageSuggestionFileType = 'any';
+
 	$: if ($user?.public_id) {
 		console.log('User public_id:', $user.public_id);
 		loadCollections();
@@ -466,7 +468,14 @@
 								bind:this={answerInput}
 								placeholder="Enter an answer"
 							/>
-							<input type="text" name="extra" id="extra" bind:value={item.extra} class="form-control mb-2" placeholder="Extra info (optional)" />
+							<input
+								type="text"
+								name="extra"
+								id="extra"
+								bind:value={item.extra}
+								class="form-control mb-2"
+								placeholder="Extra info (optional)"
+							/>
 
 							<button
 								type="button"
@@ -515,6 +524,7 @@
 							<ImageSuggestions
 								category={collection.category}
 								searchTerm={item.answer}
+								bind:fileType={imageSuggestionFileType}
 								on:addImage={async (e) => {
 									// Store current scroll position
 									const currentScrollY = window.scrollY;
