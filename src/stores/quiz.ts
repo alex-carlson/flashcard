@@ -149,8 +149,6 @@ export function createQuizStore() {
                 isLoading: false
             }));
 
-            document.title = `${data.category} - ${(data.profiles && data.profiles.username) ? data.profiles.username : 'Unknown'}`;
-
         } catch (error) {
             console.error('Error fetching collection:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to fetch collection';
