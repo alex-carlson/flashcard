@@ -257,7 +257,7 @@ export async function uploadThumbnail(data, category) {
     formData.append('author_id', usr.public_id);
     // Sanitize category to allow only alphanumeric, dash, and underscore
     const safeCategory = category.replace(/[^a-zA-Z0-9-_]/g, '');
-    formData.append('uuid', 'thumbnails/' + safeCategory + '/' + uuidv4());
+    formData.append('uuid', 'thumbnails/' + safeCategory + '/thumbnail');
     formData.append('file', data);
     formData.append('forceJpeg', 'true');
     formData.append('category', category);
