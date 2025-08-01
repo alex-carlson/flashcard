@@ -25,6 +25,7 @@
 	// Auto-trigger completion when all cards are revealed
 	$: if ($stats.isComplete && !$quiz.showModal && !$quiz.isComplete) {
 		quiz.completeQuiz($user?.id, $user?.token);
+		dispatch('finish');
 	}
 
 	// Handle toolbar updates
@@ -84,7 +85,9 @@
 
 		// Check if all cards are answered
 		if ($quiz.cards.every((card) => card.revealed)) {
+			console.log('All cards revealed, completing quiz...');
 			quiz.completeQuiz($user?.id, $user?.token);
+			dispatch('finish');
 		} else {
 			// Auto-play next audio question
 			const nextCardIndex = $quiz.cards.findIndex((card, i) => i > index && !card.revealed);
@@ -167,7 +170,11 @@
 						{toggleReveal}
 						updateCards={() => {}}
 						on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
-						on:giveUp={(e) => setRevealed(e.detail.index, true)}
+						on:giveUp={(e) => {
+							console.log('Give up on card', i);
+							setRevealed(e.detail.index, true);
+							dispatch('finish');
+						}}
 					/>
 				{/each}
 			{/if}
@@ -176,6 +183,11 @@
 		<QuizActions
 			currentMode={$quiz.currentMode}
 			isComplete={$quiz.isComplete}
+			on:giveup={() => {
+				console.log('Give up clicked flashcards');
+				quiz.completeQuiz($user?.id, $user?.token);
+				dispatch('giveup');
+			}}
 			onCompleteQuiz={() => quiz.completeQuiz($user?.id, $user?.token)}
 			{isPartyMode}
 		/>
