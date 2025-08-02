@@ -45,7 +45,7 @@
 
 <div>
 	{#if !quizStarted}
-		<div class="white padding rounded my-3">
+		<div class="white padding rounded m-3">
 			<!-- add category and title -->
 			<h1 class="mb-3">{category}</h1>
 			{#if author}

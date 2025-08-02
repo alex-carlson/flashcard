@@ -173,7 +173,6 @@
 						on:giveUp={(e) => {
 							console.log('Give up on card', i);
 							setRevealed(e.detail.index, true);
-							dispatch('finish');
 						}}
 					/>
 				{/each}
