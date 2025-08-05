@@ -11,13 +11,21 @@ export const load = async ({ params }) => {
     // Fetch collection thumbnail from DB or API
     const collectionId = await fetchCollectionByAuthorAndSlug(author.public_id, slug, { includeThumbnail: true });
     const collection = await fetchCollectionById(collectionId);
-    const quizScore = author?.quizzes_completed?.find(q => q.quiz_id === collectionId)?.percentage ?? null;
+    const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
+
+    console.log("best score", score);
 
     return {
         author: author.username,
         category: collection?.category,
         thumbnail: collection?.thumbnail_url || null,
         collectionId: collection?.id,
-        quizScore,
+        quizScore: score,
     };
 };
+
+function getScoreByQuizId(data, quizId) {
+    const entry = data.find(item => item.quiz_id === quizId);
+    return entry ? entry.percentage : null; // or any fallback value
+}
+

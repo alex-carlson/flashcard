@@ -52,9 +52,9 @@
 			{#if author}
 				<p class="mb-3">by {author}</p>
 			{/if}
-			{#if quizScore !== null}
-				<p class="mb-3">Best Score: {quizScore}% ({toLetterGrade(quizScore)})</p>
-			{/if}
+			<!-- {#if quizScore !== null}
+				<p class="mb-3">Your High Score: {quizScore}% ({toLetterGrade(quizScore)})</p>
+			{/if} -->
 			<h2 class="mb-3">Ready to start?</h2>
 			<button
 				class="btn btn-primary me-2"
