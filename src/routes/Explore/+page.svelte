@@ -67,7 +67,6 @@
 
 	function handleNavigation(collection) {
 		// Navigate to the collection page
-		console.log('Navigating to collection:', collection);
 		const url = `/quiz/${collection.profiles.username_slug}/${collection.slug}`;
 		const state = { collectionId: collection.id };
 		window.history.pushState(state, '', url);

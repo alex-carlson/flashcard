@@ -110,7 +110,6 @@
 					case 'random-daily':
 						const daily = await fetchRandomCollections(limit || 1, true); // Daily random
 						data = daily ? [daily] : [];
-						console.log('Daily random collection:', daily);
 						break;
 					default:
 						data = await fetchLatestCollections(limit || 12);

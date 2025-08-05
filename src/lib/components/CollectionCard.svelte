@@ -68,8 +68,8 @@
 			on:click|preventDefault={handleNavigation}
 		>
 			<div class="card-image-container">
-				{#if collection.itemsLength > 0}
-					<LazyLoadImage imageUrl={collection.thumbnail} tempSize="100%" />
+				{#if collection.items_length > 0}
+					<LazyLoadImage imageUrl={collection.thumbnail_url} tempSize="100%" />
 				{/if}
 			</div>
 			<div class="card-content">
@@ -78,7 +78,7 @@
 				</div>
 
 				<div class="card-meta">
-					<span class="card-questions">{collection.itemsLength} questions</span>
+					<span class="card-questions">{collection.items_length} questions</span>
 					<span class="card-date">{formatTimestamp(collection.created_at)}</span>
 				</div>
 			</div>

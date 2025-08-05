@@ -71,6 +71,11 @@
 	<Collections sortmode="latest" limit={4} />
 </div>
 
+<div class="container mt-5">
+	<h2>Random Collections</h2>
+	<Collections sortmode="random" limit={16} />
+</div>
+
 <div class="container">
 	<div class="mt-3 mb-5">
 		<a href="/explore?sort=popular">See More...</a>
