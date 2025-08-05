@@ -6,6 +6,7 @@
 	import { addToast } from '$stores/toast';
 	import Fa from 'svelte-fa';
 	import { faTrash } from '@fortawesome/free-solid-svg-icons';
+	import { supabase } from '$lib/api/supabaseClient';
 
 	let scores = [];
 	let page = 1;
@@ -15,27 +16,59 @@
 	async function getQuizScores() {
 		if ($user) {
 			const data = await getUserQuizScores($user.id);
-			const processedScores = await Promise.all(
-				data.map(async (score) => {
-					const metadata = await getCollectionMetadataFromId(score.quiz_id);
-					if (!metadata || !metadata[0]) {
+			const collectionIds = data.map((score) => score.quiz_id);
+
+			const { data: metadataList, error: metadataError } = await supabase
+				.from('collections')
+				.select('id, category, author, created_at, author_public_id, slug, private')
+				.in('id', collectionIds);
+
+			if (metadataError) {
+				console.error('Error fetching collection metadata:', metadataError);
+				addToast({
+					type: 'error',
+					message: 'Failed to load scores. Please try again later.'
+				});
+				return;
+			}
+
+			const uniqueAuthorIds = [...new Set(metadataList.map((m) => m.author_public_id))];
+			const { data: users, error: usersError } = await supabase
+				.from('profiles')
+				.select('username_slug, public_id')
+				.in('public_id', uniqueAuthorIds);
+
+			if (usersError) {
+				console.error('Error fetching user data:', usersError);
+				addToast({
+					type: 'error',
+					message: 'Failed to load scores. Please try again later.'
+				});
+				return;
+			}
+
+			const metadataMap = new Map(metadataList.map((m) => [m.id, m]));
+			const usersMap = new Map(users.map((u) => [u.public_id, u.username_slug]));
+
+			const processedScores = data
+				.map((score) => {
+					const metadata = metadataMap.get(score.quiz_id);
+					if (!metadata) {
 						return null;
 					}
 					return {
 						...score,
-						collectionName: metadata[0].category,
-						author_id: metadata[0].author_public_id,
-						author: metadata[0].author,
-						username_slug: await fetchUser(metadata[0].author_public_id).then(
-							(userData) => userData.username_slug
-						),
-						slug: metadata[0].slug,
-						private: metadata[0].private
+						collectionName: metadata.category,
+						author_id: metadata.author_public_id,
+						author: metadata.author,
+						username_slug: usersMap.get(metadata.author_public_id) || 'unknown-author',
+						slug: metadata.slug,
+						private: metadata.private
 					};
 				})
-			);
-			scores = processedScores.filter(Boolean);
-			scores.sort((a, b) => b.percentage - a.percentage);
+				.filter(Boolean);
+			processedScores.sort((a, b) => b.percentage - a.percentage);
+			scores = processedScores;
 		}
 	}
 	onMount(() => {
