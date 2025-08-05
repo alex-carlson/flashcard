@@ -10,6 +10,7 @@
 	}
 	let searchTerm = '';
 	let results = [];
+	let pasteUrl = '';
 
 	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -32,6 +33,19 @@
 			console.error('Error fetching YouTube data:', err);
 		}
 	}
+
+	function handlePasteUrl() {
+		const videoId = pasteUrl.trim();
+		if (!videoId) {
+			alert('Invalid YouTube ID');
+			return;
+		}
+		addSong({
+			title: `Video ID: ${videoId}`,
+			videoId,
+			thumbnail: `https://img.youtube.com/vi/${videoId}/default.jpg`
+		});
+	}
 </script>
 
 <div class="container white audio-uploader padding">
@@ -45,6 +59,18 @@
 			}}
 		/>
 		<button on:click={searchYoutube}><Fa icon={faSearch} /></button>
+	</div>
+	<div class="paste-url-container" style="margin-top: 1em;">
+		<input
+			type="text"
+			bind:value={pasteUrl}
+			placeholder="Paste YouTube ID here"
+			on:keydown={(e) => {
+				if (e.key === 'Enter') handlePasteUrl();
+			}}
+			style="width: 70%; margin-right: 0.5em;"
+		/>
+		<button on:click={handlePasteUrl} class="btn btn-sm btn-primary">Add by Video ID</button>
 	</div>
 
 	{#if results.length > 0}
