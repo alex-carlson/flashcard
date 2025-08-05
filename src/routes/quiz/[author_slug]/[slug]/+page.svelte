@@ -1,8 +1,10 @@
 <script>
-	export let data;
+	import { toLetterGrade } from '$lib/api/quizScore.js';
 	import FlashCards from '$lib/FlashCards.svelte';
-	const { category, thumbnail, collectionId, author } = data;
+	import { onDestroy } from 'svelte';
+	export let data;
 
+	const { category, thumbnail, collectionId, author, quizScore } = data;
 	let timer = 0;
 	let interval = null;
 	let quizStarted = false;
@@ -24,7 +26,6 @@
 		clearInterval(interval);
 	}
 
-	import { onDestroy } from 'svelte';
 	onDestroy(() => {
 		clearInterval(interval);
 	});
@@ -50,6 +51,9 @@
 			<h1 class="mb-3">{category}</h1>
 			{#if author}
 				<p class="mb-3">by {author}</p>
+			{/if}
+			{#if quizScore !== null}
+				<p class="mb-3">Best Score: {quizScore}% ({toLetterGrade(quizScore)})</p>
 			{/if}
 			<h2 class="mb-3">Ready to start?</h2>
 			<button

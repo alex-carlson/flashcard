@@ -11,11 +11,13 @@ export const load = async ({ params }) => {
     // Fetch collection thumbnail from DB or API
     const collectionId = await fetchCollectionByAuthorAndSlug(author.public_id, slug, { includeThumbnail: true });
     const collection = await fetchCollectionById(collectionId);
+    const quizScore = author?.quizzes_completed?.find(q => q.quiz_id === collectionId)?.percentage ?? null;
 
     return {
         author: author.username,
         category: collection?.category,
         thumbnail: collection?.thumbnail_url || null,
         collectionId: collection?.id,
+        quizScore,
     };
 };
