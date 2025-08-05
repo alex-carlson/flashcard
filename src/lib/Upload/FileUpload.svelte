@@ -7,6 +7,8 @@
 	let fileInput;
 	let myImg = null;
 	let isDragOver = false;
+	let imageUrl = '';
+	let imageAddedByUrl = false;
 
 	// Reset the image when placeholderImage changes (e.g., when switching collections)
 	$: if (placeholderImage && !myImg) {
@@ -19,6 +21,7 @@
 		if (fileInput) {
 			fileInput.value = '';
 		}
+		clearImageUrlBadge();
 	}
 
 	const convertFileToImage = (file) => {
@@ -33,6 +36,7 @@
 		reader.readAsDataURL(file);
 		reader.onload = (e) => {
 			myImg = e.target.result;
+			clearImageUrlBadge();
 			dispatch('uploadImage', file);
 
 			// Only clear if explicitly requested
@@ -73,6 +77,24 @@
 			convertFileToImage(files[0]);
 		}
 	};
+
+	function handleImageUrlPaste() {
+		const url = imageUrl.trim();
+		if (!url) return;
+		// Basic validation for image URL
+		if (!/^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|webp)(\?.*)?$/i.test(url)) {
+			alert('Please enter a valid image URL (jpg, png, gif, svg, webp)');
+			return;
+		}
+		myImg = url;
+		imageAddedByUrl = true;
+		dispatch('uploadImage', url);
+	}
+
+	// Reset badge if user uploads a file or clears image
+	function clearImageUrlBadge() {
+		imageAddedByUrl = false;
+	}
 </script>
 
 <div
@@ -98,7 +120,24 @@
 			{/if}
 		</p>
 		<img class="preview" src={myImg || placeholderImage} alt="" />
+		{#if imageAddedByUrl}
+			<span class="badge bg-info text-dark mt-2">Added by URL</span>
+		{/if}
 	</div>
+</div>
+
+<!-- Image URL input below drop zone -->
+<div class="mt-2 d-flex flex-column gap-2">
+	<input
+		type="text"
+		class="form-control"
+		placeholder="Paste image URL"
+		bind:value={imageUrl}
+		on:keydown={(e) => {
+			if (e.key === 'Enter') handleImageUrlPaste();
+		}}
+	/>
+	<button class="btn btn-sm btn-primary" on:click={handleImageUrlPaste}>Add by URL</button>
 </div>
 
 <input

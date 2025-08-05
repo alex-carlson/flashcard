@@ -262,31 +262,44 @@
 			<div class="collection card mb-4 p-3">
 				<div class="collection-info row g-3 align-items-center">
 					<div
-						class="thumbnail-uploader col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
-						style="width: 180px; height: 180px;"
+						class="thumbnail_container d-flex flex-row align-items-center justify-content-center gap-3"
+						style="min-height: 180px; width: 100%; flex-wrap: wrap;"
 					>
-						<FileUpload
-							bind:this={thumbnailUploader}
-							on:uploadImage={async (event) => {
-								console.log('Thumbnail upload event:', event.detail);
-								try {
-									const result = await uploadThumbnail(event.detail, collection.category);
-									if (result) {
-										console.log('Thumbnail upload successful:', result);
-										// Clear the image after successful upload
-										if (thumbnailUploader && typeof thumbnailUploader.clearImage === 'function') {
-											thumbnailUploader.clearImage();
+						{#if collection.thumbnail}
+							<img
+								src={collection.thumbnail}
+								alt="Collection Thumbnail"
+								class="img-fluid"
+								style="width: 100%; max-width: 180px; max-height: 180px; object-fit: contain; flex: 1 1 120px; min-width: 80px;"
+							/>
+						{/if}
+						<div
+							class="thumbnail-uploader d-flex flex-column align-items-center justify-content-center"
+							style="width: 100%; max-width: 180px; height: 240px; flex: 1 1 120px; min-width: 80px;"
+						>
+							<FileUpload
+								bind:this={thumbnailUploader}
+								on:uploadImage={async (event) => {
+									console.log('Thumbnail upload event:', event.detail);
+									try {
+										const result = await uploadThumbnail(event.detail, collection.category);
+										if (result) {
+											console.log('Thumbnail upload successful:', result);
+											// Clear the image after successful upload
+											if (thumbnailUploader && typeof thumbnailUploader.clearImage === 'function') {
+												thumbnailUploader.clearImage();
+											}
 										}
+									} catch (error) {
+										console.error('Error uploading thumbnail:', error);
+										addToast({
+											type: 'error',
+											message: 'Failed to upload thumbnail. Please try again.'
+										});
 									}
-								} catch (error) {
-									console.error('Error uploading thumbnail:', error);
-									addToast({
-										type: 'error',
-										message: 'Failed to upload thumbnail. Please try again.'
-									});
-								}
-							}}
-						/>
+								}}
+							/>
+						</div>
 					</div>
 					<div class="col-12 col-md">
 						<input
@@ -451,8 +464,8 @@
 				{#if questionType === 'Image'}
 					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
 						<div
-							class="col-12 col-md-auto"
-							style="width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;"
+							class="col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
+							style="width: 180px; height: 240px;"
 						>
 							<FileUpload
 								bind:this={itemUploader}

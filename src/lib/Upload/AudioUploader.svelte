@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { Fa } from 'svelte-fa';
-	import { faSearch } from '@fortawesome/free-solid-svg-icons';
+	import { faSearch, faPlus } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
 	export function addSong(data) {
 		// This function can be used to add a song to a playlist or perform other actions
@@ -12,32 +12,51 @@
 	let results = [];
 	let pasteUrl = '';
 
-	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-
 	async function searchYoutube() {
 		if (!searchTerm) return;
 
-		const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-			searchTerm + ' song'
-		)}&type=video&videoCategoryId=10&maxResults=5&key=${API_KEY}`;
+		const query = searchTerm + ' song';
+		const url = `${import.meta.env.VITE_API_URL}/youtube/search?q=${encodeURIComponent(query)}`;
 
 		try {
 			const res = await fetch(url);
 			const data = await res.json();
-			results = data.items.map((item) => ({
-				title: item.snippet.title,
-				videoId: item.id.videoId,
-				thumbnail: item.snippet.thumbnails.medium.url
-			}));
+			console.log('YouTube search data:', data);
+			results = (data.items || data.results || []).map((item) => {
+				const videoId = item.videoId || (item.id && item.id.videoId) || item.id || '';
+				return {
+					title: item.title || (item.snippet && item.snippet.title) || '',
+					videoId,
+					thumbnail:
+						item.thumbnail ||
+						(item.snippet &&
+							item.snippet.thumbnails &&
+							item.snippet.thumbnails.medium &&
+							item.snippet.thumbnails.medium.url) ||
+						(item.thumbnails && item.thumbnails.medium && item.thumbnails.medium.url) ||
+						(videoId ? `https://img.youtube.com/vi/${videoId}/default.jpg` : '')
+				};
+			});
 		} catch (err) {
 			console.error('Error fetching YouTube data:', err);
 		}
 	}
 
 	function handlePasteUrl() {
-		const videoId = pasteUrl.trim();
+		const url = pasteUrl.trim();
+		if (!url) {
+			alert('Invalid YouTube URL');
+			return;
+		}
+		// Regex to extract YouTube video ID from various URL formats
+		const match =
+			url.match(
+				/(?:youtube\.com\/.*v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+			) || url.match(/^([a-zA-Z0-9_-]{11})$/);
+
+		const videoId = match ? match[1] : null;
 		if (!videoId) {
-			alert('Invalid YouTube ID');
+			alert('Invalid YouTube URL or ID');
 			return;
 		}
 		addSong({
@@ -49,6 +68,7 @@
 </script>
 
 <div class="container white audio-uploader padding">
+	<h2 class="mb-3">Search YouTube</h2>
 	<div class="search-container">
 		<input
 			type="text"
@@ -60,19 +80,6 @@
 		/>
 		<button on:click={searchYoutube}><Fa icon={faSearch} /></button>
 	</div>
-	<div class="paste-url-container" style="margin-top: 1em;">
-		<input
-			type="text"
-			bind:value={pasteUrl}
-			placeholder="Paste YouTube ID here"
-			on:keydown={(e) => {
-				if (e.key === 'Enter') handlePasteUrl();
-			}}
-			style="width: 70%; margin-right: 0.5em;"
-		/>
-		<button on:click={handlePasteUrl} class="btn btn-sm btn-primary">Add by Video ID</button>
-	</div>
-
 	{#if results.length > 0}
 		<ul>
 			{#each results as result}
@@ -100,4 +107,25 @@
 			{/each}
 		</ul>
 	{/if}
+	<div class="mt-4">
+		<p class="text-muted mb-0">
+			You can also paste a YouTube video ID or URL directly below to add it.
+		</p>
+	</div>
+	<div class="paste-url-container d-flex align-items-center gap-2">
+		<input
+			type="text"
+			bind:value={pasteUrl}
+			placeholder="Paste YouTube ID here"
+			on:keydown={(e) => {
+				if (e.key === 'Enter') handlePasteUrl();
+			}}
+			class="form-control"
+		/>
+		<button
+			style="width: 45px; height: 45px;"
+			on:click={handlePasteUrl}
+			class="btn btn-sm btn-primary"><Fa icon={faPlus} /></button
+		>
+	</div>
 </div>
