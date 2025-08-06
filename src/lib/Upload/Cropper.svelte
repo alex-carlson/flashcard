@@ -122,7 +122,13 @@
 
 <div class="cropper-container">
 	<div class="cropper">
-		<img bind:this={image} {src} alt="To crop" style="max-width: 100%; display: block;" />
+		<img
+			bind:this={image}
+			{src}
+			crossorigin="anonymous"
+			alt="To crop"
+			style="max-width: 100%; display: block;"
+		/>
 		<div class="cropper-actions">
 			<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
 			<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>

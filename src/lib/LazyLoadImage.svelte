@@ -4,7 +4,7 @@
 
 	import { addToast } from '../stores/toast';
 
-	let loaded = false;
+	let loaded = true;
 	let finalUrl = '';
 
 	function handleLoad() {
@@ -22,10 +22,10 @@
 	// Reactively update finalUrl when imageUrl or imagePath changes
 	$: if (imageUrl) {
 		finalUrl = imageUrl;
-		loaded = false;
+		// loaded = false;
 	} else {
 		finalUrl = '';
-		loaded = false;
+		// loaded = false;
 	}
 </script>
 
