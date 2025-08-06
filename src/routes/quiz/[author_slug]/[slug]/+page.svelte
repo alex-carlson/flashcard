@@ -84,6 +84,8 @@
 				z-index: 1000;
 			}
 		</style>
+	{/if}
+	<div id="quiz" style="display: {quizStarted ? 'block' : 'none'}">
 		<FlashCards
 			{collectionId}
 			on:finish={() => {
@@ -95,5 +97,5 @@
 				clearInterval(interval);
 			}}
 		/>
-	{/if}
+	</div>
 </div>
