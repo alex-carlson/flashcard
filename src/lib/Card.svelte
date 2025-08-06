@@ -33,12 +33,28 @@
 
 	function handleInput(e) {
 		if (!item) return;
+		console.log('Checking question:', item.question, 'with answer:', item.answer);
 		clearTimeout(item._debounceTimeout);
 		item._debounceTimeout = setTimeout(() => {
-			if (areStringsClose(item.userAnswer, item.answer, 1)) {
+			let isCorrect = false;
+			if (Array.isArray(item.answer)) {
+				isCorrect = item.answer.some((ans) => areStringsClose(item.userAnswer, ans, 1));
+			} else {
+				isCorrect = areStringsClose(item.userAnswer, item.answer, 1);
+			}
+			if (isCorrect) {
 				item.revealed = true;
-				item.userAnswer = item.answer;
-				e.target.value = item.answer;
+				console.log('Correct answer:', item.answer);
+				// If answer is array, set userAnswer to the matched answer
+				if (Array.isArray(item.answer)) {
+					console.log('Multiple answers found:', item.answer);
+					const matched = item.answer.find((ans) => areStringsClose(item.userAnswer, ans, 1));
+					item.userAnswer = matched;
+					e.target.value = item.answer[0];
+				} else {
+					item.userAnswer = item.answer;
+					e.target.value = item.answer;
+				}
 				e.target.disabled = true;
 				e.target.style.display = 'none';
 				e.target.style.backgroundColor = '#d4edda';
@@ -121,7 +137,7 @@
 					class={`answer ${item.revealed ? 'revealed' : 'hidden'}`}
 					style="transform: scale(1);"
 				>
-					{item.answer}
+					{Array.isArray(item.answer) ? item.answer[0] : item.answer}
 				</span>
 				{#if item.extra && item.revealed}
 					<span class="extra">{item.extra}</span>
@@ -147,7 +163,7 @@
 					class={`answer black ${item.revealed ? 'revealed' : 'hidden'}`}
 					style="transform: scale(1);"
 				>
-					{item.answer || 'Loading'}
+					{Array.isArray(item.answer) ? item.answer[0] : item.answer || 'Loading'}
 				</span>
 			{/if}
 		</div>

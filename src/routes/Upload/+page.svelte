@@ -265,9 +265,9 @@
 						class="thumbnail_container d-flex flex-row align-items-center justify-content-center gap-3"
 						style="min-height: 180px; width: 100%; flex-wrap: wrap;"
 					>
-						{#if collection.thumbnail}
+						{#if collection.thumbnail_url}
 							<img
-								src={collection.thumbnail}
+								src={collection.thumbnail_url}
 								alt="Collection Thumbnail"
 								class="img-fluid"
 								style="width: 100%; max-width: 180px; max-height: 180px; object-fit: contain; flex: 1 1 120px; min-width: 80px;"

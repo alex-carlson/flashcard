@@ -9,7 +9,8 @@
 		faFloppyDisk,
 		faBan,
 		faChevronUp,
-		faChevronDown
+		faChevronDown,
+		faPlus
 	} from '@fortawesome/free-solid-svg-icons';
 	import { uploadData } from './uploader.js';
 	import { addToast } from '../../stores/toast.js';
@@ -199,7 +200,52 @@
 					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
-			<input id="editedAnswer" type="text" bind:value={item.answer} placeholder="Enter an answer" />
+			<div class="answer-edit-group">
+				{#if Array.isArray(item.answer)}
+					{#each item.answer as ans, idx (idx)}
+						<div class="answer-row">
+							<input type="text" bind:value={item.answer[idx]} placeholder="Enter an answer" />
+							<button
+								class="remove-answer-btn danger"
+								type="button"
+								title="Remove this answer"
+								on:click={() => {
+									if (item.answer.length === 2) {
+										// If only two left, revert to string
+										const otherIdx = idx === 0 ? 1 : 0;
+										item.answer = item.answer[otherIdx];
+									} else {
+										item.answer = item.answer.filter((_, i) => i !== idx);
+									}
+								}}>&#x2212;</button
+							>
+							{#if idx === item.answer.length - 1}
+								<button
+									class="add-answer-btn"
+									type="button"
+									on:click={() => (item.answer = [...item.answer, ''])}
+									title="Add another answer">+</button
+								>
+							{/if}
+						</div>
+					{/each}
+				{:else}
+					<div class="answer-row">
+						<input
+							id="editedAnswer"
+							type="text"
+							bind:value={item.answer}
+							placeholder="Enter an answer"
+						/>
+						<button
+							class="add-answer-btn secondary"
+							type="button"
+							on:click={() => (item.answer = item.answer ? [item.answer, ''] : ['', ''])}
+							title="Add another answer"><Fa icon={faPlus} /></button
+						>
+					</div>
+				{/if}
+			</div>
 			<input id="editedExtra" type="text" bind:value={item.extra} placeholder="Enter extra info" />
 			<div class="vertical">
 				<button class="success" on:click={saveEditHandler}><Fa icon={faFloppyDisk} /></button>
@@ -248,3 +294,34 @@
 		{/if}
 	{/if}
 </li>
+
+<style>
+	.answer-edit-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	.answer-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.add-answer-btn {
+		background: #4caf50;
+		color: white;
+		border: none;
+		border-radius: 50%;
+		width: 2rem;
+		height: 2rem;
+		font-size: 1.25rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: 0.25rem;
+		transition: background 0.2s;
+	}
+	.add-answer-btn:hover {
+		background: #388e3c;
+	}
+</style>
