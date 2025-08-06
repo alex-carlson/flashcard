@@ -147,6 +147,12 @@
 			description={$quiz.collection.description}
 		/>
 
+		<div class="col-12">
+			<p class="text-center p2" style="font-size: 1.4rem;">
+				Current score: {$stats.correct} / {$stats.total}
+			</p>
+		</div>
+
 		{#if !isPartyMode}
 			<select class="my-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
 				{#each [['FILL_IN_THE_BLANK', 'Fill in the Blank'], ['TRUE_FALSE', '50/50'], ['MULTIPLE_CHOICE', 'Multiple Choice'], ['FLASH_CARDS', 'Flashcard']] as [mode, label]}

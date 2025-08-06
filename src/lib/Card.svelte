@@ -33,7 +33,6 @@
 
 	function handleInput(e) {
 		if (!item) return;
-		console.log('Checking question:', item.question, 'with answer:', item.answer);
 		clearTimeout(item._debounceTimeout);
 		item._debounceTimeout = setTimeout(() => {
 			let isCorrect = false;
@@ -44,10 +43,8 @@
 			}
 			if (isCorrect) {
 				item.revealed = true;
-				console.log('Correct answer:', item.answer);
 				// If answer is array, set userAnswer to the matched answer
 				if (Array.isArray(item.answer)) {
-					console.log('Multiple answers found:', item.answer);
 					const matched = item.answer.find((ans) => areStringsClose(item.userAnswer, ans, 1));
 					item.userAnswer = matched;
 					e.target.value = item.answer[0];
