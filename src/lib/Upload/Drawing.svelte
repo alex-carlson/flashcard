@@ -251,7 +251,7 @@
 
 	function saveDrawing() {
 		// dispatch a custom event to notify parent component
-		const dataURL = canvas.toDataURL('image/png');
+		const dataURL = canvas.toDataURL('image/webp', 0.6);
 		dispatch('save', { dataURL });
 	}
 	function cancelDrawing() {
