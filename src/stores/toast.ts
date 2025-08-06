@@ -33,3 +33,14 @@ export function addToast({ message, type = 'info', duration = 3000 }: {
         }, 300); // 300ms for fade out animation
     }, duration);
 }
+
+export function removeToast(toastId: number) {
+    toasts.update((all) =>
+        all.map((t) => t.id === toastId ? { ...t, removing: true } : t)
+    );
+
+    // Remove the toast after fade animation
+    setTimeout(() => {
+        toasts.update((all) => all.filter((t) => t.id !== toastId));
+    }, 300); // 300ms for fade out animation
+}
