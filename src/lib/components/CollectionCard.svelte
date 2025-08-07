@@ -60,7 +60,7 @@
 	});
 </script>
 
-<li>
+<li class="pb-2">
 	{#if collection}
 		<a
 			class="collection-card-link"
@@ -78,7 +78,7 @@
 				</div>
 
 				<div class="card-meta">
-					<span class="card-questions">{collection.items_length} questions</span>
+					<span class="card-questions">{collection.items_length || 0} questions</span>
 					<span class="card-date">{formatTimestamp(collection.created_at)}</span>
 				</div>
 			</div>
