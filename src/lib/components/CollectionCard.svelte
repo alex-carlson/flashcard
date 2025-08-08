@@ -69,7 +69,7 @@
 	});
 </script>
 
-<li class="pb-2">
+<li>
 	{#if collection}
 		<a
 			class="collection-card-link"
@@ -81,7 +81,7 @@
 					<LazyLoadImage imageUrl={collection.thumbnail_url} tempSize="100%" />
 				{/if}
 			</div>
-			<div class="card-content">
+			<div class="card-content pb-2">
 				<div class="fit-text-container">
 					<h2 bind:this={titleEl} class="fit-text">{collection.category}</h2>
 				</div>
