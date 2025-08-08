@@ -192,9 +192,16 @@
 				<p>No collections available</p>
 			</div>
 		{:else}
-			<ul class="collections-list">
+			<ul class="collections-list p-2">
 				{#each processedCollections as collection}
-					<CollectionCard {collection} onNavigate={selectCollection} />
+					<CollectionCard
+						{collection}
+						onNavigate={selectCollection}
+						showTags={condensed}
+						showDate={!condensed}
+						showIsVisible={condensed}
+						showAuthor={!condensed}
+					/>
 				{/each}
 			</ul>
 		{/if}

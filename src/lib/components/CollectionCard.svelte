@@ -1,13 +1,20 @@
 <script>
 	export let collection = null;
 	export let onNavigate = null; // Allow parent to override navigation
+	export let showTags = false;
+	export let showAuthor = false;
+	export let showIsVisible = false;
+	export let showDate = true;
 	import { formatTimestamp } from '$lib/api/utils.js';
 	import LazyLoadImage from '$lib/LazyLoadImage.svelte';
 	import { goto } from '$app/navigation';
 	import { fetchUser } from '$lib/api/user';
 	import { afterUpdate, onMount } from 'svelte';
+	import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+	import Fa from 'svelte-fa';
 
 	let titleEl;
+	let tagCount = 0;
 	let scale = 1;
 
 	async function defaultGotoPageWithState(author_id, slug) {
@@ -52,6 +59,8 @@
 
 	onMount(() => {
 		resizeText();
+		tagCount = collection?.tags ? collection.tags.split(',').length : 0;
+		console.log('collection data:', collection);
 		window.addEventListener('resize', resizeText);
 	});
 
@@ -78,8 +87,27 @@
 				</div>
 
 				<div class="card-meta">
+					{#if showTags}
+						<span class="card-meta-item">
+							{tagCount}
+							{tagCount === 1 ? 'tag' : 'tags'}
+						</span>
+					{/if}
 					<span class="card-questions">{collection.items_length || 0} questions</span>
-					<span class="card-date">{formatTimestamp(collection.created_at)}</span>
+					{#if showDate}
+						<span class="card-date">{formatTimestamp(collection.created_at)}</span>
+					{/if}
+					{#if showIsVisible}
+						<span class="card-visibility">
+							{#if collection.private}
+								<Fa icon={faEyeSlash} />
+								Private
+							{:else}
+								<Fa icon={faEye} />
+								Public
+							{/if}
+						</span>
+					{/if}
 				</div>
 			</div>
 		</a>
