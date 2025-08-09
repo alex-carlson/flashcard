@@ -13,6 +13,7 @@
 	export let list = true;
 	export let grid = true;
 	export let condensed = false;
+	export let showAuthor = false;
 	export let sortmode = 'default'; // 'default', 'latest', 'popular', 'random'
 	export let limit = 12; // null for no limit, or a number to limit results
 	export let onSelectCollection = null; // Allow parent to override selection behavior
@@ -200,7 +201,7 @@
 						showTags={condensed}
 						showDate={!condensed}
 						showIsVisible={condensed}
-						showAuthor={!condensed}
+						showAuthor={!condensed && showAuthor}
 					/>
 				{/each}
 			</ul>

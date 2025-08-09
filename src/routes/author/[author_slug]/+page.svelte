@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 	import Loading from '$lib/components/Loading.svelte';
+	import { goto } from '$app/navigation';
 
 	export let data;
 
@@ -11,6 +12,15 @@
 	let author = null;
 	let bio = null;
 	let userData = null;
+
+	function handleCollectionNavigate(collection) {
+		// Custom navigation logic can be added here if needed
+		// For now, we'll just log the collection
+		console.log('Navigating to collection:', collection);
+
+		//use goto navigation
+		goto(`/quiz/${collection.profiles.username_slug || collection.profiles.username || collection.profiles.public_id}/${collection.slug}`, { state: { collectionId: collection.id } });
+	}
 
 	// Use server-loaded data if available, otherwise fetch client-side
 	$: if (data?.userData) {
@@ -147,7 +157,7 @@
 	<div class="container list grid pt-3">
 		<ul>
 			{#each collections as data}
-				<CollectionCard collection={data} />
+				<CollectionCard collection={data} onNavigate={handleCollectionNavigate} />
 			{/each}
 		</ul>
 	</div>

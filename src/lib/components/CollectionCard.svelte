@@ -108,6 +108,11 @@
 							{/if}
 						</span>
 					{/if}
+					{#if showAuthor && collection.profiles}
+						<span class="card-author">
+							by {collection.profiles.username || collection.profiles.public_id}
+						</span>
+					{/if}
 				</div>
 			</div>
 		</a>

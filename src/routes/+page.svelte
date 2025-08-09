@@ -68,12 +68,12 @@
 
 <div class="container mt-5">
 	<h2>Latest Collections</h2>
-	<Collections sortmode="latest" limit={4} />
+	<Collections sortmode="latest" limit={4} showAuthor={true} />
 </div>
 
 <div class="container mt-5">
 	<h2>Random Collections</h2>
-	<Collections sortmode="random" limit={16} />
+	<Collections sortmode="random" limit={16} showAuthor={true} />
 </div>
 
 <div class="container">
