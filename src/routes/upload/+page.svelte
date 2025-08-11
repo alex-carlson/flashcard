@@ -463,14 +463,17 @@
 				</ul>
 				{#if questionType === 'Image'}
 					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
-						<div
-							class="col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
-							style="width: 180px; height: 240px;"
-						>
-							<FileUpload
-								bind:this={itemUploader}
-								on:uploadImage={(event) => (item.file = event.detail)}
-							/>
+						<div class="vertical">
+							<div
+								class="col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
+								style="width: 180px; height: 240px;"
+							>
+								<FileUpload
+									bind:this={itemUploader}
+									on:uploadImage={(event) => (item.file = event.detail)}
+								/>
+							</div>
+							<!-- add extra text to go with the image -->
 						</div>
 						<div class="col-12 col-md">
 							<input

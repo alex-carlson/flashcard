@@ -1,9 +1,10 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { Fa } from 'svelte-fa';
-	import { faSearch, faPlus } from '@fortawesome/free-solid-svg-icons';
+	import { faSearch, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
 	export function addSong(data) {
+		searchTerm = '';
 		// This function can be used to add a song to a playlist or perform other actions
 		console.log(`Adding song: ${data.title}, ID: ${data.videoId}`);
 		dispatch('addSong', data);
@@ -11,10 +12,12 @@
 	let searchTerm = '';
 	let results = [];
 	let pasteUrl = '';
+	let isLoading = false;
 
 	async function searchYoutube() {
 		if (!searchTerm) return;
 
+		isLoading = true;
 		const query = searchTerm + ' song';
 		const url = `${import.meta.env.VITE_API_URL}/youtube/search?q=${encodeURIComponent(query)}`;
 
@@ -39,6 +42,8 @@
 			});
 		} catch (err) {
 			console.error('Error fetching YouTube data:', err);
+		} finally {
+			isLoading = false;
 		}
 	}
 
@@ -70,17 +75,40 @@
 <div class="container white audio-uploader padding">
 	<h2 class="mb-3">Search YouTube</h2>
 	<div class="search-container">
+		{#if searchTerm.trim() !== ''}
+			<button
+				type="button"
+				on:click={() => {
+					searchTerm = '';
+					results = [];
+				}}
+				aria-label="Clear"
+				class="clear-btn left"
+				style="margin-left: 4px;"
+			>
+				<Fa icon={faTimes} />
+			</button>
+		{/if}
 		<input
 			type="text"
 			bind:value={searchTerm}
 			placeholder="e.g. Prince"
+			class:hasText={searchTerm.trim().length > 0}
 			on:keydown={(e) => {
 				if (e.key === 'Enter') searchYoutube();
 			}}
 		/>
-		<button on:click={searchYoutube}><Fa icon={faSearch} /></button>
+		<button on:click={searchYoutube} disabled={isLoading}>
+			{#if isLoading}
+				<div class="spinner"></div>
+			{:else}
+				<Fa icon={faSearch} />
+			{/if}
+		</button>
 	</div>
-	{#if results.length > 0}
+	{#if isLoading}
+		<div class="loading-message">Searching YouTube...</div>
+	{:else if results.length > 0}
 		<ul>
 			{#each results as result}
 				<li>
@@ -129,3 +157,35 @@
 		>
 	</div>
 </div>
+
+<style>
+	.spinner {
+		width: 16px;
+		height: 16px;
+		border: 2px solid #f3f3f3;
+		border-top: 2px solid #007bff;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	.loading-message {
+		text-align: center;
+		padding: 1rem;
+		color: #666;
+		font-style: italic;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+</style>

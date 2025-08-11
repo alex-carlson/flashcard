@@ -110,10 +110,22 @@ export async function fetchCollectionById(
     }
 }
 
+export async function incrementPlayCounter(collectionId: string) {
+    const url = `/collections/incrementPlays/${collectionId}`;
+    console.log("Incrementing play counter for collection:", collectionId);
+    try {
+        const response = await apiFetch(url, 'POST', null, false);
+        return response;
+    } catch (error) {
+        console.error("Error incrementing play counter:", error);
+        return undefined;
+    }
+}
+
 export async function fetchCollectionByAuthorAndSlug(
-    authorId,
-    slug
-): Promise<Collection | undefined> {
+    authorId: string,
+    slug: string
+): Promise<string | undefined> {
     const url = `/collections/user/collection/${authorId}/${slug}`;
     try {
         const data = await apiFetch(url, 'GET', null, false, false);

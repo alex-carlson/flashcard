@@ -2,15 +2,17 @@
 	import { toLetterGrade } from '$lib/api/quizScore.js';
 	import FlashCards from '$lib/FlashCards.svelte';
 	import { onDestroy } from 'svelte';
+	import { incrementPlayCounter } from '$lib/api/collections.js';
 	export let data;
 
-	const { category, thumbnail, collectionId, author, quizScore } = data;
+	const { category, thumbnail, collectionId, author, quizScore, timesPlayed } = data;
 	let timer = 0;
 	let interval = null;
 	let quizStarted = false;
 	let practiceMode = false;
 
 	function startQuiz() {
+		incrementPlayCounter(collectionId);
 		quizStarted = true;
 		practiceMode = false;
 		timer = 0;
@@ -21,6 +23,7 @@
 	}
 
 	function startPractice() {
+		incrementPlayCounter(collectionId);
 		quizStarted = true;
 		practiceMode = true;
 		clearInterval(interval);
@@ -34,13 +37,20 @@
 <svelte:head>
 	{#if category && author}
 		<title>{category} by {author}</title>
+		<meta name="description" content="Play {category} by {author} - Interactive flash cards quiz" />
 		<meta property="og:title" content="Play {category} by {author}!" />
 		<meta name="twitter:title" content="Play {category} by {author}!" />
 		<meta name="twitter:card" content="summary_large_image" />
+
+		<!-- Additional metadata for better link previews -->
+		<meta name="robots" content="index, follow" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="format-detection" content="telephone=no" />
 	{/if}
 	{#if thumbnail != null && thumbnail != ''}
 		<meta property="og:image" content={thumbnail} />
 		<meta name="twitter:image" content={thumbnail} />
+		<link rel="image_src" href={thumbnail} />
 	{/if}
 </svelte:head>
 
@@ -51,6 +61,9 @@
 			<h1 class="mb-3">{category}</h1>
 			{#if author}
 				<p class="mb-3">by {author}</p>
+			{/if}
+			{#if timesPlayed > 0}
+				<p class="mb-3">Times Played: {timesPlayed}</p>
 			{/if}
 			<!-- {#if quizScore !== null}
 				<p class="mb-3">Your High Score: {quizScore}% ({toLetterGrade(quizScore)})</p>

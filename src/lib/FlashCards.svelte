@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { user } from '$stores/user';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
-	import { getScoreMessage } from './api/quizScore';
+	import { getScoreMessage, getRandomPhraseForScore, toLetterGrade } from './api/quizScore';
 	import { createQuizStore } from '$stores/quiz';
 
 	// Components
@@ -202,7 +202,7 @@
 	<Modal
 		bind:show={$quiz.showModal}
 		title="Quiz Completed"
-		message={getScoreMessage($stats.percentage)}
+		message={getRandomPhraseForScore($stats.percentage)}
 		effect={$stats.isComplete ? 'confetti' : 'none'}
 		onClose={() => {
 			quiz.revealCards();
