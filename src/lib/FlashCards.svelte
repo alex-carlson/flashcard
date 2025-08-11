@@ -203,6 +203,7 @@
 		bind:show={$quiz.showModal}
 		title="Quiz Completed"
 		message={getRandomPhraseForScore($stats.percentage)}
+		grade={toLetterGrade($stats.percentage)}
 		effect={$stats.isComplete ? 'confetti' : 'none'}
 		onClose={() => {
 			quiz.revealCards();

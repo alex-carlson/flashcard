@@ -5,6 +5,7 @@
 	export let show = false;
 	export let title = '';
 	export let message = '';
+	export let grade = '';
 	export const Effect = {
 		NONE: 'none',
 		CONFETTI: 'confetti',
@@ -49,6 +50,11 @@
 				<div class="modal-header">
 					<h2 class="modal-title">{title}</h2>
 				</div>
+				{#if grade !== ''}
+					<div class="modal-grade">
+						<p>{grade}</p>
+					</div>
+				{/if}
 				<div class="modal-body">
 					<p>{message}</p>
 				</div>
@@ -158,7 +164,10 @@
 		cursor: pointer;
 		border: 1px solid transparent;
 		border-radius: 0.375rem;
-		transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			border-color 0.2s,
+			color 0.2s;
 	}
 
 	.btn-secondary {

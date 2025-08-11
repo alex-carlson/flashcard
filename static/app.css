@@ -13414,6 +13414,7 @@ header .navContainer ul li.user-tab a .profile-picture img {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
 }
 .modal .modal-dialog .modal-content .modal-header {
   padding: 1rem;
@@ -13425,6 +13426,20 @@ header .navContainer ul li.user-tab a .profile-picture img {
   font-size: 1.25rem;
   font-weight: 600;
   color: #333;
+}
+.modal .modal-dialog .modal-content .modal-grade {
+  position: absolute;
+  top: -30px;
+  right: 60px;
+  color: red;
+  font-size: 5rem;
+  font-weight: bold;
+  transform: rotate(-12deg);
+  overflow: visible;
+  z-index: 1;
+}
+.modal .modal-dialog .modal-content .modal-grade p {
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
 }
 .modal .modal-dialog .modal-content .modal-body {
   padding: 1rem;
