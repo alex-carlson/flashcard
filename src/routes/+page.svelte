@@ -56,6 +56,7 @@
 			list={false}
 			sortmode="random-daily"
 			limit={1}
+			showAuthor={true}
 			on:searched={loadSearchedPage}
 		/>
 	</div>

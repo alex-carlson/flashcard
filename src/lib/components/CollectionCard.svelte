@@ -144,7 +144,7 @@
 
 	.card-meta {
 		display: flex;
-		gap: 1rem;
+		gap: 10px;
 		justify-content: center;
 	}
 
