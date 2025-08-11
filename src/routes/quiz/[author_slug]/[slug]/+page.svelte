@@ -36,24 +36,51 @@
 
 <svelte:head>
 	{#if category && author}
-		<title>{category} by {author}</title>
-		<meta name="description" content="Play {category} by {author} - Interactive flash cards quiz" />
-		<meta property="og:title" content="Play {category} by {author}!" />
-		<meta name="twitter:title" content="Play {category} by {author}!" />
-		<meta name="twitter:card" content="summary_large_image" />
+		<!-- Primary title - most important for SMS apps -->
+		<title>Play {category} by {author}</title>
 
-		<!-- Additional metadata for better link previews -->
+		<!-- Description for link previews -->
+		<meta name="description" content="Play {category} by {author} - Interactive flash cards quiz" />
+
+		<!-- Open Graph tags (used by some messaging apps) -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Play {category} by {author}" />
+		<meta property="og:description" content="Interactive flash cards quiz - Test your knowledge!" />
+		<meta property="og:site_name" content="Flash Cards" />
+
+		<!-- Twitter Card tags -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Play {category} by {author}" />
+		<meta
+			name="twitter:description"
+			content="Interactive flash cards quiz - Test your knowledge!"
+		/>
+
+		<!-- Legacy image tag for older systems -->
+		<meta name="image" content={thumbnail || ''} />
+
+		<!-- Additional metadata for better compatibility -->
 		<meta name="robots" content="index, follow" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Schema.org structured data for better understanding -->
+		<meta name="application-name" content="Flash Cards" />
+		<meta name="theme-color" content="#007bff" />
 	{/if}
 	{#if thumbnail != null && thumbnail != ''}
+		<!-- Multiple image meta tags for maximum compatibility -->
 		<meta property="og:image" content={thumbnail} />
+		<meta property="og:image:secure_url" content={thumbnail} />
+		<meta property="og:image:type" content="image/jpeg" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
 		<meta name="twitter:image" content={thumbnail} />
+		<meta name="twitter:image:src" content={thumbnail} />
 		<link rel="image_src" href={thumbnail} />
+		<link rel="apple-touch-icon" href={thumbnail} />
 	{/if}
 </svelte:head>
-
 <div>
 	{#if !quizStarted}
 		<div class="white padding rounded m-3">
