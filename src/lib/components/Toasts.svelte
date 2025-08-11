@@ -8,7 +8,15 @@
 	{#each $toasts as toast (toast.id)}
 		<div
 			class="toast {toast.type} {toast.removing ? 'removing' : 'show'}"
+			tabindex="0"
+			role="button"
+			aria-label="Dismiss toast: {toast.message}"
 			on:click={() => removeToast(toast.id)}
+			on:keydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					removeToast(toast.id);
+				}
+			}}
 		>
 			<span class="toast-message">{toast.message}</span>
 		</div>

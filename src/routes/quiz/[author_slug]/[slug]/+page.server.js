@@ -13,7 +13,7 @@ export const load = async ({ params }) => {
     const collection = await fetchCollectionById(collectionId);
     const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
 
-    console.log("best score", score);
+    console.log("Collection thumbnail_url: ", collection?.thumbnail_url);
 
     return {
         author: author.username,
