@@ -219,7 +219,7 @@
 	{#if !user}
 		<p><a href="/login">Log in</a> to manage your collections.</p>
 	{:else}
-		<div class="select-quiz mt-4">
+		<div class="select-quiz mt-4 p-2">
 			<h2>Select a Quiz</h2>
 			<Collections
 				{collections}
@@ -234,7 +234,7 @@
 			/>
 		</div>
 		{#if collection === null}
-			<div class="create mt-4">
+			<div class="create mt-4 p-2">
 				<h2>Create a new Quiz</h2>
 				<input
 					type="text"
@@ -259,7 +259,7 @@
 				</button>
 			</div>
 		{:else}
-			<div class="collection card mb-4 p-3">
+			<div class="collection card mb-4 p-2">
 				<div class="collection-info row g-3 align-items-center">
 					<div
 						class="thumbnail_container d-flex flex-row align-items-center justify-content-center gap-3"
@@ -642,7 +642,7 @@
 					</form>
 				{/if}
 			</div>
-			<div class="button-group mt-3 d-flex gap-2">
+			<div class="button-group mt-3 d-flex gap-2 p-2">
 				{#if collection.itemsLength && collection.itemsLength > 1}
 					{#if !isReordering}
 						<button class="btn btn-outline-secondary" on:click={() => (isReordering = true)}

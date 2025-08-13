@@ -193,7 +193,7 @@
 				<p>No collections available</p>
 			</div>
 		{:else}
-			<ul class="collections-list p-2">
+			<ul class="collections-list">
 				{#each processedCollections as collection}
 					<CollectionCard
 						{collection}
