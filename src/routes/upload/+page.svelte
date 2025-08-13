@@ -660,12 +660,42 @@
 								items: collection.items,
 								category: collection.category
 							});
-							if (shuffled && shuffled.length > 0) {
+							if (shuffled && Array.isArray(shuffled) && shuffled[0] && shuffled[0].items) {
 								collection.items = shuffled[0].items;
 								collection.itemsLength = shuffled[0].items.length;
+							} else {
+								addToast({
+									type: 'error',
+									message: 'Failed to shuffle items. Please try again.'
+								});
 							}
 						}}>Shuffle</button
 					>
+					<!-- download json of collection -->
+					<button
+						class="btn btn-outline-secondary"
+						on:click={() => {
+							try {
+								const blob = new Blob([JSON.stringify(collection)], { type: 'application/json' });
+								const url = URL.createObjectURL(blob);
+								const a = document.createElement('a');
+								a.href = url;
+								a.download = `${collection.category}.json`;
+								document.body.appendChild(a);
+								a.click();
+								document.body.removeChild(a);
+								URL.revokeObjectURL(url);
+							} catch (error) {
+								console.error('Error downloading collection:', error);
+								addToast({
+									type: 'error',
+									message: 'Failed to download collection. Please try again.'
+								});
+							}
+						}}
+					>
+						Download JSON
+					</button>
 				{/if}
 				<button
 					class="btn btn-danger"
