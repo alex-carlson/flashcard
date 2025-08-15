@@ -18,12 +18,12 @@ export const load = async ({ params }) => {
         const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
 
         return {
-            // author: author.username,
-            // category: collection?.category,
-            // thumbnail: collection?.thumbnail_url || null,
-            // collectionId: collection?.id,
-            // timesPlayed: collection?.times_played || 0,
-            // quizScore: score,
+            author: author.username,
+            category: collection?.category,
+            thumbnail: collection?.thumbnail_url || null,
+            collectionId: collection?.id,
+            timesPlayed: collection?.times_played || 0,
+            quizScore: score,
             meta: {
                 title: `${collection?.category} by ${author.username} | Quizzems`,
                 description: collection?.description || 'Take this quiz and test your knowledge!',

@@ -5,8 +5,8 @@
 	import { incrementPlayCounter } from '$lib/api/collections.js';
 	export let data;
 
-	// Extract data from page load
-	const { category, thumbnail, collectionId, author, quizScore, timesPlayed, meta } = data;
+	// Destructure page data
+	const { category, collectionId, author, quizScore, timesPlayed, meta } = data;
 
 	let timer = 0;
 	let interval = null;
@@ -19,9 +19,7 @@
 		practiceMode = false;
 		timer = 0;
 		clearInterval(interval);
-		interval = setInterval(() => {
-			timer += 1;
-		}, 1000);
+		interval = setInterval(() => (timer += 1), 1000);
 	}
 
 	function startPractice() {
@@ -31,17 +29,20 @@
 		clearInterval(interval);
 	}
 
-	onDestroy(() => {
-		clearInterval(interval);
+	//onmount, print meta
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		console.log('Meta:', meta);
 	});
+
+	onDestroy(() => clearInterval(interval));
 </script>
 
 <svelte:head>
 	{#if meta}
-		<!-- Primary title -->
+		<!-- Title & Description -->
 		<title>{meta.title}</title>
-
-		<!-- Description -->
 		<meta name="description" content={meta.description} />
 
 		<!-- Open Graph -->
@@ -119,12 +120,8 @@
 	<div id="quiz" style="display: {quizStarted ? 'block' : 'none'}">
 		<FlashCards
 			{collectionId}
-			on:finish={() => {
-				clearInterval(interval);
-			}}
-			on:giveup={() => {
-				clearInterval(interval);
-			}}
+			on:finish={() => clearInterval(interval)}
+			on:giveup={() => clearInterval(interval)}
 		/>
 	</div>
 </div>
