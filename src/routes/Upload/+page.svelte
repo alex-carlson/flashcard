@@ -15,8 +15,7 @@
 		createCollection,
 		confirmDelete,
 		saveEdit,
-		reorderItems,
-		shuffleItems
+		reorderItems
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
@@ -94,6 +93,7 @@
 							: collection.tags
 						: '';
 				isPublic = !collection.private || false;
+				isShuffle = collection.shuffle || false;
 
 				// Initialize items array if it doesn't exist
 				if (!collection.items) {
