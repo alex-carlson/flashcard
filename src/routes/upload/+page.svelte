@@ -484,12 +484,11 @@
 									{/if}
 								</div>
 								<div class="col-12 mt-2">
-									<input
-										type="text"
+									<textarea
 										class="form-control mb-2"
-										placeholder="Supplimental Question Text"
-										bind:value={item.supplimental}
-									/>
+										placeholder="supplemental Question Text"
+										bind:value={item.supplemental}
+									></textarea>
 								</div>
 							</div>
 						</div>

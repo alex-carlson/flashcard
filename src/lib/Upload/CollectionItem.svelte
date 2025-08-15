@@ -200,7 +200,7 @@
 					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
-			<input type="text" bind:value={item.supplimental} placeholder="Supplimental question info" />
+			<textarea bind:value={item.supplemental} placeholder="supplemental question info"></textarea>
 			<div class="answer-edit-group">
 				{#if Array.isArray(item.answer)}
 					{#each item.answer as ans, idx (idx)}
@@ -271,7 +271,7 @@
 			{:else}
 				<img class="preview" src={item.file || item.image} alt="Preview" />
 			{/if}
-			<span>{item.supplimental}</span>
+			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		</div>
 		<div class="answer-field vertical">
 			<span>{item.answer}</span>

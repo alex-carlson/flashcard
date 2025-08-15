@@ -121,8 +121,8 @@
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
-		{#if item.supplimental}
-			<p class="supplimental">{item.supplimental}</p>
+		{#if item.supplemental}
+			<span class="supplemental">{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		{/if}
 
 		<div class="answerbox mt-2">
