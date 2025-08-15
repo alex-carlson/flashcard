@@ -87,6 +87,7 @@
 				(blob) => {
 					if (blob) {
 						const file = new File([blob], `cropped.${fileExtension}`, { type: mimeType });
+						console.log('Cropped image:', file);
 						dispatch('cropped', file);
 						resolve(file);
 					} else {
@@ -105,7 +106,8 @@
 			return match ? match[1] : 'jpg';
 		}
 		const extension = imageSrc.split('.').pop()?.toLowerCase();
-		return extension || 'jpg';
+		// Remove query string if present
+		return extension?.split('?')[0] || 'jpg';
 	}
 
 	function getMimeType(format) {
@@ -123,13 +125,15 @@
 
 <div class="cropper-container">
 	<div class="cropper">
-		<img
-			bind:this={image}
-			{src}
-			crossorigin="anonymous"
-			alt="To crop"
-			style="max-width: 100%; display: block;"
-		/>
+		<div class="cropper-image-wrapper">
+			<img
+				bind:this={image}
+				{src}
+				crossorigin="anonymous"
+				alt="To crop"
+				style="max-width: 100%; display: block;"
+			/>
+		</div>
 		<div class="cropper-actions">
 			<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
 			<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>
@@ -159,11 +163,28 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: flex-start;
+		overflow: hidden;
+	}
+
+	.cropper-image-wrapper {
+		flex: 1 1 auto;
+		width: 100%;
+		max-height: 55vh;
+		display: flex;
+		align-items: center;
 		justify-content: center;
+		overflow: auto;
 	}
 
 	.cropper-actions {
 		margin-top: 10px;
 		text-align: center;
+		width: 100%;
+		position: relative;
+		z-index: 2;
+		background: #fff;
+		box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
+		padding-bottom: 1rem;
 	}
 </style>
