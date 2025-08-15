@@ -31,6 +31,7 @@ interface Collection {
     thumbnail: string;
     author: string;
     author_slug: string;
+    shuffle: boolean;
 }
 
 interface QuizState {
@@ -75,7 +76,8 @@ export function createQuizStore() {
             description: '',
             thumbnail: '',
             author: '',
-            author_slug: ''
+            author_slug: '',
+            shuffle: false
         }
     }; const { subscribe, update } = writable(initialState);
 
@@ -143,11 +145,17 @@ export function createQuizStore() {
                     description: data.description || '',
                     thumbnail: String(data.thumbnail || ''),
                     author: (data.profiles && data.profiles.username) ? data.profiles.username : 'Unknown',
-                    author_slug: (data.profiles && data.profiles.username_slug) ? data.profiles.username_slug : ''
+                    author_slug: (data.profiles && data.profiles.username_slug) ? data.profiles.username_slug : '',
+                    shuffle: data.shuffle || false
                 },
                 hasInitialized: true,
                 isLoading: false
             }));
+
+            // Shuffle cards if collection.shuffle is true
+            if (data.shuffle) {
+                shuffleCards();
+            }
 
         } catch (error) {
             console.error('Error fetching collection:', error);

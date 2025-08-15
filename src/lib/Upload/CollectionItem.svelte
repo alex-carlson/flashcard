@@ -200,7 +200,7 @@
 					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
-			<textarea bind:value={item.supplemental} placeholder="supplemental question info"></textarea>
+			<textarea bind:value={item.supplemental} placeholder="Supplemental Question Text"></textarea>
 			<div class="answer-edit-group">
 				{#if Array.isArray(item.answer)}
 					{#each item.answer as ans, idx (idx)}

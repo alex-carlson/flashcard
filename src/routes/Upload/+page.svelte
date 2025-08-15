@@ -32,6 +32,7 @@
 	let tempCategory = '';
 	let tempDescription = '';
 	let tempTags = '';
+	let isShuffle = false;
 	let answerInput; // Reference to the answer input field
 	let questionInput; // Reference to the question input field
 	let thumbnailUploader; // Reference to the thumbnail FileUpload component
@@ -152,7 +153,8 @@
 			private: !isPublic, // isPublic is true for public, so private is the inverse
 			tags: tempTags || '',
 			category: tempCategory || collection.category || '',
-			description: tempDescription || collection.description || ''
+			description: tempDescription || collection.description || '',
+			shuffle: isShuffle
 		};
 
 		try {
@@ -354,6 +356,16 @@
 							/> <span>{isPublic ? 'Public' : 'Private'}</span>
 							<span class="small-text">({collection.itemsLength} questions)</span>
 						</form>
+						<form class="shuffle-form form-check form-switch d-flex align-items-center gap-3 mb-2">
+							<label for="shuffle-toggle" class="form-label me-5 mb-0">Shuffle Questions</label>
+							<input
+								id="shuffle-toggle"
+								type="checkbox"
+								class="form-check-input"
+								bind:checked={isShuffle}
+								aria-label="Shuffle Questions"
+							/> <span>{isShuffle ? 'Shuffle for each play' : "Don't shuffle"}</span>
+						</form>
 						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
 							Save Changes
 						</button>
@@ -486,7 +498,7 @@
 								<div class="col-12 mt-2">
 									<textarea
 										class="form-control mb-2"
-										placeholder="supplemental Question Text"
+										placeholder="Supplemental Question Text"
 										bind:value={item.supplemental}
 									></textarea>
 								</div>
@@ -613,6 +625,11 @@
 							}
 						}}
 					/>
+					<textarea
+						class="form-control mb-2"
+						placeholder="Supplemental Question Text"
+						bind:value={item.supplemental}
+					></textarea>
 				{:else if questionType === 'Question'}
 					<form class="form row g-2 align-items-center" on:submit|preventDefault>
 						<div class="col-12">
@@ -670,25 +687,6 @@
 							>Done</button
 						>
 					{/if}
-					<button
-						class="btn btn-outline-secondary"
-						on:click={async () => {
-							const shuffled = await shuffleItems({
-								items: collection.items,
-								category: collection.category
-							});
-							if (shuffled && Array.isArray(shuffled) && shuffled[0] && shuffled[0].items) {
-								collection.items = shuffled[0].items;
-								collection.itemsLength = shuffled[0].items.length;
-							} else {
-								addToast({
-									type: 'error',
-									message: 'Failed to shuffle items. Please try again.'
-								});
-							}
-						}}>Shuffle</button
-					>
-					<!-- download json of collection -->
 					<button
 						class="btn btn-outline-secondary"
 						on:click={() => {
