@@ -6,7 +6,16 @@
 
 	export let data;
 
-	const meta = data.meta ?? {};
+	const meta = {
+		title: data.meta?.title ?? 'Quizzems - Bar Trivia with Attitude',
+		description:
+			data.meta?.description ??
+			'Make your brain bigger and smarter, fight your friends! Waste an afternoon.',
+		image: data.meta?.image ?? '/ogimage.jpg',
+		url: data.meta?.url ?? 'https://quizzems.com',
+		siteName: 'Quizzems',
+		themeColor: '#6F1D1B'
+	};
 </script>
 
 <svelte:head>
