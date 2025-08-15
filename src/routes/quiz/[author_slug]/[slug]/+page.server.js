@@ -17,15 +17,19 @@ export const load = async ({ params }) => {
         const collection = await fetchCollectionById(collectionId);
         const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
 
-        console.log("Collection thumbnail_url: ", collection?.thumbnail_url);
-
         return {
-            author: author.username,
-            category: collection?.category,
-            thumbnail: collection?.thumbnail_url || null,
-            collectionId: collection?.id,
-            timesPlayed: collection?.times_played || 0,
-            quizScore: score,
+            // author: author.username,
+            // category: collection?.category,
+            // thumbnail: collection?.thumbnail_url || null,
+            // collectionId: collection?.id,
+            // timesPlayed: collection?.times_played || 0,
+            // quizScore: score,
+            meta: {
+                title: `${collection?.category} by ${author.username} | Quizzems`,
+                description: collection?.description || 'Take this quiz and test your knowledge!',
+                image: collection?.thumbnail_url || '/ogimage.jpg',
+                url: `https://quizzems.com/quiz/${author_slug}/${slug}`,
+            }
         };
     } catch (error) {
         console.error('Error loading quiz page:', error);

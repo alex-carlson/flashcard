@@ -5,7 +5,9 @@
 	import { incrementPlayCounter } from '$lib/api/collections.js';
 	export let data;
 
-	const { category, thumbnail, collectionId, author, quizScore, timesPlayed } = data;
+	// Extract data from page load
+	const { category, thumbnail, collectionId, author, quizScore, timesPlayed, meta } = data;
+
 	let timer = 0;
 	let interval = null;
 	let quizStarted = false;
@@ -35,66 +37,54 @@
 </script>
 
 <svelte:head>
-	{#if category && author}
-		<!-- Primary title - most important for SMS apps -->
-		<title>Play {category} by {author}</title>
+	{#if meta}
+		<!-- Primary title -->
+		<title>{meta.title}</title>
 
-		<!-- Description for link previews -->
-		<meta name="description" content="Play {category} by {author} - Interactive flash cards quiz" />
+		<!-- Description -->
+		<meta name="description" content={meta.description} />
 
-		<!-- Open Graph tags (used by some messaging apps) -->
+		<!-- Open Graph -->
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Play {category} by {author}" />
-		<meta property="og:description" content="Interactive flash cards quiz - Test your knowledge!" />
-		<meta property="og:site_name" content="Flash Cards" />
+		<meta property="og:title" content={meta.title} />
+		<meta property="og:description" content={meta.description} />
+		<meta property="og:site_name" content={meta.siteName || 'Quizzems'} />
+		{#if meta.url}<meta property="og:url" content={meta.url} />{/if}
 
-		<!-- Twitter Card tags -->
+		<!-- Twitter -->
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Play {category} by {author}" />
-		<meta
-			name="twitter:description"
-			content="Interactive flash cards quiz - Test your knowledge!"
-		/>
+		<meta name="twitter:title" content={meta.title} />
+		<meta name="twitter:description" content={meta.description} />
 
-		<!-- Legacy image tag for older systems -->
-		<meta name="image" content={thumbnail || ''} />
+		<!-- Image -->
+		{#if meta.image}
+			<meta name="image" content={meta.image} />
+			<meta property="og:image" content={meta.image} />
+			<meta property="og:image:secure_url" content={meta.image} />
+			<meta property="og:image:type" content="image/jpeg" />
+			<meta property="og:image:width" content="1200" />
+			<meta property="og:image:height" content="630" />
+			<meta name="twitter:image" content={meta.image} />
+			<meta name="twitter:image:src" content={meta.image} />
+			<link rel="image_src" href={meta.image} />
+			<link rel="apple-touch-icon" href={meta.image} />
+		{/if}
 
-		<!-- Additional metadata for better compatibility -->
+		<!-- Additional metadata -->
 		<meta name="robots" content="index, follow" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="format-detection" content="telephone=no" />
-
-		<!-- Schema.org structured data for better understanding -->
-		<meta name="application-name" content="Flash Cards" />
-		<meta name="theme-color" content="#007bff" />
-	{/if}
-	{#if thumbnail != null && thumbnail != ''}
-		<!-- Multiple image meta tags for maximum compatibility -->
-		<meta property="og:image" content={thumbnail} />
-		<meta property="og:image:secure_url" content={thumbnail} />
-		<meta property="og:image:type" content="image/jpeg" />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
-		<meta name="twitter:image" content={thumbnail} />
-		<meta name="twitter:image:src" content={thumbnail} />
-		<link rel="image_src" href={thumbnail} />
-		<link rel="apple-touch-icon" href={thumbnail} />
+		<meta name="application-name" content={meta.siteName || 'Quizzems'} />
+		<meta name="theme-color" content={meta.themeColor || '#6F1D1B'} />
 	{/if}
 </svelte:head>
+
 <div>
 	{#if !quizStarted}
 		<div class="white padding rounded m-3">
-			<!-- add category and title -->
 			<h1 class="mb-3">{category}</h1>
-			{#if author}
-				<p class="mb-3">by {author}</p>
-			{/if}
-			{#if timesPlayed > 0}
-				<p class="mb-3">Times Played: {timesPlayed}</p>
-			{/if}
-			<!-- {#if quizScore !== null}
-				<p class="mb-3">Your High Score: {quizScore}% ({toLetterGrade(quizScore)})</p>
-			{/if} -->
+			{#if author}<p class="mb-3">by {author}</p>{/if}
+			{#if timesPlayed > 0}<p class="mb-3">Times Played: {timesPlayed}</p>{/if}
 			<h2 class="mb-3">Ready to start?</h2>
 			<button
 				class="btn btn-primary me-2"
@@ -125,15 +115,14 @@
 			}
 		</style>
 	{/if}
+
 	<div id="quiz" style="display: {quizStarted ? 'block' : 'none'}">
 		<FlashCards
 			{collectionId}
 			on:finish={() => {
-				console.log('Quiz finished');
 				clearInterval(interval);
 			}}
 			on:giveup={() => {
-				console.log('Quiz given up');
 				clearInterval(interval);
 			}}
 		/>

@@ -5,6 +5,7 @@
 
 	const dispatch = createEventDispatcher();
 	export let src;
+	export let isThumbnail = false;
 	let image;
 	let cropper;
 

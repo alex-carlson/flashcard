@@ -53,12 +53,15 @@ export function getScoreMessage(score) {
 
 export function toLetterGrade(score) {
     if (score > 99) return "A+";
-    if (score >= 85) return "A";
-    if (score >= 80) return "A-";
-    if (score >= 70) return "B";
-    if (score >= 65) return "B-";
-    if (score >= 60) return "C+";
-    if (score >= 55) return "C";
+    if (score >= 95) return "A";
+    if (score >= 90) return "A-";
+    if (score >= 85) return "B+";
+    if (score >= 80) return "B";
+    if (score >= 75) return "B-";
+    if (score >= 70) return "C+";
+    if (score >= 65) return "C";
+    if (score >= 60) return "C-";
+    if (score >= 55) return "D+";
     if (score >= 50) return "D";
     return "F";
 }

@@ -121,7 +121,23 @@
 	$: if (collectionId && !$quiz.hasInitialized && !$quiz.isLoading) {
 		quiz.loadCollection(collectionId);
 	}
+	let testValue = '';
+
+	function testValues() {
+		console.log('Grade: ' + toLetterGrade(testValue));
+		console.log('Phrase', getRandomPhraseForScore(testValue));
+	}
 </script>
+
+<div class="text white col-4">
+	<input
+		type="number"
+		bind:value={testValue}
+		class="text"
+		on:input={() => (testValue = +testValue)}
+	/>
+	<button on:click={() => testValues()}>Log Value</button>
+</div>
 
 <div class="container white pt-3">
 	{#if $quiz.isLoading || (!$quiz.hasInitialized && collectionId)}
