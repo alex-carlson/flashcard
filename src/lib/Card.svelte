@@ -121,6 +121,10 @@
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
+		{#if item.supplimental}
+			<p class="supplimental">{item.supplimental}</p>
+		{/if}
+
 		<div class="answerbox mt-2">
 			{#if currentMode === 'TRUE_FALSE'}
 				<Options {cards} currentCardIndex={i} numberOfOptions="2" {shuffleTrigger} />

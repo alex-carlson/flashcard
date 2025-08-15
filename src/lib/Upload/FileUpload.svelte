@@ -147,3 +147,39 @@
 	bind:this={fileInput}
 	on:change={handleFileInput}
 />
+
+<style>
+	input[type='text'],
+	button,
+	.form-control {
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.drop-zone {
+		min-height: 180px;
+		width: 100%;
+		border: 2px dashed #ccc;
+		border-radius: 8px;
+		background: #fafafa;
+		cursor: pointer;
+		transition: border-color 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 1rem;
+	}
+	.drop-zone.drag-over {
+		border-color: #007bff;
+		background: #e6f7ff;
+	}
+	.drop-zone__prompt {
+		width: 100%;
+		text-align: center;
+	}
+	.preview {
+		max-width: 100%;
+		max-height: 120px;
+		margin: 0.5rem auto;
+		display: block;
+	}
+</style>

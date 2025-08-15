@@ -200,6 +200,7 @@
 					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
+			<input type="text" bind:value={item.supplimental} placeholder="Supplimental question info" />
 			<div class="answer-edit-group">
 				{#if Array.isArray(item.answer)}
 					{#each item.answer as ans, idx (idx)}
@@ -253,22 +254,25 @@
 			</div>
 		</div>
 	{:else}
-		{#if item.question != null}
-			<span class="question">{item.question}</span>
-		{:else if item.audio != null}
-			<div class="audio">
-				{#if item.thumbnail}
-					<img src={item.thumbnail} alt={item.answer} />
-					<p>{item.title || item.answer}</p>
-				{:else}
-					<button on:click={() => addItemMetaData(item.audio)}>
-						<Fa icon={faPenToSquare} />Update Data</button
-					>
-				{/if}
-			</div>
-		{:else}
-			<img class="preview" src={item.file || item.image} alt="Preview" />
-		{/if}
+		<div class="vertical">
+			{#if item.question != null}
+				<span class="question">{item.question}</span>
+			{:else if item.audio != null}
+				<div class="audio">
+					{#if item.thumbnail}
+						<img src={item.thumbnail} alt={item.answer} />
+						<p>{item.title || item.answer}</p>
+					{:else}
+						<button on:click={() => addItemMetaData(item.audio)}>
+							<Fa icon={faPenToSquare} />Update Data</button
+						>
+					{/if}
+				</div>
+			{:else}
+				<img class="preview" src={item.file || item.image} alt="Preview" />
+			{/if}
+			<span>{item.supplimental}</span>
+		</div>
 		<div class="answer-field vertical">
 			<span>{item.answer}</span>
 			<span>{item.extra}</span>

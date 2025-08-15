@@ -275,7 +275,6 @@
 						{/if}
 						<div
 							class="thumbnail-uploader d-flex flex-column align-items-center justify-content-center"
-							style="width: 100%; max-width: 180px; height: 240px; flex: 1 1 120px; min-width: 80px;"
 						>
 							<FileUpload
 								bind:this={thumbnailUploader}
@@ -464,16 +463,35 @@
 				{#if questionType === 'Image'}
 					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
 						<div class="vertical">
-							<div
-								class="col-12 col-md-auto d-flex flex-column align-items-center justify-content-center"
-								style="width: 180px; height: 240px;"
-							>
-								<FileUpload
-									bind:this={itemUploader}
-									on:uploadImage={(event) => (item.file = event.detail)}
-								/>
+							<div class="row g-2 align-items-center">
+								<div
+									class="col-12 col-md-auto d-flex flex-row align-items-center justify-content-center gap-3"
+									style="flex-wrap: wrap;"
+								>
+									<FileUpload
+										bind:this={itemUploader}
+										on:uploadImage={(event) => (item.file = event.detail)}
+									/>
+									{#if item.file}
+										<img
+											src={typeof item.file === 'string'
+												? item.file
+												: URL.createObjectURL(item.file)}
+											alt="Preview"
+											class="img-fluid"
+											style="max-width: 180px; max-height: 180px; object-fit: contain;"
+										/>
+									{/if}
+								</div>
+								<div class="col-12 mt-2">
+									<input
+										type="text"
+										class="form-control mb-2"
+										placeholder="Supplimental Question Text"
+										bind:value={item.supplimental}
+									/>
+								</div>
 							</div>
-							<!-- add extra text to go with the image -->
 						</div>
 						<div class="col-12 col-md">
 							<input
