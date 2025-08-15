@@ -19,6 +19,7 @@
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
+	import Cropper from '$lib/Upload/Cropper.svelte';
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
@@ -26,6 +27,7 @@
 	let isReordering = false;
 	let collections = [];
 	let showImageSuggestions = false;
+	let showCropper = false;
 
 	let item = {};
 	let tempCategory = '';
@@ -128,6 +130,57 @@
 		});
 	}
 
+	function toggleCropper() {
+		showCropper = !showCropper;
+	}
+
+	async function uploadChangedImage(file, fileName = null) {
+		try {
+			// Set the originalname property on the file
+			if (file && typeof file === 'object') {
+				const defaultFileName = fileName || file.name || 'modified-image.jpg';
+				file.originalname = defaultFileName;
+			}
+
+			// Create a temporary item object with the new file
+			const tempItem = {
+				...item,
+				file: file,
+				// Keep the existing answer
+				answer: item.answer,
+				// Add category from collection
+				category: collection?.category || item.category
+			};
+
+			console.log('Temporary item for upload:', tempItem);
+
+			// Upload the new image
+			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
+
+			if (result && result.length > 0) {
+				// Update the item with the new image URL
+				const updatedItem = result[0].items.find((i) => i.id === item.id);
+				if (updatedItem) {
+					item.image = updatedItem.image;
+
+					addToast({
+						type: 'success',
+						message: 'Image updated successfully!'
+					});
+
+					// Dispatch event to parent to update the collection
+					dispatch('updateItem', { id: item.id, image: item.image });
+				}
+			}
+		} catch (error) {
+			console.error('Error updating image:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to update image. Please try again.'
+			});
+		}
+	}
+
 	async function setVisible(event) {
 		const data = {
 			category: collection.category,
@@ -187,6 +240,17 @@
 			console.error('Error fetching recommended tags:', error);
 			return [];
 		}
+	}
+
+	async function onCropped(event) {
+		console.log('Cropped event received:', event);
+		const croppedFile = event.detail;
+
+		//get extension from type
+		const fileExtension = croppedFile.type.split('/')[1] || 'png';
+
+		await uploadChangedImage(croppedFile, 'cropped-image.' + fileExtension);
+		showCropper = false;
 	}
 
 	$: if (tempCategory || tempDescription) {
@@ -268,12 +332,25 @@
 						style="min-height: 180px; width: 100%; flex-wrap: wrap;"
 					>
 						{#if collection.thumbnail_url}
-							<img
-								src={collection.thumbnail_url}
-								alt="Collection Thumbnail"
-								class="img-fluid"
-								style="width: 100%; max-width: 180px; max-height: 180px; object-fit: contain; flex: 1 1 120px; min-width: 80px;"
-							/>
+							<div class="preview">
+								<img
+									src={collection.thumbnail_url}
+									alt="Collection Thumbnail"
+									class="img-fluid"
+									style="width: 100%; max-width: 180px; max-height: 180px; object-fit: contain; flex: 1 1 120px; min-width: 80px;"
+								/>
+								<!-- add button to toggle cropper -->
+								<button class="btn btn-secondary" on:click={() => toggleCropper(collection.id)}>
+									Edit Thumbnail
+								</button>
+								{#if showCropper}
+									<Cropper
+										src={collection.thumbnail_url}
+										on:cropped={onCropped}
+										on:cancel={toggleCropper}
+									/>
+								{/if}
+							</div>
 						{/if}
 						<div
 							class="thumbnail-uploader d-flex flex-column align-items-center justify-content-center"

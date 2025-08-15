@@ -123,7 +123,7 @@
 	}
 </script>
 
-<div class="cropper-container">
+<div class="cropper-container{isThumbnail ? ' thumbnail-cropper' : ''}">
 	<div class="cropper">
 		<div class="cropper-image-wrapper">
 			<img
@@ -152,7 +152,12 @@
 		background: #f8f9fa;
 		overflow: hidden;
 	}
-
+	.cropper-container.thumbnail-cropper {
+		width: 288px;
+		height: 180px;
+		max-width: 288px;
+		max-height: 180px;
+	}
 	.cropper {
 		position: relative;
 		width: 90vw;
@@ -166,7 +171,12 @@
 		justify-content: flex-start;
 		overflow: hidden;
 	}
-
+	.cropper-container.thumbnail-cropper .cropper {
+		width: 288px;
+		height: 180px;
+		max-width: 288px;
+		max-height: 180px;
+	}
 	.cropper-image-wrapper {
 		flex: 1 1 auto;
 		width: 100%;
@@ -176,7 +186,9 @@
 		justify-content: center;
 		overflow: auto;
 	}
-
+	.cropper-container.thumbnail-cropper .cropper-image-wrapper {
+		max-height: 180px;
+	}
 	.cropper-actions {
 		margin-top: 10px;
 		text-align: center;
