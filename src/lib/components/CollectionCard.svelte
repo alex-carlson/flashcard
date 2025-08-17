@@ -16,6 +16,7 @@
 	let titleEl;
 	let tagCount = 0;
 	let scale = 1;
+	let imageOptions = "format=webp,anim=false,fit=cover,quality=75,width=300/";
 
 	async function defaultGotoPageWithState(author_id, slug) {
 		try {
@@ -78,7 +79,7 @@
 		>
 			<div class="card-image-container">
 				{#if collection.items_length > 0}
-					<LazyLoadImage imageUrl={collection.thumbnail_url} tempSize="100%" />
+					<img src={collection.thumbnail_url.replace('https://media.quizzems.com/', 'https://media.quizzems.com/cdn-cgi/image/' + imageOptions)} alt="Thumbnail" class="img-fluid" />
 				{/if}
 			</div>
 			<div class="card-content pb-2">
