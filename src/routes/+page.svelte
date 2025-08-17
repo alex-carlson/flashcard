@@ -68,13 +68,13 @@
 <Tags count={12} centered={true} />
 
 <div class="container mt-5">
-	<h2>Latest Collections</h2>
+	<h2>Latest Quizzes</h2>
 	<Collections sortmode="latest" limit={4} showAuthor={true} />
 </div>
 
 <div class="container mt-5">
-	<h2>Random Collections</h2>
-	<Collections sortmode="random" limit={16} showAuthor={true} />
+	<h2>Try something different</h2>
+	<Collections sortmode="random" limit={8} showAuthor={true} />
 </div>
 
 <div class="container">
