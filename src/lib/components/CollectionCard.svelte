@@ -78,7 +78,7 @@
 			on:click|preventDefault={handleNavigation}
 		>
 			<div class="card-image-container">
-				{#if collection.items_length > 0}
+				{#if collection.items_length > 0 && collection.thumbnail_url}
 					<img src={collection.thumbnail_url.replace('https://media.quizzems.com/', 'https://media.quizzems.com/cdn-cgi/image/' + imageOptions)} alt="Thumbnail" class="img-fluid" />
 				{/if}
 			</div>
