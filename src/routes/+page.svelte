@@ -56,7 +56,7 @@
 
 <div class="container mb-5">
 	<h2>The quiz of the day is...</h2>
-	<div class="white rounded p-2">
+	<div class="p2">
 		<Collections
 			grid={true}
 			list={false}

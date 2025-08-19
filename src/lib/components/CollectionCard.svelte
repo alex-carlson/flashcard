@@ -16,7 +16,7 @@
 	let titleEl;
 	let tagCount = 0;
 	let scale = 1;
-	let imageOptions = "format=webp,anim=false,fit=cover,quality=75,width=300/";
+	let imageOptions = 'format=webp,anim=false,fit=cover,quality=75,width=288,height=288/';
 
 	async function defaultGotoPageWithState(author_id, slug) {
 		try {
@@ -79,7 +79,14 @@
 		>
 			<div class="card-image-container">
 				{#if collection.items_length > 0 && collection.thumbnail_url}
-					<img src={collection.thumbnail_url.replace('https://media.quizzems.com/', 'https://media.quizzems.com/cdn-cgi/image/' + imageOptions)} alt="Thumbnail" class="img-fluid" />
+					<img
+						src={collection.thumbnail_url.replace(
+							'https://media.quizzems.com/',
+							'https://media.quizzems.com/cdn-cgi/image/' + imageOptions
+						)}
+						alt="Thumbnail"
+						class="img-fluid"
+					/>
 				{/if}
 			</div>
 			<div class="card-content pb-2">
@@ -162,11 +169,13 @@
 	}
 
 	:global(.card-image-container) :global(img) {
-		max-height: 180px;
+		/* max-height: 180px; */
 		width: auto;
 		height: auto;
 		display: block;
 		margin: 0 auto;
+		width: 100%;
+		aspect-ratio: 4 / 3;
 	}
 
 	.card-image.placeholder {

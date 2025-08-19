@@ -166,7 +166,7 @@
 	})();
 </script>
 
-<div class="collections-container {layoutClass}">
+<div class="collections-container {layoutClass} {sortmode}">
 	{#if condensed}
 		<button
 			class="toggle-button"
