@@ -43,7 +43,13 @@
 
 <div class="image-section py-3">
 	<div class="image-content my-3 container text-center">
-		<img class="my-2" src="/logo_yellow.png" alt="" />
+		<img
+			class="my-2"
+			src="/logo_yellow.png"
+			alt="Quizzems Logo"
+			fetchpriority="high"
+			aria-label="Quizzems Logo"
+		/>
 		<!-- <p class="drop-quote">{tagline}</p> -->
 	</div>
 </div>

@@ -1,17 +1,42 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+	<!-- Preload and load app.css asynchronously -->
+	<link rel="preload" href="/app.css" as="style" />
+	<link rel="stylesheet" href="/app.css" media="print" onload="this.media='all'" />
+	<noscript>
 		<link rel="stylesheet" href="/app.css" />
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Roboto+Condensed:wght@100..900&display=swap" rel="stylesheet">
-		<script defer src="https://cloud.umami.is/script.js" data-website-id="f697cc27-8b8c-4ce1-8b4d-d898d0f3c5bf"></script>
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="off">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+	</noscript>
+
+	<!-- Preconnect to Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+	<!-- Preload and load Google Fonts asynchronously -->
+	<link rel="preload" as="style"
+		href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Roboto+Condensed:wght@100..900&display=swap" />
+	<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Roboto+Condensed:wght@100..900&display=swap"
+		media="print" onload="this.media='all'" />
+	<noscript>
+		<link rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Roboto+Condensed:wght@100..900&display=swap" />
+	</noscript>
+
+	<!-- Analytics -->
+	<script defer src="https://cloud.umami.is/script.js"
+		data-website-id="f697cc27-8b8c-4ce1-8b4d-d898d0f3c5bf"></script>
+
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="off">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
 </html>
