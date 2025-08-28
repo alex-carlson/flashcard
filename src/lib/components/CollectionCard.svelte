@@ -149,7 +149,6 @@
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-		height: 100%;
 	}
 
 	.card-meta {
@@ -168,19 +167,34 @@
 		will-change: transform;
 	}
 
-	:global(.card-image-container) :global(img) {
-		/* max-height: 180px; */
-		width: auto;
-		height: auto;
-		display: block;
-		margin: 0 auto;
+	.card-image-container {
+		position: relative;
 		width: 100%;
-		aspect-ratio: 4 / 3;
+		aspect-ratio: 5 / 4;
+		height: auto;
+		min-height: 180px;
+		max-height: 400px;
+		overflow: hidden;
+		background: #f8f9fa;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.card-image-container img {
+		max-width: 100%;
+		max-height: 100%;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: center;
+		display: block;
 	}
 
 	.card-image.placeholder {
 		width: 100%;
-		aspect-ratio: 4 / 3;
+		aspect-ratio: 9 / 5;
 		background-color: #e0e0e0;
 		display: block;
 		border-radius: 0.5em;
@@ -217,5 +231,15 @@
 	/* We use inline style to apply scale dynamically */
 	:global(.fit-text) {
 		transform: scale(var(--scale));
+	}
+
+	@media (max-width: 600px) {
+		.card-image-container {
+			width: 80px;
+			height: 80px;
+			min-width: 80px;
+			min-height: 80px;
+			aspect-ratio: unset;
+		}
 	}
 </style>

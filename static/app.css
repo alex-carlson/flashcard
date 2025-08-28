@@ -13772,8 +13772,9 @@ body {
   width: auto;
 }
 .collections-container.random-daily img {
-  max-height: 180px !important;
-  width: auto;
+  width: 288px !important;
+  height: 180px !important;
+  object-fit: cover;
   border-radius: 8px;
 }
 .collections-container.random-daily a {
@@ -13793,6 +13794,19 @@ body {
   100% {
     background-position: 200% 0;
   }
+}
+@media (max-width: 600px) {
+  .collections-container.random-daily .card-image-container {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: unset;
+  }
+}
+.random-daily .card-image-container {
+  background: transparent;
+  aspect-ratio: unset;
 }
 
 /*# sourceMappingURL=app.css.map */
