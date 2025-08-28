@@ -13805,8 +13805,8 @@ body {
   }
 }
 .random-daily .card-image-container {
-  background: transparent;
-  aspect-ratio: unset;
+  background: transparent !important;
+  aspect-ratio: unset !important;
 }
 
 /*# sourceMappingURL=app.css.map */
