@@ -25,6 +25,7 @@
 	let isCollapsed = true;
 	let hasInitialized = false;
 	let windowWidth = 0;
+	let searchTerm = '';
 	const dispatch = createEventDispatcher();
 
 	async function selectCollection(collection) {
@@ -156,6 +157,18 @@
 		return sorted;
 	})();
 
+	$: filteredCollections = processedCollections.filter(c => {
+		if (!searchTerm) return true;
+		const term = searchTerm.trim().toLowerCase();
+		return (
+			(c.category && c.category.toLowerCase().includes(term)) ||
+			(c.title && c.title.toLowerCase().includes(term)) ||
+			(c.description && c.description.toLowerCase().includes(term)) ||
+			(c.tags && c.tags.toLowerCase().includes(term)) ||
+			(c.profiles?.username && c.profiles.username.toLowerCase().includes(term))
+		);
+	});
+
 	// Determine layout classes (additive)
 	$: layoutClass = (() => {
 		let classes = [];
@@ -177,6 +190,12 @@
 		</button>
 	{/if}
 	{#if !condensed || !isCollapsed}
+		<input
+			class="search-bar"
+			type="text"
+			placeholder="Search collections..."
+			bind:value={searchTerm}
+		/>
 		{#if isLoading || (!hasInitialized && collections.length === 0)}
 			<ul class="collections-list {grid ? 'grid' : list ? 'list' : ''}">
 				{#each Array(limit && limit > 0 ? limit : 12) as _, i}
@@ -188,13 +207,13 @@
 				<p>{error}</p>
 				<button class="retry-button" on:click={retryLoad}>Retry</button>
 			</div>
-		{:else if processedCollections.length === 0}
+		{:else if filteredCollections.length === 0}
 			<div class="empty-state">
 				<p>No collections available</p>
 			</div>
 		{:else}
 			<ul class="collections-list">
-				{#each processedCollections as collection}
+				{#each filteredCollections as collection}
 					<CollectionCard
 						{collection}
 						onNavigate={selectCollection}
