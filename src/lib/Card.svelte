@@ -24,6 +24,7 @@
 	export let onCardLoad = () => {};
 	export let toggleReveal = () => {};
 	export let updateCards = () => {};
+	export let isPartyMode = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -144,7 +145,7 @@
 					<span class="extra">{item.extra}</span>
 				{/if}
 				<div class="input-container">
-					{#if !item.revealed}
+					{#if !item.revealed && !isPartyMode}
 						<button class="give-up-btn small" on:click|stopPropagation={handleGiveUp} tabindex="-1">
 							<Fa icon={faFlag} />
 						</button>

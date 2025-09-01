@@ -180,6 +180,7 @@
 						shuffleTrigger={$quiz.shuffleTrigger}
 						{onCardLoad}
 						{toggleReveal}
+						{isPartyMode}
 						updateCards={() => {}}
 						on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
 						on:giveUp={(e) => {

@@ -189,13 +189,16 @@
 			{isCollapsed ? 'Show Collections' : 'Hide Collections'}
 		</button>
 	{/if}
-	{#if !condensed || !isCollapsed}
+	<!-- if !isCollapsed add input -->
+	 {#if !isCollapsed && condensed}
 		<input
-			class="search-bar"
+			class="search-bar mb-2"
 			type="text"
 			placeholder="Search collections..."
 			bind:value={searchTerm}
 		/>
+	 {/if}
+	{#if !condensed || !isCollapsed}
 		{#if isLoading || (!hasInitialized && collections.length === 0)}
 			<ul class="collections-list {grid ? 'grid' : list ? 'list' : ''}">
 				{#each Array(limit && limit > 0 ? limit : 12) as _, i}
