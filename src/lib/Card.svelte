@@ -44,6 +44,7 @@
 		} else {
 			userAnswers[idx] = e.target.value;
 		}
+		console.log("User answers now:", userAnswers);
 		validateAnswer();
 		
 		// Lock in if all required answers are correct for multi-answer questions
@@ -85,7 +86,13 @@
 			// Validate if we have enough correct answers and all filled answers are correct
 			isValidated = filledAnswers.length >= req && correctFilledAnswers.length === filledAnswers.length && correctFilledAnswers.length >= req;
 		} else {
+			console.log("Validating single answer, user answer:", userAnswers[0], "correct answer:", item.answer);
 			isValidated = userAnswers[0]?.trim() && isCorrect();
+			// if is valid, lock in the answer
+			if (isValidated) {
+				isLockedIn = true;
+				item.revealed = true; // Mark as completed
+			}
 		}
 	}
 
