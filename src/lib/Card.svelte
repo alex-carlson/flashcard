@@ -41,8 +41,9 @@
 		const fillerWords = ['the', 'of', 'in', 'a', 'an', 'to', 'and', 'for', 'on', 'at', 'by', 'with', 'from'];
 		return (str || '')
 			.toLowerCase()
-			.replace(/\s+/g, '') // remove all spaces
-			.split(/[\s,.;:!?]+/)
+			.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"\[\]'?<>\\|]/g, '') // remove all punctuation
+			.replace(/\s+/g, ' ') // normalize spaces
+			.split(' ')
 			.filter(word => word && !fillerWords.includes(word))
 			.join('');
 	}
