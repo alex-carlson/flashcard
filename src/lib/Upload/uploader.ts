@@ -230,11 +230,13 @@ export async function uploadQuestion(data) {
     const usr = getCurrentUser();
     const username = usr.username;
 
+    console.log("Upload question, data is:", data);
+
     const d: any = {
         uuid: uuidv4(),
         question: data.question,
         folder: `${username}/${data.category}`,
-        answer: data.answers ?? data.answer,
+        answer: data.answer ?? data.answers,
         category: data.category,
         author: username,
         author_id: usr.uid,

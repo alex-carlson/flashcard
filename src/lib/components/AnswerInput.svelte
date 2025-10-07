@@ -1,6 +1,6 @@
 <script>
 	import { Fa } from 'svelte-fa';
-	import { faList, faTimes } from '@fortawesome/free-solid-svg-icons';
+	import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 	export let item;
 	export let idPrefix = 'answer';

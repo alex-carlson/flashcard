@@ -124,6 +124,12 @@
 			item.question = '';
 			item.answer = '';
 			item.answers = '';
+			item.src = '';
+			item.supplemental_text = '';
+			const inputs = document.querySelectorAll('input, textarea');
+			inputs.forEach(input => {
+				input.value = '';
+			});
 			// Focus and scroll to question input for next item
 			setTimeout(focusQuestionInput, 100);
 		}
