@@ -62,6 +62,8 @@
 			item.src = '';
 			item.supplemental_text = '';
 			imageSuggestions = [];
+			searchTerm = '';
+			showSuggestions = false;
 			// Focus and scroll to question input for next item
 			setTimeout(focusQuestionInput, 100);
 		}
