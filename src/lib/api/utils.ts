@@ -131,7 +131,7 @@ export function mapCards(rawItems) {
                 scale: 1,
                 userAnswer: "",
                 answer: card.answer || "",
-                type,
+                type: card.type || type, // Use database type if available, otherwise fallback to inferred type
             };
         });
 }

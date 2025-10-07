@@ -156,7 +156,8 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 author: usr.username,
                 category: item.category,
                 answer: item.answer,
-                extra: item.extra || null
+                extra: item.extra || null,
+                type: item.type
             };
             const result = await apiFetch('/items/upload-url', 'POST', data);
             return result;
@@ -177,6 +178,9 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
     formData.append('author', usr.username);
     formData.append('author_uuid', usr.id);
     formData.append('author_id', usr.public_id);
+    if (item.type) {
+        formData.append('type', item.type);
+    }
 
     // Log all FormData entries
     for (const [key, value] of formData.entries()) {
@@ -226,18 +230,21 @@ export async function uploadQuestion(data) {
     const usr = getCurrentUser();
     const username = usr.username;
 
-    console.log(data);
-
-    const d = {
+    const d: any = {
         uuid: uuidv4(),
         question: data.question,
         folder: `${username}/${data.category}`,
-        answer: data.answer,
+        answer: data.answers ?? data.answer,
         category: data.category,
         author: username,
         author_id: usr.uid,
-        author_uuid: usr.id
+        author_uuid: usr.id,
+        type: data.type,
     };
+
+    if (data.numRequired != null) {
+        d.numRequired = data.numRequired;
+    }
 
     console.log('Uploading question data:', d);
 

@@ -17,7 +17,7 @@ interface Card {
     hidden: boolean;
     scale: number;
     userAnswer: string;
-    type: 'image' | 'text' | 'audio' | 'unknown';
+    type: 'image' | 'text' | 'audio' | 'unknown' | 'single' | 'multiplechoice' | 'multianswer';
     answerer?: string;
     incorrect?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

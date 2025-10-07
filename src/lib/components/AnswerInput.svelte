@@ -1,0 +1,245 @@
+<script>
+	import { Fa } from 'svelte-fa';
+	import { faList, faTimes } from '@fortawesome/free-solid-svg-icons';
+
+	export let item;
+	export let idPrefix = 'answer';
+	export let label = 'Answer:';
+
+	// Answer mode options
+	let answerMode = 'single'; // 'single', 'multiple-choice', 'multi-answer'
+
+	// Initialize answer mode based on current item state
+	$: {
+		if (item.answers && item.answers.length > 0) {
+			answerMode = item.isMultipleChoice ? 'multiple-choice' : 'multi-answer';
+		} else {
+			answerMode = 'single';
+		}
+	}
+
+	// Handle answer mode change
+	function handleModeChange() {
+		switch (answerMode) {
+			case 'single':
+				// Convert to single answer
+				item.answer = item.answers ? item.answers[0] : item.answer || '';
+				delete item.answers;
+				delete item.isMultipleChoice;
+				delete item.numRequired;
+				item.type = 'single';
+				break;
+			case 'multiple-choice':
+				// Convert to multiple choice (one correct answer from multiple options)
+				if (!item.answers) {
+					item.answers = [item.answer || '', ''];
+				}
+				item.isMultipleChoice = true;
+				item.numRequired = 1;
+				item.type = 'multiplechoice';
+				break;
+			case 'multi-answer':
+				// Convert to multi-answer (multiple correct answers)
+				if (!item.answers) {
+					item.answers = [item.answer || '', ''];
+				}
+				delete item.isMultipleChoice;
+				if (!item.numRequired) {
+					item.numRequired = item.answers.length;
+				}
+				item.type = 'multianswer';
+				break;
+		}
+	}
+
+	// Remove answer function for multi-answer support
+	function removeAnswer(index) {
+		if (item.answers && item.answers.length > 1) {
+			item.answers = item.answers.filter((_, i) => i !== index);
+			// If we removed the correct answer in multiple choice mode, reset it
+			if (answerMode === 'multiple-choice' && item.correctAnswerIndex === index) {
+				item.correctAnswerIndex = 0;
+			} else if (answerMode === 'multiple-choice' && item.correctAnswerIndex > index) {
+				item.correctAnswerIndex--;
+			}
+		}
+	}
+
+	// Function to add a new answer
+	function addAnswer() {
+		item.answers = [...item.answers, ''];
+	}
+</script>
+
+<div class="form-group white">
+	<div class="d-flex justify-content-between align-items-center mb-2">
+		<label for="{idPrefix}-0">{label}</label>
+        <select
+            class="form-select form-select-sm"
+            bind:value={answerMode}
+            on:change={handleModeChange}
+            style="width: auto; min-width: 150px; background-color: white; color: #343a40;"
+		>
+			<option value="single">Single Answer</option>
+			<option value="multiple-choice">Multiple Choice</option>
+			<option value="multi-answer">Multi-Answer</option>
+		</select>
+	</div>
+
+	{#if answerMode === 'single'}
+		<div class="single-answer-container">
+			<input
+				id="{idPrefix}-0"
+				type="text"
+				class="form-control"
+				bind:value={item.answer}
+				placeholder="Enter the answer"
+			/>
+		</div>
+	{:else if answerMode === 'multiple-choice'}
+		<div class="multiple-choice-container">
+			<div class="mb-2">
+				<small class="text-muted">Enter multiple options. Mark the correct answer with a checkmark.</small>
+			</div>
+			{#each item.answers as answer, index}
+				<div class="input-group mb-2">
+					<div class="input-group-text">
+						<input
+							type="radio"
+							name="{idPrefix}-correct"
+							value={index}
+							checked={item.correctAnswerIndex === index}
+							on:change={() => {
+								item.correctAnswerIndex = index;
+								item.numRequired = 1;
+							}}
+							aria-label="Mark as correct answer"
+						/>
+					</div>
+					<input
+						id="{idPrefix}-{index}"
+						type="text"
+						class="form-control"
+						bind:value={item.answers[index]}
+						placeholder="Enter option {index + 1}"
+					/>
+					{#if item.answers.length > 2}
+						<button
+							type="button"
+							class="btn btn-outline-danger"
+							on:click={() => removeAnswer(index)}
+							title="Remove this option"
+						>
+							<Fa icon={faTimes} />
+						</button>
+					{/if}
+				</div>
+			{/each}
+			<button
+				type="button"
+				class="btn btn-outline-primary btn-sm"
+				on:click={addAnswer}
+			>
+				Add Option
+			</button>
+		</div>
+	{:else if answerMode === 'multi-answer'}
+		<div class="multi-answer-container">
+			<div class="mb-2">
+				<small class="text-muted">Enter multiple correct answers. Players need to answer the defined number of correct options</small>
+			</div>
+			{#each item.answers as answer, index}
+				<div class="input-group mb-2">
+					<input
+						id="{idPrefix}-{index}"
+						type="text"
+						class="form-control"
+						bind:value={item.answers[index]}
+						placeholder="Enter answer {index + 1}"
+					/>
+					{#if item.answers.length > 1}
+						<button
+							type="button"
+							class="btn btn-outline-danger"
+							on:click={() => removeAnswer(index)}
+							title="Remove this answer"
+						>
+							<Fa icon={faTimes} />
+						</button>
+					{/if}
+				</div>
+			{/each}
+			<div class="multi-answer-controls d-flex gap-2 align-items-center">
+				<button
+					type="button"
+					class="btn btn-outline-primary btn-sm"
+					on:click={addAnswer}
+				>
+					Add Answer
+				</button>
+				{#if item.answers.length > 1}
+					<div class="d-flex align-items-center gap-2">
+						<label for="numRequired-{idPrefix}" class="form-label mb-0">Required:</label>
+						<input
+							id="numRequired-{idPrefix}"
+							type="number"
+							class="form-control form-control-sm"
+							min="1"
+							max={item.answers ? item.answers.length : 1}
+							bind:value={item.numRequired}
+							placeholder={item.answers ? String(item.answers.length) : '1'}
+							style="width: 120px;"
+						/>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{/if}
+</div>
+
+<style>
+	.multi-answer-container,
+	.multiple-choice-container {
+		background: #f8f9fa;
+		padding: 15px;
+		border-radius: 8px;
+		border: 1px solid #e9ecef;
+	}
+
+	.multi-answer-controls {
+		margin-top: 10px;
+		padding-top: 10px;
+		border-top: 1px solid #e9ecef;
+	}
+
+	.single-answer-container {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+	}
+
+	.form-group {
+		margin-bottom: 20px;
+	}
+
+	.form-group label {
+		font-weight: 600;
+		margin-bottom: 8px;
+		display: block;
+		color: #495057;
+	}
+
+	.input-group-text {
+		background-color: #e9ecef;
+		border-color: #ced4da;
+	}
+
+	.input-group-text input[type="radio"] {
+		margin: 0;
+	}
+
+	.text-muted {
+		font-size: 0.875rem;
+		color: #6c757d;
+	}
+</style>

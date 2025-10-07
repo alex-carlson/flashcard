@@ -4,7 +4,6 @@
 	const dispatch = createEventDispatcher();
 	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 	const CX = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
-	export let category = '';
 	export let searchTerm = '';
 	let query = searchTerm || '';
 
@@ -83,7 +82,11 @@
 				<option value="gif">GIF</option>
 			</select>
 		</div>
-		<button class="search-btn" on:click={fetchSuggestions} disabled={!query || query.length <= 3}>
+		<button
+			class="search-btn"
+			on:click|preventDefault={fetchSuggestions}
+			disabled={!query || query.length <= 3}
+		>
 			Show Results
 		</button>
 		<h6 class="mt-2">Showing results for {query}</h6>

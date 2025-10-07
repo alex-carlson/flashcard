@@ -1,8 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { Fa } from 'svelte-fa';
 	import Cropper from './Cropper.svelte';
 	import Drawing from './Drawing.svelte';
+	import { Fa } from 'svelte-fa';
 	import {
 		faPenToSquare,
 		faTrashCan,

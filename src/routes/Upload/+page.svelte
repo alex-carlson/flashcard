@@ -20,6 +20,12 @@
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
 	import Cropper from '$lib/Upload/Cropper.svelte';
+	import TabNavigation from '$lib/components/TabNavigation.svelte';
+	import { Fa } from 'svelte-fa';
+	import {
+		faList
+	} from '@fortawesome/free-solid-svg-icons';
+	import QuestionTypeForm from '$lib/components/QuestionTypeForm.svelte';
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
@@ -28,7 +34,6 @@
 	let collections = [];
 	let showImageSuggestions = false;
 	let showCropper = false;
-
 	let item = {};
 	let tempCategory = '';
 	let tempDescription = '';
@@ -525,233 +530,19 @@
 
 			<div class="uploader card mb-4">
 				<h4 class="mb-3">Add New Question</h4>
-
-				<ul class="nav nav-tabs mb-3">
-					<li class="nav-item">
-						<a
-							class="nav-link {questionType === 'Image' ? 'active' : ''}"
-							href="#"
-							on:click|preventDefault={() => (questionType = 'Image')}>Image</a
-						>
-					</li>
-					<li class="nav-item">
-						<a
-							class="nav-link {questionType === 'Audio' ? 'active' : ''}"
-							href="#"
-							on:click|preventDefault={() => (questionType = 'Audio')}>Audio</a
-						>
-					</li>
-					<li class="nav-item">
-						<a
-							class="nav-link {questionType === 'Question' ? 'active' : ''}"
-							href="#"
-							on:click|preventDefault={() => (questionType = 'Question')}>Question</a
-						>
-					</li>
-				</ul>
-				{#if questionType === 'Image'}
-					<form class="form row g-2 align-items-center container" on:submit|preventDefault>
-						<div class="vertical">
-							<div class="row g-2 align-items-center">
-								<div
-									class="col-12 col-md-auto d-flex flex-row align-items-center justify-content-center gap-3"
-									style="flex-wrap: wrap;"
-								>
-									<FileUpload
-										bind:this={itemUploader}
-										on:uploadImage={(event) => (item.file = event.detail)}
-									/>
-									{#if item.file}
-										<img
-											src={typeof item.file === 'string'
-												? item.file
-												: URL.createObjectURL(item.file)}
-											alt="Preview"
-											class="img-fluid"
-											style="max-width: 180px; max-height: 180px; object-fit: contain;"
-										/>
-									{/if}
-								</div>
-								<div class="col-12 mt-2">
-									<textarea
-										class="form-control mb-2"
-										placeholder="Supplemental Question Text"
-										bind:value={item.supplemental}
-									></textarea>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-md">
-							<input
-								id="answer"
-								type="text"
-								class="form-control mb-2"
-								bind:value={item.answer}
-								bind:this={answerInput}
-								placeholder="Enter an answer"
-							/>
-							<input
-								type="text"
-								name="extra"
-								id="extra"
-								bind:value={item.extra}
-								class="form-control mb-2"
-								placeholder="Extra info (optional)"
-							/>
-
-							<button
-								type="button"
-								class="btn btn-success mt-2"
-								on:click={async () => {
-									const newItems = await uploadData(item, undefined, false);
-									if (newItems && Array.isArray(newItems) && newItems[0] && newItems[0].items) {
-										console.log('New item added:', newItems);
-										collection.items = newItems[0].items;
-										collection.itemsLength = newItems[0].items.length;
-										addToast({
-											type: 'success',
-											message: 'Item added successfully!'
-										});
-										item.file = null;
-										item.answer = '';
-										item.extra = '';
-										// Clear the FileUpload component
-										if (itemUploader && typeof itemUploader.clearImage === 'function') {
-											itemUploader.clearImage();
-										}
-										// Hide suggestions if they are open (for consistency with addImage)
-										showImageSuggestions = false;
-										// Focus and scroll to answer input for next item
-										setTimeout(focusAnswerInput, 100);
-									} else {
-										addToast({
-											type: 'error',
-											message: 'Failed to add item. Please try again.'
-										});
-									}
-								}}
-							>
-								Add item
-							</button>
-
-							<button
-								type="button"
-								class="btn btn-secondary mt-2"
-								on:click={() => (showImageSuggestions = !showImageSuggestions)}
-							>
-								{showImageSuggestions ? 'Hide' : 'Show'} Suggestions
-							</button>
-						</div>
-						{#if showImageSuggestions}
-							<ImageSuggestions
-								category={collection.category}
-								searchTerm={item.answer}
-								bind:fileType={imageSuggestionFileType}
-								on:addImage={async (e) => {
-									// Store current scroll position
-									const currentScrollY = window.scrollY;
-
-									item.file = e.detail;
-									item.category = collection.category;
-									const newItem = await uploadData(item, undefined, false);
-									if (newItem && newItem[0] && newItem[0].items) {
-										// Update collection data
-										collection.items = newItem[0].items;
-										collection.itemsLength = newItem[0].items.length;
-
-										addToast({
-											type: 'success',
-											message: 'Image added successfully!'
-										});
-
-										// Clear form data
-										item.file = null;
-										item.answer = '';
-										// Hide suggestions after adding image
-										showImageSuggestions = false;
-									} else {
-										addToast({
-											type: 'error',
-											message: 'Failed to add image. Please try again.'
-										});
-									}
-								}}
-							/>
-						{/if}
-					</form>
-				{:else if questionType === 'Audio'}
-					<AudioUploader
-						on:addSong={async (e) => {
-							console.log('AudioUploader addSong event:', e);
-							const audioData = {
-								...e.detail,
-								url: e.detail.videoId,
-								audio: e.detail.videoId,
-								category: collection.category,
-								answer: e.detail.title
-							};
-							console.log('Audio data to upload:', audioData);
-							const newItems = await uploadAudio(audioData);
-							if (newItems) {
-								collection.items = newItems[0].items;
-								collection.itemsLength = newItems[0].items.length;
-								addToast({
-									type: 'success',
-									message: 'Audio added successfully!'
-								});
-							}
-						}}
-					/>
-					<textarea
-						class="form-control mb-2"
-						placeholder="Supplemental Question Text"
-						bind:value={item.supplemental}
-					></textarea>
-				{:else if questionType === 'Question'}
-					<form class="form row g-2 align-items-center" on:submit|preventDefault>
-						<div class="col-12">
-							<input
-								type="text"
-								class="form-control mb-2"
-								bind:value={item.question}
-								bind:this={questionInput}
-								placeholder="Enter a question"
-							/>
-							<input
-								type="text"
-								class="form-control mb-2"
-								bind:value={item.answer}
-								placeholder="Enter the answer"
-							/>
-							<button
-								type="button"
-								class="btn btn-success mt-2"
-								on:click={async () => {
-									if ((item.question ?? '').trim() === '') {
-										addToast({
-											type: 'error',
-											message: 'Please enter a question.'
-										});
-										return;
-									}
-									const newItems = await uploadQuestion(item);
-									if (newItems) {
-										collection.items = newItems[0].items;
-										collection.itemsLength = newItems[0].items.length;
-										addToast({
-											type: 'success',
-											message: 'Question added successfully!'
-										});
-										item.question = '';
-										item.answer = '';
-										// Focus and scroll to question input for next item
-										setTimeout(focusQuestionInput, 100);
-									}
-								}}>Add Question</button
-							>
-						</div>
-					</form>
-				{/if}
+				<QuestionTypeForm 
+					bind:item 
+					{collection} 
+					{questionType} 
+					on:itemAdded={(e) => {
+						console.log('Item added event received:', e.detail);
+						// Update the collection with new items
+						collection.items = e.detail.items;
+						collection.itemsLength = e.detail.itemsLength;
+						// Trigger reactivity by reassigning the collection
+						collection = { ...collection };
+					}}
+				/>
 			</div>
 			<div class="button-group mt-3 d-flex gap-2 p-2">
 				{#if collection.itemsLength && collection.itemsLength > 1}

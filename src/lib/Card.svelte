@@ -32,55 +32,79 @@
 		dispatch('giveUp', { index: i });
 	}
 
-	function handleInput(e) {
-		if (!item) return;
-		clearTimeout(item._debounceTimeout);
-		item._debounceTimeout = setTimeout(() => {
-			let isCorrect = false;
-			if (Array.isArray(item.answer)) {
-				isCorrect = item.answer.some((ans) => areStringsClose(item.userAnswer, ans, 1));
-			} else {
-				isCorrect = areStringsClose(item.userAnswer, item.answer, 1);
-			}
-			if (isCorrect) {
-				item.revealed = true;
-				// If answer is array, set userAnswer to the matched answer
-				if (Array.isArray(item.answer)) {
-					const matched = item.answer.find((ans) => areStringsClose(item.userAnswer, ans, 1));
-					item.userAnswer = matched;
-					e.target.value = item.answer[0];
-				} else {
-					item.userAnswer = item.answer;
-					e.target.value = item.answer;
-				}
-				e.target.disabled = true;
-				e.target.style.display = 'none';
-				e.target.style.backgroundColor = '#d4edda';
+	let userAnswers = [];
+	let isValidated = false;
+	let isLockedIn = false;
 
-				dispatch('correctAnswer', { index: i });
+	function handleInput(idx, e) {
+		if (isLockedIn) return; // Prevent editing when locked in
+		
+		if (item.type === 'multiplechoice') {
+			userAnswers[0] = e.target.value;
+		} else {
+			userAnswers[idx] = e.target.value;
+		}
+		validateAnswer();
+		
+		// Lock in if all required answers are correct for multi-answer questions
+		if ((item.type === 'multianswer' || Array.isArray(item.answer)) && isValidated) {
+			isLockedIn = true;
+			item.revealed = true; // Mark as completed
+		}
+	}
 
-				const inputs = document.querySelectorAll('.flashcards .card input[type="text"]');
-				for (let j = i + 1; j < inputs.length; j++) {
-					if (!inputs[j].disabled) {
-						inputs[j].scrollIntoView({
-							behavior: 'auto',
-							block: 'end', // Scroll so input is at the bottom of the visible area
-							inline: 'nearest'
-						});
-						setTimeout(() => {
-							inputs[j].focus({ preventScroll: true });
-							// Ensure input is visible and at the bottom of the viewport
-							const rect = inputs[j].getBoundingClientRect();
-							const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-							if (rect.bottom > viewportHeight || rect.top < 0) {
-								inputs[j].scrollIntoView({ behavior: 'smooth', block: 'end' });
-							}
-						}, 0);
-						break;
-					}
-				}
-			}
-		}, 100);
+	function isCorrect() {
+		if (item.type === 'multiplechoice') {
+			// For multiple choice, check if selected answer matches the correct one
+			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
+			return userAnswers[0]?.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+		} else if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+			const req = item.numRequired ?? item.answer.length;
+			const correct = item.answer.filter((ans, i) => userAnswers[i]?.trim().toLowerCase() === ans.trim().toLowerCase());
+			return correct.length >= req;
+		} else {
+			return userAnswers[0]?.trim().toLowerCase() === (item.answer || '').trim().toLowerCase();
+		}
+	}
+
+	function validateAnswer() {
+		if (item.type === 'multiplechoice') {
+			// For multiple choice, validate if an option is selected
+			isValidated = userAnswers[0]?.trim() && isCorrect();
+		} else if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+			const req = item.numRequired ?? item.answer.length;
+			const filledAnswers = userAnswers.filter(a => a?.trim());
+			
+			// Check if all filled answers are correct (green)
+			const correctFilledAnswers = filledAnswers.filter(userAns => 
+				item.answer.some(correctAns => 
+					userAns.trim().toLowerCase() === correctAns.trim().toLowerCase()
+				)
+			);
+			
+			// Validate if we have enough correct answers and all filled answers are correct
+			isValidated = filledAnswers.length >= req && correctFilledAnswers.length === filledAnswers.length && correctFilledAnswers.length >= req;
+		} else {
+			isValidated = userAnswers[0]?.trim() && isCorrect();
+		}
+	}
+
+	function getInputClass(idx) {
+		if (item.type === 'multiplechoice') {
+			// For multiple choice, we don't need input styling since we use radio buttons
+			return '';
+		}
+		
+		if (!userAnswers[idx]?.trim()) return 'form-control answer-box';
+		
+		if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+			const isThisCorrect = item.answer.some(ans => 
+				userAnswers[idx]?.trim().toLowerCase() === ans.trim().toLowerCase()
+			);
+			return `form-control answer-box ${isThisCorrect ? 'correct' : 'incorrect'}`;
+		} else {
+			return `form-control answer-box ${isCorrect() ? 'correct' : 'incorrect'}`;
+		}
 	}
 </script>
 
@@ -139,7 +163,23 @@
 					class={`answer ${item.revealed ? 'revealed' : 'hidden'}`}
 					style="transform: scale(1);"
 				>
-					{Array.isArray(item.answer) ? item.answer[0] : item.answer}
+					{#if item.revealed}
+						{#if item.type === 'multiplechoice'}
+							{item.answers[item.correctAnswerIndex || 0]}
+						{:else if item.type === 'multianswer' || Array.isArray(item.answer)}
+							{userAnswers.filter(a => a?.trim()).join(', ') || 'No answers provided'}
+						{:else}
+							{item.answer}
+						{/if}
+					{:else}
+						{#if item.type === 'multiplechoice'}
+							{item.answers ? item.answers[0] : item.answer}
+						{:else if Array.isArray(item.answer)}
+							{item.answer[0]}
+						{:else}
+							{item.answer}
+						{/if}
+					{/if}
 				</span>
 				{#if item.extra && item.revealed}
 					<span class="extra">{item.extra}</span>
@@ -150,15 +190,51 @@
 							<Fa icon={faFlag} />
 						</button>
 					{/if}
-					<input
-						class="user-answer"
-						style="box-sizing: border-box;"
-						type="text"
-						placeholder="Type your answer here..."
-						data-card-index={i}
-						bind:value={item.userAnswer}
-						on:input={handleInput}
-					/>
+					{#if item.type === 'multiplechoice'}
+						<!-- Multiple Choice - Radio buttons -->
+						<div class="multiple-choice-inputs">
+							{#each (item.answers || (Array.isArray(item.answer) ? item.answer : [])) as choice, idx}
+								<button
+									type="button"
+									class="choice-option {userAnswers[0] === choice ? 'selected' : ''}"
+									on:click={() => {
+										if (!isLockedIn) {
+											userAnswers[0] = choice;
+											handleInput(0, { target: { value: choice } });
+										}
+									}}
+									disabled={isLockedIn}
+								>
+									<span class="choice-text">{choice}</span>
+								</button>
+							{/each}
+						</div>
+					{:else if item.type === 'multianswer' || Array.isArray(item.answer)}
+						<!-- Multi-Answer - Multiple text inputs -->
+						<div class="multi-answer-inputs">
+							{#each Array(item.numRequired || item.answer.length) as _, idx}
+								<div class="input-row">
+									<input
+										type="text"
+										class={getInputClass(idx)}
+										placeholder={`Answer ${idx + 1}`}
+										value={userAnswers[idx] || ''}
+										on:input={(e) => handleInput(idx, e)}
+										disabled={isLockedIn}
+									/>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<!-- Single Answer - Single text input -->
+						<input
+							type="text"
+							class={getInputClass(0)}
+							placeholder="Enter your answer"
+							value={userAnswers[0] || ''}
+							on:input={(e) => handleInput(0, e)}
+						/>
+					{/if}
 				</div>
 			{:else}
 				<span
@@ -171,3 +247,86 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	/* .answer-box.correct {
+		border-color: #28a745;
+		background-color: #d4edda;
+	}
+
+	.answer-box.incorrect {
+		border-color: #dc3545;
+		background-color: #f8d7da;
+	} */
+
+	.validation-status {
+		display: inline-block;
+		margin-left: 10px;
+		font-weight: bold;
+	}
+
+	.validation-status.correct {
+		color: #28a745;
+	}
+
+	.validation-status.incorrect {
+		color: #dc3545;
+	}
+
+	input:disabled {
+		background-color: #e9ecef;
+		opacity: 1;
+		cursor: not-allowed;
+	}
+
+	.multi-answer-inputs {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.multiple-choice-inputs {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.choice-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 0.375rem;
+		cursor: pointer;
+		transition: background-color 0.2s, border-color 0.2s;
+	}
+
+	.choice-option:hover {
+		background-color: #f8f9fa;
+		border-color: #adb5bd;
+	}
+
+	.choice-option input[type="radio"] {
+		margin: 0;
+		cursor: pointer;
+	}
+
+	.choice-text {
+		flex: 1;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.input-row {
+		display: block;
+		width: 100%;
+	}
+
+	.input-row input {
+		width: 100%;
+		display: block;
+	}
+</style>
