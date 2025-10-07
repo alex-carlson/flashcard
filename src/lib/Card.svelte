@@ -36,6 +36,17 @@
 	let isValidated = false;
 	let isLockedIn = false;
 
+	// Remove filler words and spaces before comparing
+	function normalize(str) {
+		const fillerWords = ['the', 'of', 'in', 'a', 'an', 'to', 'and', 'for', 'on', 'at', 'by', 'with', 'from'];
+		return (str || '')
+			.toLowerCase()
+			.replace(/\s+/g, '') // remove all spaces
+			.split(/[\s,.;:!?]+/)
+			.filter(word => word && !fillerWords.includes(word))
+			.join('');
+	}
+
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
 		
@@ -58,13 +69,13 @@
 		if (item.type === 'multiplechoice') {
 			// For multiple choice, check if selected answer matches the correct one
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
-			return userAnswers[0]?.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+			return normalize(userAnswers[0]) === normalize(correctAnswer);
 		} else if (item.type === 'multianswer' || Array.isArray(item.answer)) {
 			const req = item.numRequired ?? item.answer.length;
-			const correct = item.answer.filter((ans, i) => userAnswers[i]?.trim().toLowerCase() === ans.trim().toLowerCase());
+			const correct = item.answer.filter((ans, i) => normalize(userAnswers[i]) === normalize(ans));
 			return correct.length >= req;
 		} else {
-			return userAnswers[0]?.trim().toLowerCase() === (item.answer || '').trim().toLowerCase();
+			return normalize(userAnswers[0]) === normalize(item.answer);
 		}
 	}
 
@@ -79,19 +90,34 @@
 			// Check if all filled answers are correct (green)
 			const correctFilledAnswers = filledAnswers.filter(userAns => 
 				item.answer.some(correctAns => 
-					userAns.trim().toLowerCase() === correctAns.trim().toLowerCase()
+					normalize(userAns) === normalize(correctAns)
 				)
 			);
 			
 			// Validate if we have enough correct answers and all filled answers are correct
 			isValidated = filledAnswers.length >= req && correctFilledAnswers.length === filledAnswers.length && correctFilledAnswers.length >= req;
 		} else {
-			console.log("Validating single answer, user answer:", userAnswers[0], "correct answer:", item.answer);
 			isValidated = userAnswers[0]?.trim() && isCorrect();
 			// if is valid, lock in the answer
 			if (isValidated) {
 				isLockedIn = true;
 				item.revealed = true; // Mark as completed
+				// select the next input, or if there isn't one, search the whole document for the next input
+				setTimeout(() => {
+					const inputs = Array.from(document.querySelectorAll('input, textarea'));
+					const currentInput = inputs.find(input => input.value === userAnswers[0]);
+					if (currentInput) {
+						const currentIndex = inputs.indexOf(currentInput);
+						if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
+							inputs[currentIndex + 1].focus();
+						} else {
+							// If no next input, focus the first input in the document
+							if (inputs.length > 0) {
+								inputs[0].focus();
+							}
+						}
+					}
+				});
 			}
 		}
 	}
@@ -106,7 +132,7 @@
 		
 		if (item.type === 'multianswer' || Array.isArray(item.answer)) {
 			const isThisCorrect = item.answer.some(ans => 
-				userAnswers[idx]?.trim().toLowerCase() === ans.trim().toLowerCase()
+				normalize(userAnswers[idx]) === normalize(ans)
 			);
 			return `form-control answer-box ${isThisCorrect ? 'correct' : 'incorrect'}`;
 		} else {
