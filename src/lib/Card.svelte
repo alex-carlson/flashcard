@@ -60,7 +60,7 @@
 		validateAnswer();
 		
 		// Lock in if all required answers are correct for multi-answer questions
-		if ((item.type === 'multianswer' || Array.isArray(item.answer)) && isValidated) {
+		if ((item.type === 'multianswer') && isValidated) {
 			isLockedIn = true;
 			item.revealed = true; // Mark as completed
 		}
@@ -71,11 +71,15 @@
 			// For multiple choice, check if selected answer matches the correct one
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
 			return normalize(userAnswers[0]) === normalize(correctAnswer);
-		} else if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+		} else if (item.type === 'multianswer') {
 			const req = item.numRequired ?? item.answer.length;
 			const correct = item.answer.filter((ans, i) => normalize(userAnswers[i]) === normalize(ans));
 			return correct.length >= req;
 		} else {
+			console.log("Checking correctness:", userAnswers[0], item.answer);
+			if (Array.isArray(item.answer)) {
+				return item.answer.some(ans => normalize(userAnswers[0]) === normalize(ans));
+			}
 			return normalize(userAnswers[0]) === normalize(item.answer);
 		}
 	}
@@ -84,7 +88,7 @@
 		if (item.type === 'multiplechoice') {
 			// For multiple choice, validate if an option is selected
 			isValidated = userAnswers[0]?.trim() && isCorrect();
-		} else if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+		} else if (item.type === 'multianswer') {
 			const req = item.numRequired ?? item.answer.length;
 			const filledAnswers = userAnswers.filter(a => a?.trim());
 			
@@ -131,7 +135,7 @@
 		
 		if (!userAnswers[idx]?.trim()) return 'form-control answer-box';
 		
-		if (item.type === 'multianswer' || Array.isArray(item.answer)) {
+		if (item.type === 'multianswer') {
 			const isThisCorrect = item.answer.some(ans => 
 				normalize(userAnswers[idx]) === normalize(ans)
 			);
@@ -200,19 +204,13 @@
 					{#if item.revealed}
 						{#if item.type === 'multiplechoice'}
 							{item.answers[item.correctAnswerIndex || 0]}
-						{:else if item.type === 'multianswer' || Array.isArray(item.answer)}
+						{:else if item.type === 'multianswer'}
 							{userAnswers.filter(a => a?.trim()).join(', ') || 'No answers provided'}
 						{:else}
-							{item.answer}
+							{Array.isArray(item.answer) ? item.answer[0] : item.answer}
 						{/if}
 					{:else}
-						{#if item.type === 'multiplechoice'}
-							{item.answers ? item.answers[0] : item.answer}
-						{:else if Array.isArray(item.answer)}
-							{item.answer[0]}
-						{:else}
-							{item.answer}
-						{/if}
+						{item.answer}
 					{/if}
 				</span>
 				{#if item.extra && item.revealed}
@@ -227,7 +225,7 @@
 					{#if item.type === 'multiplechoice'}
 						<!-- Multiple Choice - Radio buttons -->
 						<div class="multiple-choice-inputs">
-							{#each (item.answers || (Array.isArray(item.answer) ? item.answer : [])) as choice, idx}
+							{#each (item.userAnswers ? item.userAnswers : []) as choice, idx}
 								<button
 									type="button"
 									class="choice-option {userAnswers[0] === choice ? 'selected' : ''}"
@@ -243,7 +241,7 @@
 								</button>
 							{/each}
 						</div>
-					{:else if item.type === 'multianswer' || Array.isArray(item.answer)}
+					{:else if item.type === 'multianswer'}
 						<!-- Multi-Answer - Multiple text inputs -->
 						<div class="multi-answer-inputs">
 							{#each Array(item.numRequired || item.answer.length) as _, idx}
