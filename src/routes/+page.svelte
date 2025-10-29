@@ -5,25 +5,6 @@
 	import Collections from '$lib/Collections.svelte';
 	import Tags from '$lib/components/Tags.svelte';
 
-	const taglines = [
-		'The best place on the whole internet for doing trivia (probably)',
-		'Your new favorite dot com',
-		'The cure for brainrot',
-		'One of the websites of all time',
-		'It make brain go brrr',
-		'Less orange than the alternative!',
-		'We love NFT! (Not Failing Trivia)',
-		'Tell ur dad!',
-		'0% ABV'
-	];
-
-	let tagline = '';
-
-	function getRandomTagline() {
-		const randomIndex = Math.floor(Math.random() * taglines.length);
-		return taglines[randomIndex];
-	}
-
 	function loadSearchedPage(event) {
 		const detail = event.detail;
 		const url = `/quiz/${detail.author_public_id}/${detail.slug}`;
@@ -36,7 +17,6 @@
 	onMount(() => {
 		if (browser) {
 			document.title = 'Quizzems';
-			tagline = getRandomTagline();
 		}
 	});
 </script>
@@ -50,7 +30,6 @@
 			fetchpriority="high"
 			aria-label="Quizzems Logo"
 		/>
-		<!-- <p class="drop-quote">{tagline}</p> -->
 	</div>
 </div>
 

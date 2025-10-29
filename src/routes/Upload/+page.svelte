@@ -22,9 +22,7 @@
 	import Cropper from '$lib/Upload/Cropper.svelte';
 	import TabNavigation from '$lib/components/TabNavigation.svelte';
 	import { Fa } from 'svelte-fa';
-	import {
-		faList
-	} from '@fortawesome/free-solid-svg-icons';
+	import { faList } from '@fortawesome/free-solid-svg-icons';
 	import QuestionTypeForm from '$lib/components/QuestionTypeForm.svelte';
 	let collection = null;
 	let questionType = 'Image';
@@ -322,7 +320,9 @@
 							await loadCollections();
 							// Find the new collection by id and set it
 							const newCol = result[0];
+							console.log('newCol: ', result[0]);
 							collection = collections.find((c) => c.id === newCol.id) || newCol;
+							setCollection(newCol.id);
 						}
 					}}
 				>
@@ -530,10 +530,10 @@
 
 			<div class="uploader card mb-4">
 				<h4 class="mb-3">Add New Question</h4>
-				<QuestionTypeForm 
-					bind:item 
-					{collection} 
-					{questionType} 
+				<QuestionTypeForm
+					bind:item
+					{collection}
+					{questionType}
 					on:itemAdded={(e) => {
 						console.log('Item added event received:', e.detail);
 						// Update the collection with new items
