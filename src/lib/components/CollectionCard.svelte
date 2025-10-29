@@ -61,7 +61,6 @@
 	onMount(() => {
 		resizeText();
 		tagCount = collection?.tags ? collection.tags.split(',').length : 0;
-		console.log('collection data:', collection);
 		window.addEventListener('resize', resizeText);
 	});
 

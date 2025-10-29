@@ -23,7 +23,6 @@
 	}
 
 	function startPractice() {
-		incrementPlayCounter(collectionId);
 		quizStarted = true;
 		practiceMode = true;
 		clearInterval(interval);

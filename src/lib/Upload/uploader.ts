@@ -200,20 +200,26 @@ export async function uploadAudio(item) {
     const username = usr.username;
     const author_id = usr.public_id;
 
+    // need to send id, audio, title, answer, and thumbnail.
+    // "id": "311bd357-b69a-4def-891e-75416b7babd9",
+    // "audio": "jfL8Vu9PfW8",
+    // "title": "Charli xcx - Sympathy is a knife featuring ariana grande (official audio)",
+    // "answer": "Charli xcx",
+    // "thumbnail": "https://img.youtube.com/vi/jfL8Vu9PfW8/default.jpg"
+
     const formData = new FormData();
     const uuid = item.uuid || uuidv4(); // Use provided uuid or generate a new one
     formData.append('folder', `${username}/${item.category}`);
     formData.append('author', username);
     formData.append('author_id', author_id);
+    formData.append('category', item.category);
     formData.append('type', 'audio');
     formData.append('id', uuid);
-
-    // Append all properties from item to formData
-    for (const [key, value] of Object.entries(item)) {
-        if (value !== undefined && value !== null) {
-            formData.append(key, value);
-        }
-    }
+    formData.append('audio', item.videoId);
+    formData.append('title', item.title);
+    formData.append('answer', item.title);
+    formData.append('thumbnail', item.thumbnail);
+    formData.append('url', item.videoId);
 
     console.log('Uploading audio data:', formData);
 

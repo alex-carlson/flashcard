@@ -16,7 +16,7 @@
 
 	let imageSuggestions = [];
 	let searchTerm = '';
-    let showSuggestions = false;
+	let showSuggestions = false;
 
 	// Focus function for question input
 	function focusQuestionInput() {
@@ -29,20 +29,24 @@
 
 	// Upload handlers
 	async function handleImageUpload() {
-        if (((item.answer ?? '').trim() === '') && ((Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) === '')) {
+		if (
+			(item.answer ?? '').trim() === '' &&
+			(Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) ===
+				''
+		) {
 			addToast({
 				type: 'error',
 				message: 'Please enter an answer.'
 			});
 			return;
 		}
-        if (!item.src && !item.file) {
-            addToast({
-                type: 'error',
-                message: 'Please add an image.'
-            });
-            return;
-        }
+		if (!item.src && !item.file) {
+			addToast({
+				type: 'error',
+				message: 'Please add an image.'
+			});
+			return;
+		}
 		const newItems = await uploadData(item, undefined, false);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
@@ -51,7 +55,7 @@
 				itemsLength: newItems[0].items.length,
 				type: 'image'
 			});
-			
+
 			addToast({
 				type: 'success',
 				message: 'Image added successfully!'
@@ -70,15 +74,7 @@
 	}
 
 	async function handleAudioUpload() {
-		if ((item.question ?? '').trim() === '') {
-			addToast({
-				type: 'error',
-				message: 'Please enter a question.'
-			});
-			return;
-		}
-
-        const newItems = await uploadAudio(item);
+		const newItems = await uploadAudio(item);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
@@ -86,7 +82,7 @@
 				itemsLength: newItems[0].items.length,
 				type: 'audio'
 			});
-			
+
 			addToast({
 				type: 'success',
 				message: 'Audio added successfully!'
@@ -109,7 +105,7 @@
 			});
 			return;
 		}
-        console.log("Uploading question:", item);
+		console.log('Uploading question:', item);
 		const newItems = await uploadQuestion(item);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
@@ -118,7 +114,7 @@
 				itemsLength: newItems[0].items.length,
 				type: 'question'
 			});
-			
+
 			addToast({
 				type: 'success',
 				message: 'Question added successfully!'
@@ -129,7 +125,7 @@
 			item.src = '';
 			item.supplemental_text = '';
 			const inputs = document.querySelectorAll('input, textarea');
-			inputs.forEach(input => {
+			inputs.forEach((input) => {
 				input.value = '';
 			});
 			// Focus and scroll to question input for next item
@@ -166,59 +162,62 @@
 		{#if questionType === 'Image'}
 			<form on:submit|preventDefault={handleImageUpload}>
 				<div class="row">
-                    {#if item.src}
-                        <div class="image-preview">
-                            <img src={item.src} alt="Preview" class="img-fluid" />
-                        </div>
-                    {/if}
-                    <div class="mt-3">
-                        <FileUpload 
-                            on:uploadImage={(event) => {
-                                item.file = event.detail;
-                            }}
-                        />
-                    </div>
-                    <div class="form-group mt-3">
-                        <AnswerInput bind:item idPrefix="answer-image" />
-                    </div>
-                    <div class="mt-3">
-                        <button
-                            type="button"
-                            class="btn btn-outline-secondary mb-2"
-                            on:click={() => {
-                                if (!showSuggestions) {
-                                    // Set searchTerm to the current answer input value
-                                    searchTerm = item.answer ?? '';
-                                }
-                                showSuggestions = !showSuggestions;
-                            }}
-                        >
-                            {showSuggestions ? 'Hide' : 'Show'} Image Suggestions
-                        </button>
-                        {#if showSuggestions}
-                            <ImageSuggestions
-                                bind:searchTerm
-                                bind:suggestions={imageSuggestions}
-                                on:addImage={(e) => {
-                                    item.file = e.detail;
-                                }}
-                            />
-                        {/if}
-                    </div>
+					{#if item.src}
+						<div class="image-preview">
+							<img src={item.src} alt="Preview" class="img-fluid" />
+						</div>
+					{/if}
+					<div class="mt-3">
+						<FileUpload
+							on:uploadImage={(event) => {
+								item.file = event.detail;
+							}}
+						/>
+					</div>
+					<div class="form-group mt-3">
+						<AnswerInput bind:item idPrefix="answer-image" />
+					</div>
+					<div class="mt-3">
+						<button
+							type="button"
+							class="btn btn-outline-secondary mb-2"
+							on:click={() => {
+								if (!showSuggestions) {
+									// Set searchTerm to the current answer input value
+									searchTerm = item.answer ?? '';
+								}
+								showSuggestions = !showSuggestions;
+							}}
+						>
+							{showSuggestions ? 'Hide' : 'Show'} Image Suggestions
+						</button>
+						{#if showSuggestions}
+							<ImageSuggestions
+								bind:searchTerm
+								bind:suggestions={imageSuggestions}
+								on:addImage={(e) => {
+									item.file = e.detail;
+								}}
+							/>
+						{/if}
+					</div>
 				</div>
 				<button type="submit" class="btn btn-success mt-2">Add Image</button>
 			</form>
 		{:else if questionType === 'Audio'}
 			<form on:submit|preventDefault={handleAudioUpload}>
 				<div class="row">
-                    <div class="mt-3">
-                        <AudioUploader 
-                            on:addSong={(e) => {
-                                item.src = e.detail.videoId;
-                                item.audio = e.detail.videoId;
-                            }}
-                        />
-                    </div>
+					<div class="mt-3">
+						<AudioUploader
+							on:addSong={(e) => {
+								console.log(e);
+								item.videoId = e.detail.videoId;
+								item.title = e.detail.title;
+								item.thumbnail = e.detail.thumbnail;
+								handleAudioUpload();
+							}}
+						/>
+					</div>
 				</div>
 				<button type="submit" class="btn btn-success mt-2">Add Audio</button>
 			</form>

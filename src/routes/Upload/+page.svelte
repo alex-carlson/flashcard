@@ -297,7 +297,6 @@
 				list
 				limit={-1}
 				onSelectCollection={(e) => {
-					console.log('Selected collection:', e);
 					setCollection(e.id);
 				}}
 			/>
@@ -316,11 +315,9 @@
 					on:click={async () => {
 						const result = await createCollection(tempCategory);
 						if (result && result.length > 0) {
-							console.log('New collection created:', result);
 							await loadCollections();
 							// Find the new collection by id and set it
 							const newCol = result[0];
-							console.log('newCol: ', result[0]);
 							collection = collections.find((c) => c.id === newCol.id) || newCol;
 							setCollection(newCol.id);
 						}

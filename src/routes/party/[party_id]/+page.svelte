@@ -164,7 +164,6 @@
 			try {
 				const d = await fetchCollectionById(data.collectionId);
 				if (d) {
-					console.log('Collection data:', d);
 					collection = d;
 					collectionName = d.category;
 					authorName = d.author; // Assuming you have authorName in the collection data

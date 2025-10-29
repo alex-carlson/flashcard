@@ -6,7 +6,7 @@
 	export function addSong(data) {
 		searchTerm = '';
 		// This function can be used to add a song to a playlist or perform other actions
-		console.log(`Adding song: ${data.title}, ID: ${data.videoId}`);
+		console.log(`Adding song with title: ${data.title}, ID: ${data.videoId}`);
 		dispatch('addSong', data);
 	}
 	let searchTerm = '';
