@@ -1,9 +1,9 @@
 <script>
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { user } from '$stores/user';
+	import { user } from '../stores/user';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
-	import { getScoreMessage, getRandomPhraseForScore, toLetterGrade } from './api/quizScore';
-	import { createQuizStore } from '$stores/quiz';
+	import { getRandomPhraseForScore, toLetterGrade } from './api/quizScore';
+	import { createQuizStore } from '../stores/quiz';
 
 	// Components
 	import Modal from './Modal.svelte';
@@ -14,18 +14,38 @@
 	import QuizActions from './components/quiz/QuizActions.svelte';
 	import ErrorDisplay from './components/quiz/ErrorDisplay.svelte';
 	// Props
-	export let collectionId = null;
+	export let collectionId;
+	export let practiceMode;
 	export let isPartyMode = false;
 
 	// Initialize quiz store
 	const quiz = createQuizStore();
-	const { stats } = quiz;
 	const dispatch = createEventDispatcher();
 
+	// Access stats as a separate reactive store
+	$: stats = quiz.stats;
+
 	// Auto-trigger completion when all cards are revealed
-	$: if ($stats.isComplete && !$quiz.showModal && !$quiz.isComplete) {
-		quiz.completeQuiz($user?.id, $user?.token);
-		dispatch('finish');
+	$: {
+		console.log('Quiz state check:', {
+			isComplete: $stats.isComplete,
+			practiceMode: $quiz.isPractice,
+			showModal: $quiz.showModal,
+			quizComplete: $quiz.isComplete,
+			cardsRevealed: $quiz.cards.filter((c) => c.revealed).length,
+			totalCards: $quiz.cards.length
+		});
+
+		if ($stats.isComplete && !$quiz.showModal && !$quiz.isComplete) {
+			console.log('Auto-completing quiz...');
+			quiz.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined);
+			dispatch('finish');
+		}
+	}
+
+	// Dispatch stats updates for live score display
+	$: if ($stats && $quiz.hasInitialized) {
+		dispatch('statsUpdate', $stats);
 	}
 
 	// Handle toolbar updates
@@ -71,34 +91,22 @@
 
 	function setMode(mode) {
 		quiz.setMode(mode);
-		// Override for party mode
-		if (isPartyMode && mode !== 'FILL_IN_THE_BLANK') {
-			quiz.update((state) => ({ ...state, currentMode: 'FILL_IN_THE_BLANK' }));
-		}
 	}
 	function onCorrectAnswer(event) {
-		const { index, answer } = event;
+		const { index, answer, userAnswer } = event.detail;
 		quiz.updateCard(index, {
 			revealed: true,
-			userAnswer: answer
+			userAnswer: userAnswer || answer
 		});
 
-		// Check if all cards are answered
-		if ($quiz.cards.every((card) => card.revealed)) {
-			console.log('All cards revealed, completing quiz...');
-			quiz.completeQuiz($user?.id, $user?.token);
-			dispatch('finish');
-		} else {
-			// Auto-play next audio question
-			const nextCardIndex = $quiz.cards.findIndex((card, i) => i > index && !card.revealed);
-			if (nextCardIndex !== -1) {
-				const nextCard = $quiz.cards[nextCardIndex];
-				if (nextCard.type === 'audio' && nextCard.audio) {
-					try {
-						youtubePlayerService.loadVideoOnly(nextCard.audio);
-					} catch (error) {
-						console.error('Failed to auto-play next audio question:', error);
-					}
+		const nextCardIndex = $quiz.cards.findIndex((card, i) => i > index && !card.revealed);
+		if (nextCardIndex !== -1) {
+			const nextCard = $quiz.cards[nextCardIndex];
+			if (nextCard.type === 'audio' && nextCard.audio) {
+				try {
+					youtubePlayerService.loadVideoOnly(nextCard.audio);
+				} catch (error) {
+					console.error('Failed to auto-play next audio question:', error);
 				}
 			}
 		}
@@ -108,24 +116,24 @@
 
 	function retryFetch() {
 		quiz.retry();
-		// quiz.loadCollection(collectionId);
 	}
-	// Lifecycle
+
 	onMount(() => {
 		if (collectionId && !$quiz.hasInitialized) {
 			quiz.loadCollection(collectionId);
 		}
 	});
 
-	// Reactive statement to watch for collectionId changes
+	export function onQuizStart() {
+		quiz.setIsPractice(practiceMode);
+	}
+
+	export function getStats() {
+		return $stats;
+	}
+
 	$: if (collectionId && !$quiz.hasInitialized && !$quiz.isLoading) {
 		quiz.loadCollection(collectionId);
-	}
-	let testValue = '';
-
-	function testValues() {
-		console.log('Grade: ' + toLetterGrade(testValue));
-		console.log('Phrase', getRandomPhraseForScore(testValue));
 	}
 </script>
 
@@ -153,13 +161,7 @@
 			description={$quiz.collection.description}
 		/>
 
-		<div class="col-12">
-			<p class="text-center p2" style="font-size: 1.4rem;">
-				Current score: {$stats.correct} / {$stats.total}
-			</p>
-		</div>
-
-		{#if !isPartyMode}
+		{#if !isPartyMode && practiceMode}
 			<select class="my-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
 				{#each [['FILL_IN_THE_BLANK', 'Fill in the Blank'], ['TRUE_FALSE', '50/50'], ['MULTIPLE_CHOICE', 'Multiple Choice'], ['FLASH_CARDS', 'Flashcard']] as [mode, label]}
 					<option value={mode} selected={mode === $quiz.currentMode}>
@@ -182,7 +184,7 @@
 						{toggleReveal}
 						{isPartyMode}
 						updateCards={() => {}}
-						on:correctAnswer={(e) => onCorrectAnswer({ index: i, answer: $quiz.cards[i].answer })}
+						on:correctAnswer={onCorrectAnswer}
 						on:giveUp={(e) => {
 							console.log('Give up on card', i);
 							setRevealed(e.detail.index, true);
@@ -206,31 +208,60 @@
 	{/if}
 
 	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>
-	<Modal
-		bind:show={$quiz.showModal}
-		title="Quiz Completed"
-		message={getRandomPhraseForScore($stats.percentage)}
-		grade={toLetterGrade($stats.percentage)}
-		effect={$stats.isComplete ? 'confetti' : 'none'}
-		onClose={() => {
-			quiz.revealCards();
-			quiz.closeModal();
-		}}
-		buttons={[
-			{
-				text: 'Retry',
-				action: () => {
-					quiz.retry();
+	{#if $quiz.isPractice}
+		<Modal
+			bind:show={$quiz.showModal}
+			title="Practice Concluded"
+			message="Practice makes perfect!"
+			onClose={() => {
+				quiz.revealCards();
+				quiz.closeModal();
+			}}
+			buttons={[
+				{
+					text: 'Retry',
+					action: () => {
+						quiz.retry();
+					},
+					class: 'bg-yellow-400 text-black'
 				},
-				class: 'bg-yellow-400 text-black'
-			},
-			{
-				text: 'Leaderboards',
-				action: () => {
-					window.location.href = '/leaderboard';
+				{
+					text: 'See Answers',
+					action: () => {
+						quiz.revealCards();
+						quiz.closeModal();
+					},
+					class: 'bg-yellow-400 text-black'
+				}
+			]}
+		/>
+	{:else}
+		<Modal
+			bind:show={$quiz.showModal}
+			title="Quiz Completed"
+			message={getRandomPhraseForScore($stats.percentage)}
+			grade={toLetterGrade($stats.percentage)}
+			effect={$stats.isComplete ? 'confetti' : 'none'}
+			onClose={() => {
+				quiz.revealCards();
+				quiz.closeModal();
+			}}
+			buttons={[
+				{
+					text: 'Retry',
+					action: () => {
+						quiz.retry();
+					},
+					class: 'bg-yellow-400 text-black'
 				},
-				class: 'bg-blue-500 text-white'
-			}
-		]}
-	/>
+				{
+					text: 'Leaderboards',
+					action: () => {
+						window.location.href = '/leaderboard';
+					},
+					class: 'bg-blue-500 text-white'
+				}
+			]}
+		/>
+	{/if}
 </div>

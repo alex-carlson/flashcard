@@ -1,6 +1,6 @@
-let scoreTexts = {
+const scoreTexts = {
     100: [
-        "Wow! Here’s the keys to the website!",
+        "Wow! Here's the keys to the website!",
         "Ring ring, MENSA is on the line!"
     ],
     90: [
@@ -9,14 +9,14 @@ let scoreTexts = {
     ],
     80: [
         "B is for Badass!",
-        "Almost genius, but you’ll have to settle for “smart.”"
+        "Almost genius, but you'll have to settle for “smart.”"
     ],
     70: [
         "Not bad, but I think you can do better!",
         "Impressive(to those that are easily impressed)"
     ],
     60: [
-        "By most standards at least you didn’t fail.",
+        "By most standards at least you didn't fail.",
         "You have approximate knowledge of some things."
     ],
     50: [
@@ -28,15 +28,15 @@ let scoreTexts = {
         "At least you tried!"
     ],
     30: [
-        "If you squint, this ain’t so bad!",
+        "If you squint, this ain't so bad!",
         "A third is a third is a third."
     ],
     20: [
-        "I don’t care that you’re old, this will require a parent’s signature.",
-        "Mama let’s research."
+        "I don't care that you're old, this will require a parent's signature.",
+        "Mama let's research."
     ],
     10: [
-        "We don’t need no education!",
+        "We don't need no education!",
         "Consider cracking open Quizzems for Dummies."
     ],
     0: [

@@ -1,6 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import { fetchCollectionById } from '$lib/api/collections';
-import { fetchUser, completeQuiz } from '$lib/api/user';
+import { completeQuiz } from '$lib/api/user';
 import { mapCards } from '$lib/api/utils';
 import { addToast } from './toast';
 
@@ -37,6 +37,8 @@ interface Collection {
 interface QuizState {
     cards: Card[];
     isLoading: boolean;
+    isPractice: boolean;
+    isParty: boolean;
     hasInitialized: boolean;
     currentMode: 'FILL_IN_THE_BLANK' | 'MULTIPLE_CHOICE' | 'FLASHCARD';
     showModal: boolean;
@@ -66,6 +68,8 @@ export function createQuizStore() {
         currentMode: 'FILL_IN_THE_BLANK',
         showModal: false,
         isComplete: false,
+        isPractice: false,
+        isParty: false,
         isGrid: false,
         isFullscreen: false,
         shuffleTrigger: 0,
@@ -79,22 +83,43 @@ export function createQuizStore() {
             author_slug: '',
             shuffle: false
         }
-    }; const { subscribe, update } = writable(initialState);
+    };
 
-    // Derived stats
-    const stats = derived({ subscribe }, ($state): QuizStats => {
+    const store = writable(initialState);
+    const { subscribe, update } = store;
+
+    const stats = derived(store, ($state): QuizStats => {
         const cards = $state.cards || [];
-        return {
+
+        // Helper function to normalize answers for comparison
+        const normalizeAnswer = (answer: string | number | null | undefined): string => {
+            if (answer === null || answer === undefined) {
+                return '';
+            }
+            return String(answer).toLowerCase().trim();
+        };
+
+        const revealedCards = cards.filter(c => c?.revealed);
+        const correctCards = revealedCards.filter(c => {
+            const userAnswer = normalizeAnswer(c?.userAnswer);
+            const correctAnswer = normalizeAnswer(c?.answer);
+            const isCorrect = userAnswer === correctAnswer;
+            return isCorrect;
+        });
+
+        const statsResult = {
             total: cards.length,
-            answered: cards.filter(c => c?.revealed).length,
-            correct: cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length,
+            answered: revealedCards.length,
+            correct: correctCards.length,
             percentage: cards.length > 0
-                ? Math.round((cards.filter(c => c?.revealed && c?.userAnswer === c?.answer).length / cards.length) * 100)
+                ? Math.round((correctCards.length / cards.length) * 100)
                 : 0,
             areAnyRevealed: cards.some(card => card?.revealed),
             canReset: cards.some(card => card?.scale !== 1 || card?.hidden),
             isComplete: cards.length > 0 && cards.every(card => card?.revealed)
         };
+
+        return statsResult;
     });
 
     async function loadCollection(collectionId: string | null): Promise<void> {
@@ -172,13 +197,23 @@ export function createQuizStore() {
         }
     }
 
-    function updateCard(index: number, updates: Partial<Card>): void {
+    function setIsPractice(isPracticeMode: boolean): void {
         update(state => ({
             ...state,
-            cards: state.cards.map((card, i) =>
-                i === index ? { ...card, ...updates } : card
-            )
+            isPractice: isPracticeMode
         }));
+    }
+
+    function updateCard(index: number, updates: Partial<Card>): void {
+        update(state => {
+            const newState = {
+                ...state,
+                cards: state.cards.map((card, i) =>
+                    i === index ? { ...card, ...updates } : card
+                )
+            };
+            return newState;
+        });
     }
 
     function shuffleCards(): void {
@@ -247,15 +282,33 @@ export function createQuizStore() {
     }
 
     function revealCards(): void {
-        console.log('Revealing all cards');
-        update(state => ({
-            ...state,
-            cards: state.cards.map(card => ({
-                ...card,
-                revealed: true,
-                incorrect: card?.userAnswer !== card?.answer
-            }))
-        }));
+        update(state => {
+            // Helper function to normalize answers for comparison (same as in stats)
+            const normalizeAnswer = (answer: string | number | null | undefined): string => {
+                if (answer === null || answer === undefined) {
+                    return '';
+                }
+                return String(answer).toLowerCase().trim();
+            };
+
+            return {
+                ...state,
+                cards: state.cards.map(card => {
+                    const userAnswer = normalizeAnswer(card?.userAnswer);
+                    const correctAnswer = normalizeAnswer(card?.answer);
+                    const hasUserAnswer = Boolean(card?.userAnswer && String(card.userAnswer).trim());
+                    const isIncorrect = !hasUserAnswer || userAnswer !== correctAnswer;
+
+                    console.log(`Card ${card?.id}: userAnswer="${userAnswer}", correctAnswer="${correctAnswer}", hasUserAnswer=${hasUserAnswer}, incorrect=${isIncorrect}`);
+
+                    return {
+                        ...card,
+                        revealed: true,
+                        incorrect: isIncorrect
+                    };
+                })
+            };
+        });
     }
 
     function resetCardsToInitialState(): void {
@@ -277,6 +330,7 @@ export function createQuizStore() {
         update,
         loadCollection,
         updateCard,
+        setIsPractice,
         shuffleCards,
         resetCards,
         toggleGrid,

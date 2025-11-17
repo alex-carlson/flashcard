@@ -1,79 +1,89 @@
 <script>
-    export let cards;
-    export let currentCardIndex;
-    export let numberOfOptions = 2;
-    export let shuffleTrigger;
+	import { createEventDispatcher } from 'svelte';
 
-    let drawnCards = null; // Initialize as null to indicate loading state
+	export let cards;
+	export let currentCardIndex;
+	export let numberOfOptions = 2;
+	export let shuffleTrigger;
 
-    function randomCardIndex(excludeIndices = []) {
-        let randomCard;
-        do {
-            randomCard = Math.floor(Math.random() * cards.length);
-        } while (excludeIndices.includes(randomCard));
-        return randomCard;
-    }
+	const dispatch = createEventDispatcher();
 
-    async function drawCards() {
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate delay
+	let drawnCards = null; // Initialize as null to indicate loading state
 
-        // Start with the current card
-        let currentCard = {
-            ...cards[currentCardIndex],
-            isCorrect: true,
-            clicked: false,
-        };
+	function randomCardIndex(excludeIndices = []) {
+		let randomCard;
+		do {
+			randomCard = Math.floor(Math.random() * cards.length);
+		} while (excludeIndices.includes(randomCard));
+		return randomCard;
+	}
 
-        // Generate random cards
-        let randomCards = [];
-        let usedIndices = [currentCardIndex]; // Keep track of used indices to avoid duplicates
+	async function drawCards() {
+		await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate delay
 
-        while (randomCards.length < numberOfOptions - 1) {
-            let randomCardIndexValue = randomCardIndex(usedIndices);
-            usedIndices.push(randomCardIndexValue);
+		// Start with the current card
+		let currentCard = {
+			...cards[currentCardIndex],
+			isCorrect: true,
+			clicked: false
+		};
 
-            randomCards.push({
-                ...cards[randomCardIndexValue],
-                isCorrect: false,
-                clicked: false,
-            });
-        }
+		// Generate random cards
+		let randomCards = [];
+		let usedIndices = [currentCardIndex]; // Keep track of used indices to avoid duplicates
 
-        // Combine current card with random cards and shuffle
-        let myCards = [currentCard, ...randomCards].sort(
-            () => Math.random() - 0.5,
-        );
-        drawnCards = myCards; // Update drawnCards after drawing
-    }
+		while (randomCards.length < numberOfOptions - 1) {
+			let randomCardIndexValue = randomCardIndex(usedIndices);
+			usedIndices.push(randomCardIndexValue);
 
-    // Draw cards initially
-    drawCards();
+			randomCards.push({
+				...cards[randomCardIndexValue],
+				isCorrect: false,
+				clicked: false
+			});
+		}
 
-    function handleClick(card) {
-        card.clicked = true; // Mark the card as clicked
-        // Reassign drawnCards to trigger reactivity
-        drawnCards = [...drawnCards];
-    }
+		// Combine current card with random cards and shuffle
+		let myCards = [currentCard, ...randomCards].sort(() => Math.random() - 0.5);
+		drawnCards = myCards; // Update drawnCards after drawing
+	}
 
-    $: if (shuffleTrigger) {
-        drawCards();
-    }
+	// Draw cards initially
+	drawCards();
+
+	function handleClick(card) {
+		card.clicked = true; // Mark the card as clicked
+		// Reassign drawnCards to trigger reactivity
+		drawnCards = [...drawnCards];
+
+		// Dispatch correctAnswer event if the answer is correct
+		if (card.isCorrect) {
+			dispatch('correctAnswer', {
+				index: currentCardIndex,
+				answer: card.answer,
+				userAnswer: card.answer
+			});
+		}
+	}
+
+	$: if (shuffleTrigger) {
+		drawCards();
+	}
 </script>
 
 <div class="options">
-    {#if drawnCards}
-        <!-- loop through drawncards -->
-        {#each drawnCards as card}
-            <button
-                class={"card " +
-                    (card.clicked ? (card.isCorrect ? "green" : "red") : "")}
-                on:click={() => handleClick(card)}
-            >
-                {card.answer}
-            </button>
-        {/each}
-    {:else}
-        <!-- Loading state -->
-        <p>Loading cards...</p>
-    {/if}
+	{#if drawnCards}
+		<!-- loop through drawncards -->
+		{#each drawnCards as card}
+			<button
+				class={'card ' + (card.clicked ? (card.isCorrect ? 'green' : 'red') : '')}
+				on:click={() => handleClick(card)}
+			>
+				{card.answer}
+			</button>
+		{/each}
+	{:else}
+		<!-- Loading state -->
+		<p>Loading cards...</p>
+	{/if}
 </div>

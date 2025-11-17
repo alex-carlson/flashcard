@@ -27,7 +27,6 @@
 	let lastY = 0;
 
 	let removingBackground = false;
-	let removalThreshold = 30; // Threshold for flood fill removal
 	const undoStack = []; // Stack to keep track of undo actions
 
 	function saveState() {

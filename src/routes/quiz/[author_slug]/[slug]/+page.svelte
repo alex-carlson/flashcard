@@ -1,5 +1,4 @@
 <script>
-	import { toLetterGrade } from '$lib/api/quizScore.js';
 	import FlashCards from '$lib/FlashCards.svelte';
 	import { onDestroy } from 'svelte';
 	import { incrementPlayCounter } from '$lib/api/collections.js';
@@ -12,29 +11,32 @@
 	let interval = null;
 	let quizStarted = false;
 	let practiceMode = false;
+	let flashCardsComponent;
+	let quizStats = { correct: 0, total: 0 };
 
-	function startQuiz() {
-		incrementPlayCounter(collectionId);
+	// Debug reactive statement
+	$: console.log('QuizStats changed:', quizStats);
+
+	function startQuiz(isPractice = false) {
+		if (!isPractice) {
+			timer = 0;
+			interval = setInterval(() => (timer += 1), 1000);
+		} else {
+			clearInterval(interval);
+		}
+
+		if (collectionId) {
+			incrementPlayCounter(collectionId);
+		}
+
 		quizStarted = true;
-		practiceMode = false;
-		timer = 0;
-		clearInterval(interval);
-		interval = setInterval(() => (timer += 1), 1000);
+		practiceMode = isPractice;
+
+		// Call onQuizStart on the FlashCards component
+		if (flashCardsComponent?.onQuizStart) {
+			flashCardsComponent.onQuizStart();
+		}
 	}
-
-	function startPractice() {
-		quizStarted = true;
-		practiceMode = true;
-		clearInterval(interval);
-	}
-
-	//onmount, print meta
-	import { onMount } from 'svelte';
-
-	onMount(() => {
-		console.log('Meta:', meta);
-	});
-
 	onDestroy(() => clearInterval(interval));
 </script>
 
@@ -89,38 +91,45 @@
 			<button
 				class="btn btn-primary me-2"
 				style="width: auto; padding: 0 2rem;"
-				on:click={startQuiz}>Go</button
+				on:click={() => startQuiz(false)}>Go</button
 			>
 			<button
 				class="btn btn-outline-secondary"
 				style="width: auto; padding: 0 2rem;"
-				on:click={startPractice}>Practice</button
+				on:click={() => startQuiz(true)}>Practice</button
 			>
 		</div>
 	{:else}
-		{#if !practiceMode}
-			<div class="timer mb-3 fixed-timer white">
-				Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
+		<div class="mb-3 sticky-top white py-3">
+			<div
+				style="display:flex; justify-content:space-between; align-items:center; padding:0 1rem; gap: 1rem;"
+			>
+				<div style="flex:1;"></div>
+				<h2 style="margin:0; text-align:center; flex:1;">
+					{quizStats.correct}/{quizStats.total}
+				</h2>
+				{#if !practiceMode}
+					<div class="timer" style="flex:1; text-align:right; white-space:nowrap;">
+						Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
+					</div>
+				{:else}
+					<div class="timer" style="flex:1; text-align:right; white-space:nowrap;"></div>
+				{/if}
 			</div>
-		{/if}
-		<style>
-			.fixed-timer {
-				position: fixed;
-				top: 1rem;
-				right: 1rem;
-				padding: 0.5rem 1rem;
-				border-radius: 0.5rem;
-				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-				z-index: 1000;
-			}
-		</style>
+		</div>
 	{/if}
 
 	<div id="quiz" style="display: {quizStarted ? 'block' : 'none'}">
 		<FlashCards
+			bind:this={flashCardsComponent}
+			{practiceMode}
 			{collectionId}
 			on:finish={() => clearInterval(interval)}
 			on:giveup={() => clearInterval(interval)}
+			on:statsUpdate={(e) => {
+				console.log('Stats update received:', e.detail);
+				quizStats = e.detail;
+			}}
 		/>
 	</div>
 </div>

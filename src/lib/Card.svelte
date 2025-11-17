@@ -38,31 +38,51 @@
 
 	// Remove filler words and spaces before comparing
 	function normalize(str) {
-		const fillerWords = ['the', 'of', 'in', 'a', 'an', 'to', 'and', 'for', 'on', 'at', 'by', 'with', 'from'];
+		const fillerWords = [
+			'the',
+			'of',
+			'in',
+			'a',
+			'an',
+			'to',
+			'and',
+			'for',
+			'on',
+			'at',
+			'by',
+			'with',
+			'from'
+		];
 		return (str || '')
 			.toLowerCase()
 			.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"\[\]'?<>\\|]/g, '') // remove all punctuation
 			.replace(/\s+/g, ' ') // normalize spaces
 			.split(' ')
-			.filter(word => word && !fillerWords.includes(word))
+			.filter((word) => word && !fillerWords.includes(word))
 			.join('');
 	}
 
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
-		
+
 		if (item.type === 'multiplechoice') {
 			userAnswers[0] = e.target.value;
 		} else {
 			userAnswers[idx] = e.target.value;
 		}
-		console.log("User answers now:", userAnswers);
 		validateAnswer();
-		
+
 		// Lock in if all required answers are correct for multi-answer questions
-		if ((item.type === 'multianswer') && isValidated) {
+		if (item.type === 'multianswer' && isValidated) {
 			isLockedIn = true;
 			item.revealed = true; // Mark as completed
+
+			// Dispatch correctAnswer event to notify parent
+			dispatch('correctAnswer', {
+				index: i,
+				answer: item.answer,
+				userAnswer: userAnswers.filter((a) => a?.trim())
+			});
 		}
 	}
 
@@ -76,9 +96,8 @@
 			const correct = item.answer.filter((ans, i) => normalize(userAnswers[i]) === normalize(ans));
 			return correct.length >= req;
 		} else {
-			console.log("Checking correctness:", userAnswers[0], item.answer);
 			if (Array.isArray(item.answer)) {
-				return item.answer.some(ans => normalize(userAnswers[0]) === normalize(ans));
+				return item.answer.some((ans) => normalize(userAnswers[0]) === normalize(ans));
 			}
 			return normalize(userAnswers[0]) === normalize(item.answer);
 		}
@@ -88,29 +107,47 @@
 		if (item.type === 'multiplechoice') {
 			// For multiple choice, validate if an option is selected
 			isValidated = userAnswers[0]?.trim() && isCorrect();
+
+			// Dispatch correctAnswer event if validated
+			if (isValidated) {
+				dispatch('correctAnswer', {
+					index: i,
+					answer: item.answers[item.correctAnswerIndex || 0],
+					userAnswer: userAnswers[0]
+				});
+			}
 		} else if (item.type === 'multianswer') {
 			const req = item.numRequired ?? item.answer.length;
-			const filledAnswers = userAnswers.filter(a => a?.trim());
-			
+			const filledAnswers = userAnswers.filter((a) => a?.trim());
+
 			// Check if all filled answers are correct (green)
-			const correctFilledAnswers = filledAnswers.filter(userAns => 
-				item.answer.some(correctAns => 
-					normalize(userAns) === normalize(correctAns)
-				)
+			const correctFilledAnswers = filledAnswers.filter((userAns) =>
+				item.answer.some((correctAns) => normalize(userAns) === normalize(correctAns))
 			);
-			
+
 			// Validate if we have enough correct answers and all filled answers are correct
-			isValidated = filledAnswers.length >= req && correctFilledAnswers.length === filledAnswers.length && correctFilledAnswers.length >= req;
+			isValidated =
+				filledAnswers.length >= req &&
+				correctFilledAnswers.length === filledAnswers.length &&
+				correctFilledAnswers.length >= req;
 		} else {
 			isValidated = userAnswers[0]?.trim() && isCorrect();
 			// if is valid, lock in the answer
 			if (isValidated) {
 				isLockedIn = true;
 				item.revealed = true; // Mark as completed
+
+				// Dispatch correctAnswer event to notify parent
+				dispatch('correctAnswer', {
+					index: i,
+					answer: Array.isArray(item.answer) ? item.answer[0] : item.answer,
+					userAnswer: userAnswers[0]
+				});
+
 				// select the next input, or if there isn't one, search the whole document for the next input
 				setTimeout(() => {
 					const inputs = Array.from(document.querySelectorAll('input, textarea'));
-					const currentInput = inputs.find(input => input.value === userAnswers[0]);
+					const currentInput = inputs.find((input) => input.value === userAnswers[0]);
 					if (currentInput) {
 						const currentIndex = inputs.indexOf(currentInput);
 						if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
@@ -132,12 +169,12 @@
 			// For multiple choice, we don't need input styling since we use radio buttons
 			return '';
 		}
-		
+
 		if (!userAnswers[idx]?.trim()) return 'form-control answer-box';
-		
+
 		if (item.type === 'multianswer') {
-			const isThisCorrect = item.answer.some(ans => 
-				normalize(userAnswers[idx]) === normalize(ans)
+			const isThisCorrect = item.answer.some(
+				(ans) => normalize(userAnswers[idx]) === normalize(ans)
 			);
 			return `form-control answer-box ${isThisCorrect ? 'correct' : 'incorrect'}`;
 		} else {
@@ -190,9 +227,21 @@
 
 		<div class="answerbox mt-2">
 			{#if currentMode === 'TRUE_FALSE'}
-				<Options {cards} currentCardIndex={i} numberOfOptions="2" {shuffleTrigger} />
+				<Options
+					{cards}
+					currentCardIndex={i}
+					numberOfOptions="2"
+					{shuffleTrigger}
+					on:correctAnswer
+				/>
 			{:else if currentMode === 'MULTIPLE_CHOICE'}
-				<Options {cards} currentCardIndex={i} numberOfOptions="4" {shuffleTrigger} />
+				<Options
+					{cards}
+					currentCardIndex={i}
+					numberOfOptions="4"
+					{shuffleTrigger}
+					on:correctAnswer
+				/>
 			{:else if currentMode === 'FILL_IN_THE_BLANK'}
 				{#if item.answerer}
 					<ProfilePicture userId={item.answerer} size={32} class="answerer" />
@@ -205,7 +254,7 @@
 						{#if item.type === 'multiplechoice'}
 							{item.answers[item.correctAnswerIndex || 0]}
 						{:else if item.type === 'multianswer'}
-							{userAnswers.filter(a => a?.trim()).join(', ') || 'No answers provided'}
+							{userAnswers.filter((a) => a?.trim()).join(', ') || 'No answers provided'}
 						{:else}
 							{Array.isArray(item.answer) ? item.answer[0] : item.answer}
 						{/if}
@@ -225,7 +274,7 @@
 					{#if item.type === 'multiplechoice'}
 						<!-- Multiple Choice - Radio buttons -->
 						<div class="multiple-choice-inputs">
-							{#each (item.userAnswers ? item.userAnswers : []) as choice, idx}
+							{#each item.userAnswers ? item.userAnswers : [] as choice, idx}
 								<button
 									type="button"
 									class="choice-option {userAnswers[0] === choice ? 'selected' : ''}"
@@ -333,7 +382,9 @@
 		border: 1px solid #ddd;
 		border-radius: 0.375rem;
 		cursor: pointer;
-		transition: background-color 0.2s, border-color 0.2s;
+		transition:
+			background-color 0.2s,
+			border-color 0.2s;
 	}
 
 	.choice-option:hover {
@@ -341,7 +392,7 @@
 		border-color: #adb5bd;
 	}
 
-	.choice-option input[type="radio"] {
+	.choice-option input[type='radio'] {
 		margin: 0;
 		cursor: pointer;
 	}

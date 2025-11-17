@@ -4,8 +4,6 @@
 	import { faSearch } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
 	export function addSong(data) {
-		// This function can be used to add a song to a playlist or perform other actions
-		console.log(`Adding song: ${data.title}, ID: ${data.videoId}`);
 		dispatch('addSong', data);
 	}
 	let searchTerm = '';

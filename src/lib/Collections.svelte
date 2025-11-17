@@ -33,18 +33,14 @@
 			isCollapsed = true;
 		}
 
-		// If parent provided a custom handler, use it
 		if (onSelectCollection) {
 			onSelectCollection(collection);
 			return;
 		}
 
-		// Dispatch event for any listeners
 		dispatch('selectCollection', collection.id);
 
-		// Default behavior: navigate to quiz page
 		try {
-			console.log('Navigating to collection:', collection);
 			const user = await fetchUser(collection.profiles.public_id);
 			const author_slug = user.username_slug || user.username || 'unknown-author';
 			const url = `/quiz/${author_slug}/${collection.slug}`;
@@ -53,15 +49,13 @@
 			goto(url, { state });
 		} catch (error) {
 			console.error('Error fetching user for navigation:', error);
-			// Fallback navigation if user fetch fails
 			const url = `/quiz/unknown-author/${collection.slug}`;
 			const state = { collectionId: collection.id };
 			goto(url, { state });
 		}
 	}
-	// Fetch collections on component mount
+
 	onMount(async () => {
-		// Only fetch if no collections were passed as props
 		if (collections.length === 0) {
 			await loadCollections();
 		} else {
@@ -85,7 +79,6 @@
 	}
 
 	async function loadCollections() {
-		// Prevent duplicate calls while already loading
 		if (isLoading) {
 			return;
 		}
@@ -157,7 +150,7 @@
 		return sorted;
 	})();
 
-	$: filteredCollections = processedCollections.filter(c => {
+	$: filteredCollections = processedCollections.filter((c) => {
 		if (!searchTerm) return true;
 		const term = searchTerm.trim().toLowerCase();
 		return (
@@ -190,14 +183,14 @@
 		</button>
 	{/if}
 	<!-- if !isCollapsed add input -->
-	 {#if !isCollapsed && condensed}
+	{#if !isCollapsed && condensed}
 		<input
 			class="search-bar mb-2"
 			type="text"
 			placeholder="Search collections..."
 			bind:value={searchTerm}
 		/>
-	 {/if}
+	{/if}
 	{#if !condensed || !isCollapsed}
 		{#if isLoading || (!hasInitialized && collections.length === 0)}
 			<ul class="collections-list {grid ? 'grid' : list ? 'list' : ''}">
