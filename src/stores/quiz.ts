@@ -258,7 +258,7 @@ export function createQuizStore() {
     function completeQuizAction(userId?: string, token?: string): void {
         update(state => {
             const correctAnswers = state.cards.filter(
-                card => card?.revealed && card?.userAnswer === card?.answer
+                card => card?.revealed && card.incorrect !== true
             ).length;
             const percentage = Math.round((correctAnswers / state.cards.length) * 100);
 

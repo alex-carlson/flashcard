@@ -89,7 +89,9 @@
 		>
 			Show Results
 		</button>
-		<h6 class="mt-2">Showing results for {query}</h6>
+		{#if suggestions.length > 0}
+			<h6 class="mt-2">Showing results for {query}</h6>
+		{/if}
 	</div>
 	<div class="scroll-wrapper">
 		<div class="suggestion">

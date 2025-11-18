@@ -198,7 +198,6 @@
 			currentMode={$quiz.currentMode}
 			isComplete={$quiz.isComplete}
 			on:giveup={() => {
-				console.log('Give up clicked flashcards');
 				quiz.completeQuiz($user?.id, $user?.token);
 				dispatch('giveup');
 			}}

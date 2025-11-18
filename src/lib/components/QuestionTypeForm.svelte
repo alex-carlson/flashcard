@@ -18,6 +18,18 @@
 	let searchTerm = '';
 	let showSuggestions = false;
 
+	// Reactive statement to update searchTerm when answer input changes
+	$: {
+		if (questionType === 'Image') {
+			const currentAnswer = Array.isArray(item.answers) 
+				? item.answers.join(' ').trim() 
+				: (item.answer || '').trim();
+			if (currentAnswer !== searchTerm) {
+				searchTerm = currentAnswer;
+			}
+		}
+	}
+
 	// Focus function for question input
 	function focusQuestionInput() {
 		const questionInput = document.getElementById('question-input-question');
@@ -29,6 +41,9 @@
 
 	// Upload handlers
 	async function handleImageUpload() {
+		console.log('Uploading image item:', item);
+		console.trace();
+
 		if (
 			(item.answer ?? '').trim() === '' &&
 			(Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) ===
@@ -67,7 +82,6 @@
 			item.supplemental_text = '';
 			imageSuggestions = [];
 			searchTerm = '';
-			showSuggestions = false;
 			// Focus and scroll to question input for next item
 			setTimeout(focusQuestionInput, 100);
 		}
