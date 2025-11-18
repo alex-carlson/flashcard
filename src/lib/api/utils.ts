@@ -61,7 +61,7 @@ export async function getCollectionMetadataFromId(collectionId) {
     return data || null;
 }
 
-export function areStringsClose(a, b, threshold = 0.8) {
+export function areStringsClose(a, b, threshold = 1) {
     const preprocess = (str) =>
         str
             .trim()

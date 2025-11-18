@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { fetchCollectionById } from '$lib/api/collections';
 import { completeQuiz } from '$lib/api/user';
-import { mapCards } from '$lib/api/utils';
+import { mapCards, areStringsClose } from '$lib/api/utils';
 import { addToast } from './toast';
 
 // Types
@@ -90,20 +90,14 @@ export function createQuizStore() {
 
     const stats = derived(store, ($state): QuizStats => {
         const cards = $state.cards || [];
-
-        // Helper function to normalize answers for comparison
-        const normalizeAnswer = (answer: string | number | null | undefined): string => {
-            if (answer === null || answer === undefined) {
-                return '';
-            }
-            return String(answer).toLowerCase().trim();
-        };
+        console.log('Stats calculation triggered. Cards:', cards.length, 'Revealed:', cards.filter(c => c?.revealed).length);
 
         const revealedCards = cards.filter(c => c?.revealed);
         const correctCards = revealedCards.filter(c => {
-            const userAnswer = normalizeAnswer(c?.userAnswer);
-            const correctAnswer = normalizeAnswer(c?.answer);
-            const isCorrect = userAnswer === correctAnswer;
+            const userAnswer = String(c?.userAnswer || '');
+            const correctAnswer = String(c?.answer || '');
+            const isCorrect = areStringsClose(userAnswer, correctAnswer);
+            console.log(`Card comparison: "${userAnswer}" ≈ "${correctAnswer}" = ${isCorrect}`);
             return isCorrect;
         });
 
@@ -283,21 +277,13 @@ export function createQuizStore() {
 
     function revealCards(): void {
         update(state => {
-            // Helper function to normalize answers for comparison (same as in stats)
-            const normalizeAnswer = (answer: string | number | null | undefined): string => {
-                if (answer === null || answer === undefined) {
-                    return '';
-                }
-                return String(answer).toLowerCase().trim();
-            };
-
             return {
                 ...state,
                 cards: state.cards.map(card => {
-                    const userAnswer = normalizeAnswer(card?.userAnswer);
-                    const correctAnswer = normalizeAnswer(card?.answer);
+                    const userAnswer = String(card?.userAnswer || '');
+                    const correctAnswer = String(card?.answer || '');
                     const hasUserAnswer = Boolean(card?.userAnswer && String(card.userAnswer).trim());
-                    const isIncorrect = !hasUserAnswer || userAnswer !== correctAnswer;
+                    const isIncorrect = hasUserAnswer && !areStringsClose(userAnswer, correctAnswer);
 
                     console.log(`Card ${card?.id}: userAnswer="${userAnswer}", correctAnswer="${correctAnswer}", hasUserAnswer=${hasUserAnswer}, incorrect=${isIncorrect}`);
 

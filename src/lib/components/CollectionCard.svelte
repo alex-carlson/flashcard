@@ -124,20 +124,20 @@
 			</div>
 		</a>
 	{:else}
-		<div class="placeholder-card">
+		<a class="collection-card-link placeholder" href="#">
 			<div class="card-image-container">
-				<div class="card-image placeholder shimmer"></div>
+				<img src="../loading-spinner.png" alt="placeholder image" class="img-fluid shimmer" />
 			</div>
-			<div class="card-content">
-				<h2 class="card-title shimmer placeholder fit-title" style="width: 80%; height: 1.5em">
-					Loading...
-				</h2>
-				<div class="card-meta wd-100 mt-2" style="width: 100%;">
-					<span class="card-questions shimmer placeholder" style="width: 40%; height: 1em;"></span>
-					<span class="card-date shimmer placeholder" style="width: 30%; height: 1em;"></span>
+			<div class="card-content pb-2">
+				<div class="fit-text-container">
+					<h2>asdf</h2>
+				</div>
+				<div class="card-meta">
+					<span class="card-questions">30</span>
+					<span class="card-date">11/1/2011</span>
 				</div>
 			</div>
-		</div>
+		</a>
 	{/if}
 </li>
 
@@ -191,18 +191,23 @@
 		display: block;
 	}
 
-	.card-image.placeholder {
+	.placeholder .img-fluid {
 		width: 100%;
-		aspect-ratio: 9 / 5;
-		background-color: #e0e0e0;
-		display: block;
-		border-radius: 0.5em;
-		position: relative;
-		overflow: hidden;
+		height: 100%;
+		background-color: gray;
 	}
 
-	.placeholder {
-		border-radius: 0.3em;
+	.placeholder .fit-text-container,
+	.placeholder .card-meta {
+		width: 100%;
+	}
+
+	.placeholder h2,
+	.placeholder span {
+		background-color: gray;
+		color: gray;
+		border-radius: 15px;
+		width: 100%;
 	}
 
 	.fit-text-container {

@@ -5,14 +5,17 @@
 	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 	const CX = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
 	export let searchTerm = '';
-	let query = searchTerm || '';
+	let searchOverride = '';
 
 	export let fileType = 'any';
 	export let suggestions = [];
 
+	// Use searchOverride if it exists, otherwise use searchTerm
+	$: effectiveSearchTerm = searchOverride || searchTerm;
+
 	export async function fetchSuggestions() {
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
-		let fullQuery = query;
+		let fullQuery = effectiveSearchTerm;
 		if (fileType === 'png') {
 			fullQuery += ' transparent isolated no background';
 		}
@@ -60,6 +63,7 @@
 	}
 	function handleAddImage(url) {
 		dispatch('addImage', url);
+		searchOverride = null;
 	}
 </script>
 
@@ -69,14 +73,14 @@
 		<input
 			name="searchOverride"
 			type="text"
-			bind:value={query}
+			bind:value={searchOverride}
 			placeholder="Search for images..."
 			class="search-input"
 		/>
 		<div class="file-type-selector">
 			<label for="fileType">File Type:</label>
 			<select id="fileType" bind:value={fileType}>
-				<option value="any">Any</option>
+				<option value="image">Any</option>
 				<option value="png">PNG</option>
 				<option value="jpg">JPG</option>
 				<option value="gif">GIF</option>
@@ -85,12 +89,12 @@
 		<button
 			class="search-btn"
 			on:click|preventDefault={fetchSuggestions}
-			disabled={!query || query.length <= 3}
+			disabled={!effectiveSearchTerm || effectiveSearchTerm.length <= 3}
 		>
 			Show Results
 		</button>
 		{#if suggestions.length > 0}
-			<h6 class="mt-2">Showing results for {query}</h6>
+			<h6 class="mt-2">Showing results for {effectiveSearchTerm}</h6>
 		{/if}
 	</div>
 	<div class="scroll-wrapper">

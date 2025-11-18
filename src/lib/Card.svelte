@@ -36,32 +36,6 @@
 	let isValidated = false;
 	let isLockedIn = false;
 
-	// Remove filler words and spaces before comparing
-	function normalize(str) {
-		const fillerWords = [
-			'the',
-			'of',
-			'in',
-			'a',
-			'an',
-			'to',
-			'and',
-			'for',
-			'on',
-			'at',
-			'by',
-			'with',
-			'from'
-		];
-		return (str || '')
-			.toLowerCase()
-			.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"\[\]'?<>\\|]/g, '') // remove all punctuation
-			.replace(/\s+/g, ' ') // normalize spaces
-			.split(' ')
-			.filter((word) => word && !fillerWords.includes(word))
-			.join('');
-	}
-
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
 
@@ -90,16 +64,16 @@
 		if (item.type === 'multiplechoice') {
 			// For multiple choice, check if selected answer matches the correct one
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
-			return normalize(userAnswers[0]) === normalize(correctAnswer);
+			return areStringsClose(userAnswers[0], correctAnswer);
 		} else if (item.type === 'multianswer') {
 			const req = item.numRequired ?? item.answer.length;
-			const correct = item.answer.filter((ans, i) => normalize(userAnswers[i]) === normalize(ans));
+			const correct = item.answer.filter((ans, i) => areStringsClose(userAnswers[i], ans));
 			return correct.length >= req;
 		} else {
 			if (Array.isArray(item.answer)) {
-				return item.answer.some((ans) => normalize(userAnswers[0]) === normalize(ans));
+				return item.answer.some((ans) => areStringsClose(userAnswers[0], ans));
 			}
-			return normalize(userAnswers[0]) === normalize(item.answer);
+			return areStringsClose(userAnswers[0], item.answer);
 		}
 	}
 
@@ -122,7 +96,7 @@
 
 			// Check if all filled answers are correct (green)
 			const correctFilledAnswers = filledAnswers.filter((userAns) =>
-				item.answer.some((correctAns) => normalize(userAns) === normalize(correctAns))
+				item.answer.some((correctAns) => areStringsClose(userAns, correctAns))
 			);
 
 			// Validate if we have enough correct answers and all filled answers are correct
@@ -173,9 +147,7 @@
 		if (!userAnswers[idx]?.trim()) return 'form-control answer-box';
 
 		if (item.type === 'multianswer') {
-			const isThisCorrect = item.answer.some(
-				(ans) => normalize(userAnswers[idx]) === normalize(ans)
-			);
+			const isThisCorrect = item.answer.some((ans) => areStringsClose(userAnswers[idx], ans));
 			return `form-control answer-box ${isThisCorrect ? 'correct' : 'incorrect'}`;
 		} else {
 			return `form-control answer-box ${isCorrect() ? 'correct' : 'incorrect'}`;

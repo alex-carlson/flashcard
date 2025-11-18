@@ -63,6 +63,10 @@
 	function draw(x, y) {
 		if (!drawing) return;
 
+		const rect = canvas.getBoundingClientRect();
+		const scaleX = canvas.width / rect.width;
+		const scaleY = canvas.height / rect.height;
+
 		if (erasing) {
 			// Use destination-out composite operation to erase
 			ctx.globalCompositeOperation = 'destination-out';
@@ -73,13 +77,14 @@
 			ctx.strokeStyle = color;
 		}
 
-		ctx.lineWidth = width; // Use the current width setting
+		ctx.lineWidth = width * scaleX; // Adjust line width based on canvas scaling
 		ctx.beginPath();
 		ctx.moveTo(lastX, lastY);
 		ctx.lineTo(x, y);
 		ctx.stroke();
 		[lastX, lastY] = [x, y];
 	}
+
 	function endDrawing() {
 		drawing = false;
 		// Reset composite operation to normal
@@ -321,8 +326,8 @@
 						type="color"
 						bind:value={color}
 						style="
-                            width: {width}px;
-                            height: {width}px;
+                            width: 40px;
+                            height: 40px;
                             border-radius: 50%;
                             border: 1px solid black;
                             padding: 0;
