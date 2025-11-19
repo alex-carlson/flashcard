@@ -10,7 +10,16 @@
 	import { goto } from '$app/navigation';
 	import { fetchUser } from '$lib/api/user';
 	import { afterUpdate, onMount } from 'svelte';
-	import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+	import {
+		faEye,
+		faEyeSlash,
+		faListOl,
+		faCalendar,
+		faChartSimple,
+		faCircleQuestion,
+		faFolderOpen,
+		faPencil
+	} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 
 	let titleEl;
@@ -69,72 +78,177 @@
 	});
 </script>
 
-<li>
+<li class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-3 mb-md-4 w-100">
 	{#if collection}
 		<a
-			class="collection-card-link"
+			class="collection-card-link card border-0 shadow-sm w-100"
+			class:h-100={false}
+			class:mobile-card={true}
 			href="/quiz/{collection.profiles.username}/{collection.slug}"
 			on:click|preventDefault={handleNavigation}
 		>
-			<div class="card-image-container">
-				{#if collection.items_length > 0 && collection.thumbnail_url}
-					<img
-						src={collection.thumbnail_url.replace(
-							'https://media.quizzems.com/',
-							'https://media.quizzems.com/cdn-cgi/image/' + imageOptions
-						)}
-						alt="Thumbnail"
-						class="img-fluid"
-					/>
-				{/if}
-			</div>
-			<div class="card-content pb-2">
-				<div class="fit-text-container">
-					<h2 bind:this={titleEl} class="fit-text">{collection.category}</h2>
+			<!-- Mobile horizontal layout -->
+			<div class="d-flex d-sm-none align-items-stretch w-100">
+				<div class="mobile-thumbnail">
+					{#if collection.items_length > 0 && collection.thumbnail_url}
+						<img
+							src={collection.thumbnail_url.replace(
+								'https://media.quizzems.com/',
+								'https://media.quizzems.com/cdn-cgi/image/' + imageOptions
+							)}
+							alt="Thumbnail"
+							class="img-fluid"
+						/>
+					{/if}
 				</div>
+				<div class="flex-grow-1 d-flex flex-column justify-content-center px-3">
+					<h2 class="mobile-title text-center mb-1">{collection.category}</h2>
+					<div class="mobile-meta d-flex justify-content-center gap-2 small text-muted">
+						<span class="d-flex align-items-center gap-1">
+							<Fa icon={faPencil} size="xs" />
+							{collection.items_length || 0}
+						</span>
+						{#if showDate}
+							<span class="d-flex align-items-center gap-1">
+								<Fa icon={faCalendar} size="xs" />
+								{formatTimestamp(collection.created_at).split('/').slice(0, 2).join('/')}
+							</span>
+						{/if}
+						{#if collection.times_played}
+							<span class="d-flex align-items-center gap-1">
+								<Fa icon={faChartSimple} size="xs" />
+								{collection.times_played > 999
+									? Math.floor(collection.times_played / 1000) + 'k'
+									: collection.times_played}
+							</span>
+						{/if}
+						{#if showIsVisible}
+							<span class="d-flex align-items-center">
+								{#if collection.private}
+									<Fa icon={faEyeSlash} size="xs" />
+								{:else}
+									<Fa icon={faEye} size="xs" />
+								{/if}
+							</span>
+						{/if}
+					</div>
+				</div>
+			</div>
 
-				<div class="card-meta">
-					{#if showTags}
-						<span class="card-meta-item">
-							{tagCount}
-							{tagCount === 1 ? 'tag' : 'tags'}
+			<!-- Desktop vertical layout -->
+			<div class="d-none d-sm-flex flex-column h-100 w-100">
+				<div class="card-image-container position-relative overflow-hidden">
+					{#if collection.items_length > 0 && collection.thumbnail_url}
+						<img
+							src={collection.thumbnail_url.replace(
+								'https://media.quizzems.com/',
+								'https://media.quizzems.com/cdn-cgi/image/' + imageOptions
+							)}
+							alt="Thumbnail"
+							class="img-fluid w-100 h-100"
+						/>
+					{/if}
+				</div>
+				<div class="card-body p-2 d-flex flex-column">
+					<div
+						class="fit-text-container flex-grow-1 d-flex align-items-center justify-content-center"
+					>
+						<h2 bind:this={titleEl} class="fit-text text-center mb-0 h6 h5-md">
+							{collection.category}
+						</h2>
+					</div>
+
+					<div
+						class="card-meta d-flex flex-wrap justify-content-center gap-1 gap-md-2 small text-muted"
+					>
+						{#if showTags}
+							<span class="card-meta-item d-none d-sm-inline">
+								{tagCount}
+								{tagCount === 1 ? 'tag' : 'tags'}
+							</span>
+						{/if}
+						<span class="card-questions d-flex align-items-center gap-1">
+							<Fa icon={faPencil} size="xs" />
+							<span class="d-none d-sm-inline">{collection.items_length || 0}</span>
+							<span class="d-sm-none">{collection.items_length || 0}</span>
 						</span>
-					{/if}
-					<span class="card-questions">{collection.items_length || 0} questions</span>
-					{#if showDate}
-						<span class="card-date">{formatTimestamp(collection.created_at)}</span>
-					{/if}
-					{#if showIsVisible}
-						<span class="card-visibility">
-							{#if collection.private}
-								<Fa icon={faEyeSlash} />
-								Private
-							{:else}
-								<Fa icon={faEye} />
-								Public
-							{/if}
-						</span>
-					{/if}
-					{#if showAuthor && collection.profiles}
-						<span class="card-author">
-							by {collection.profiles.username || collection.profiles.public_id}
-						</span>
-					{/if}
+						{#if showDate}
+							<span class="card-date d-flex align-items-center gap-1">
+								<Fa icon={faCalendar} size="xs" />
+								<span class="d-none d-md-inline">{formatTimestamp(collection.created_at)}</span>
+								<span class="d-md-none"
+									>{formatTimestamp(collection.created_at).split('/').slice(0, 2).join('/')}</span
+								>
+							</span>
+						{/if}
+						{#if showIsVisible}
+							<span class="card-visibility d-flex align-items-center">
+								{#if collection.private}
+									<Fa icon={faEyeSlash} size="xs" />
+								{:else}
+									<Fa icon={faEye} size="xs" />
+								{/if}
+							</span>
+						{/if}
+						{#if collection.times_played}
+							<span class="d-flex align-items-center gap-1">
+								<Fa icon={faChartSimple} size="xs" />
+								<span class="d-none d-sm-inline">{collection.times_played}</span>
+								<span class="d-sm-none"
+									>{collection.times_played > 999
+										? Math.floor(collection.times_played / 1000) + 'k'
+										: collection.times_played}</span
+								>
+							</span>
+						{/if}
+						{#if showAuthor && collection.profiles}
+							<span class="card-author d-none d-xl-block small">
+								by {collection.profiles.username || collection.profiles.public_id}
+							</span>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</a>
 	{:else}
-		<a class="collection-card-link placeholder" href="#">
-			<div class="card-image-container">
-				<img src="../loading-spinner.png" alt="placeholder image" class="img-fluid shimmer" />
-			</div>
-			<div class="card-content pb-2">
-				<div class="fit-text-container">
-					<h2>asdf</h2>
+		<a class="collection-card-link card border-0 shadow-sm placeholder w-100 mobile-card" href="#">
+			<!-- Mobile horizontal placeholder -->
+			<div class="d-flex d-sm-none align-items-stretch w-100">
+				<div class="mobile-thumbnail flex-shrink-0">
+					<div class="w-100 h-100 bg-secondary shimmer"></div>
 				</div>
-				<div class="card-meta">
-					<span class="card-questions">30</span>
-					<span class="card-date">11/1/2011</span>
+				<div class="flex-grow-1 d-flex flex-column justify-content-center px-3">
+					<h2 class="mobile-title text-center mb-1 bg-secondary shimmer text-transparent">
+						Loading...
+					</h2>
+					<div class="mobile-meta d-flex justify-content-center gap-2 small text-muted">
+						<span class="bg-secondary shimmer text-transparent">--</span>
+						<span class="bg-secondary shimmer text-transparent">--/--</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Desktop vertical placeholder -->
+			<div class="d-none d-sm-flex flex-column h-100">
+				<div class="card-image-container position-relative overflow-hidden">
+					<img
+						src="../loading-spinner.png"
+						alt="placeholder image"
+						class="img-fluid w-100 h-100 shimmer"
+					/>
+				</div>
+				<div class="card-body p-2 p-md-3 d-flex flex-column">
+					<div
+						class="fit-text-container flex-grow-1 d-flex align-items-center justify-content-center"
+					>
+						<h2 class="text-center mb-0 h6 h5-md">Loading...</h2>
+					</div>
+					<div
+						class="card-meta mt-2 d-flex flex-wrap justify-content-center gap-1 gap-md-2 small text-muted"
+					>
+						<span class="card-questions">--</span>
+						<span class="card-date">--/--</span>
+					</div>
 				</div>
 			</div>
 		</a>
@@ -142,48 +256,79 @@
 </li>
 
 <style>
-	.card-content {
+	/* Mobile thumbnail styles */
+	.mobile-thumbnail {
+		width: 80px;
+		height: 80px;
+		aspect-ratio: 1 / 1;
+		overflow: hidden;
+		background: #f8f9fa;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		text-align: center;
+		flex-shrink: 0;
 	}
 
-	.card-meta {
-		display: flex;
-		gap: 10px;
-		justify-content: center;
-	}
-
-	.collection-card-link {
-		display: flex;
-		flex-direction: column;
+	.mobile-thumbnail img {
+		width: 100%;
 		height: 100%;
+		object-fit: cover;
+		object-position: center;
+	}
+
+	.mobile-title {
+		font-size: 1.4rem;
+		line-height: 1.2;
+		margin: 0;
+	}
+
+	.mobile-meta {
+		font-size: 1rem;
+		line-height: 1.2;
+	}
+
+	/* Override Bootstrap card styles for our custom layout */
+	.collection-card-link {
 		transition:
 			transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
 			box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 		will-change: transform;
+		text-decoration: none;
+		color: inherit;
 	}
 
+	/* Desktop cards get full height, mobile cards get content height */
+	.mobile-card {
+		height: auto;
+	}
+
+	@media (min-width: 576px) {
+		.mobile-card {
+			height: 100%;
+		}
+	}
+
+	.collection-card-link:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	/* Desktop card image container */
 	.card-image-container {
-		position: relative;
 		width: 100%;
 		aspect-ratio: 5 / 4;
 		height: auto;
-		min-height: 180px;
-		max-height: 400px;
-		overflow: hidden;
+		min-height: 120px;
+		max-height: 300px;
 		background: #f8f9fa;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
 	.card-image-container img {
-		max-width: 100%;
-		max-height: 100%;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
@@ -191,59 +336,70 @@
 		display: block;
 	}
 
-	.placeholder .img-fluid {
-		width: 100%;
-		height: 100%;
-		background-color: gray;
-	}
-
-	.placeholder .fit-text-container,
-	.placeholder .card-meta {
-		width: 100%;
-	}
-
-	.placeholder h2,
-	.placeholder span {
-		background-color: gray;
-		color: gray;
-		border-radius: 15px;
-		width: 100%;
-	}
-
 	.fit-text-container {
-		height: 3em; /* Fixed height */
+		height: 1.2rem;
+		min-height: 1.2rem;
 		overflow: hidden;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		text-align: center;
 	}
 
 	.fit-text {
-		margin: 0;
-		white-space: normal;
 		transform-origin: center center;
 		display: inline-block;
 		transform: scale(var(--scale));
-		font-size: 1.3rem;
+		font-size: 1rem;
 		line-height: 1.2;
-		text-align: center;
 		max-width: 100%;
 		--scale: 1;
+	}
+
+	/* Responsive typography */
+	@media (min-width: 768px) {
+		.fit-text {
+			font-size: 1.1rem;
+		}
+		.fit-text-container {
+			/* height: 3rem; */
+			/* min-height: 3rem; */
+		}
+	}
+
+	@media (min-width: 992px) {
+		.fit-text {
+			font-size: 1.2rem;
+		}
+	}
+
+	/* Placeholder styles */
+	.placeholder .card-image-container {
+		background-color: #e9ecef;
+	}
+
+	.placeholder .fit-text,
+	.placeholder .card-meta span {
+		background-color: #dee2e6;
+		color: transparent;
+		border-radius: 0.25rem;
+		animation: shimmer 1.5s infinite;
+	}
+
+	.shimmer {
+		animation: shimmer 1.5s infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+		100% {
+			opacity: 1;
+		}
 	}
 
 	/* We use inline style to apply scale dynamically */
 	:global(.fit-text) {
 		transform: scale(var(--scale));
-	}
-
-	@media (max-width: 600px) {
-		.card-image-container {
-			width: 80px;
-			height: 80px;
-			min-width: 80px;
-			min-height: 80px;
-			aspect-ratio: unset;
-		}
 	}
 </style>

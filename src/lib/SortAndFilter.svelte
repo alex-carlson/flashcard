@@ -68,6 +68,7 @@
 						<option value="name">Alphabetical</option>
 						<option value="date">Creation Date</option>
 						<option value="size">Size</option>
+						<option value="plays">Times Played</option>
 					</select>
 				</div>
 				<div class="control-group">
