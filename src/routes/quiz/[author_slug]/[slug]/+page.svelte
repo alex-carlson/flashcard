@@ -1,11 +1,17 @@
 <script>
 	import FlashCards from '$lib/FlashCards.svelte';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { incrementPlayCounter } from '$lib/api/collections.js';
+	import QuizHeader from '$lib/components/quiz/QuizHeader.svelte';
+	import { createQuizStore } from '$lib/../stores/quiz';
 	export let data;
 
 	// Destructure page data
-	const { category, collectionId, author, quizScore, timesPlayed, meta } = data;
+	const { category, collectionId, author, thumbnail, quizScore, timesPlayed, meta } = data;
+
+	// Initialize quiz store
+	const quiz = createQuizStore();
+	$: stats = quiz.stats;
 
 	let timer = 0;
 	let interval = null;
@@ -13,6 +19,84 @@
 	let practiceMode = false;
 	let flashCardsComponent;
 	let quizStats = { correct: 0, total: 0 };
+	let imagesPreloaded = false;
+	let imagePreloadCount = 0;
+	let totalImages = 0;
+	let preloadStarted = false;
+	let loadedImages = 0;
+	let failedImages = 0;
+
+	// Preload images function
+	function preloadImages(cards) {
+		// Extract all unique image URLs from cards
+		const imageUrls = [
+			...new Set([
+				...cards
+					.filter((card) => card.type === 'image' && card.imageUrl)
+					.map((card) => card.imageUrl)
+			])
+		];
+
+		totalImages = imageUrls.length;
+		imagePreloadCount = 0;
+		loadedImages = 0;
+		failedImages = 0;
+
+		console.log(`Starting preload of ${totalImages} unique images:`, imageUrls);
+
+		if (totalImages === 0) {
+			imagesPreloaded = true;
+			return;
+		}
+
+		const preloadPromises = imageUrls.map((url, index) => {
+			return new Promise((resolve) => {
+				const img = new Image();
+				let completed = false;
+
+				const onComplete = (loaded = false) => {
+					if (completed) return; // Prevent multiple calls
+					completed = true;
+					imagePreloadCount++;
+					if (loaded) {
+						loadedImages++;
+					} else {
+						failedImages++;
+					}
+					console.log(
+						`Image ${imagePreloadCount}/${totalImages} ${loaded ? 'loaded' : 'failed'}: ${url}`
+					);
+					resolve(loaded);
+				};
+
+				img.onload = () => onComplete(true);
+				img.onerror = () => onComplete(false); // Mark as failed but continue
+				img.src = url;
+				// No artificial timeout - let the browser handle loading naturally
+			});
+		});
+
+		// Wait for all images to either load or fail naturally
+		Promise.all(preloadPromises).then(() => {
+			console.log(
+				`Image preloading completed. Loaded: ${loadedImages}, Failed: ${failedImages}, Total: ${imagePreloadCount}/${totalImages}`
+			);
+			imagesPreloaded = true;
+		});
+	}
+
+	// Load quiz data on mount
+	onMount(() => {
+		if (collectionId) {
+			quiz.loadCollection(collectionId);
+		}
+	});
+
+	// Preload images when cards are loaded
+	$: if ($quiz.hasInitialized && $quiz.cards.length > 0 && !imagesPreloaded && !preloadStarted) {
+		preloadStarted = true;
+		preloadImages($quiz.cards);
+	}
 
 	// Debug reactive statement
 	$: console.log('QuizStats changed:', quizStats);
@@ -84,20 +168,66 @@
 <div>
 	{#if !quizStarted}
 		<div class="white padding rounded m-3">
-			<h1 class="mb-3">{category}</h1>
-			{#if author}<p class="mb-3">by {author}</p>{/if}
-			{#if timesPlayed > 0}<p class="mb-3">Times Played: {timesPlayed}</p>{/if}
-			<h2 class="mb-3">Ready to start?</h2>
-			<button
-				class="btn btn-primary me-2"
-				style="width: auto; padding: 0 2rem;"
-				on:click={() => startQuiz(false)}>Go</button
-			>
-			<button
-				class="btn btn-outline-secondary"
-				style="width: auto; padding: 0 2rem;"
-				on:click={() => startQuiz(true)}>Practice</button
-			>
+			{#if $quiz.hasInitialized}
+				<QuizHeader
+					collectionName={$quiz.collection.name || category}
+					author={$quiz.collection.author || author}
+					authorSlug={$quiz.collection.author_slug}
+					thumbnail={$quiz.collection.thumbnail || thumbnail}
+					description={$quiz.collection.description}
+				/>
+			{:else}
+				<QuizHeader collectionName={category} {author} authorSlug="" {thumbnail} description="" />
+			{/if}
+			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
+			{#if !$quiz.hasInitialized}
+				<h2 class="mb-3">Loading quiz data...</h2>
+			{:else if !imagesPreloaded && totalImages > 0}
+				<h2 class="mb-3">Preparing images... ({imagePreloadCount}/{totalImages})</h2>
+				<div class="progress mb-3" style="height: 12px;">
+					<div
+						class="progress-bar bg-success"
+						role="progressbar"
+						style="width: {totalImages > 0 ? (loadedImages / totalImages) * 100 : 0}%"
+						title="Successfully loaded images"
+					></div>
+					<div
+						class="progress-bar bg-warning"
+						role="progressbar"
+						style="width: {totalImages > 0 ? (failedImages / totalImages) * 100 : 0}%"
+						title="Failed to load images"
+					></div>
+				</div>
+				<p class="text-muted small mb-2">
+					{loadedImages} loaded, {failedImages} failed of {totalImages} images
+				</p>
+				<p class="text-muted small mb-3">Loading images in the background...</p>
+				<button
+					class="btn btn-outline-primary btn-sm me-2"
+					style="width: auto; padding: 0 1rem;"
+					on:click={() => {
+						imagesPreloaded = true;
+						preloadStarted = true;
+					}}>Skip Preload</button
+				>
+				{#if failedImages > 0}
+					<small class="text-muted"
+						>{failedImages} image(s) failed to load and will be skipped</small
+					>
+				{/if}
+			{:else}
+				<h2 class="mb-3">Ready to start?</h2>
+				<button
+					class="btn btn-primary me-2"
+					style="width: auto; padding: 0 2rem;"
+					on:click={() => startQuiz(false)}>Go</button
+				>
+				<button
+					class="btn btn-outline-secondary"
+					style="width: auto; padding: 0 2rem;"
+					on:click={() => startQuiz(true)}>Practice</button
+				>
+			{/if}
 		</div>
 	{:else}
 		<div class="mb-3 sticky-top white py-3">
@@ -124,6 +254,7 @@
 			bind:this={flashCardsComponent}
 			{practiceMode}
 			{collectionId}
+			{quiz}
 			on:finish={() => clearInterval(interval)}
 			on:giveup={() => clearInterval(interval)}
 			on:statsUpdate={(e) => {

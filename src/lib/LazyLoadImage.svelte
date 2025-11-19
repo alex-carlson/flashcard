@@ -4,8 +4,9 @@
 
 	import { addToast } from '../stores/toast';
 
-	let loaded = true;
+	let loaded = false;
 	let finalUrl = '';
+	let imgElement;
 
 	function handleLoad() {
 		loaded = true;
@@ -19,13 +20,28 @@
 		});
 	}
 
-	// Reactively update finalUrl when imageUrl or imagePath changes
+	// Check if image is already loaded in cache
+	function checkIfImageLoaded(url) {
+		if (!url) return false;
+
+		const img = new Image();
+		img.src = url;
+
+		// If image is complete and has dimensions, it's already loaded
+		if (img.complete && img.naturalWidth > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	// Reactively update finalUrl when imageUrl changes
 	$: if (imageUrl) {
 		finalUrl = imageUrl;
-		// loaded = false;
+		// Check if image is already in cache
+		loaded = checkIfImageLoaded(imageUrl);
 	} else {
 		finalUrl = '';
-		// loaded = false;
+		loaded = false;
 	}
 </script>
 
@@ -37,6 +53,7 @@
 
 	{#if finalUrl}
 		<img
+			bind:this={imgElement}
 			src={finalUrl}
 			alt="Placeholder"
 			loading="lazy"

@@ -17,34 +17,35 @@
 	export let collectionId;
 	export let practiceMode;
 	export let isPartyMode = false;
+	export let quiz; // Allow external quiz store to be passed in
 
-	// Initialize quiz store
-	const quiz = createQuizStore();
+	// Initialize quiz store (use external if provided, otherwise create new)
+	const quizStore = quiz ?? createQuizStore();
 	const dispatch = createEventDispatcher();
 
 	// Access stats as a separate reactive store
-	$: stats = quiz.stats;
+	$: stats = quizStore.stats;
 
 	// Auto-trigger completion when all cards are revealed
 	$: {
 		console.log('Quiz state check:', {
 			isComplete: $stats.isComplete,
-			practiceMode: $quiz.isPractice,
-			showModal: $quiz.showModal,
-			quizComplete: $quiz.isComplete,
-			cardsRevealed: $quiz.cards.filter((c) => c.revealed).length,
-			totalCards: $quiz.cards.length
+			practiceMode: $quizStore.isPractice,
+			showModal: $quizStore.showModal,
+			quizComplete: $quizStore.isComplete,
+			cardsRevealed: $quizStore.cards.filter((c) => c.revealed).length,
+			totalCards: $quizStore.cards.length
 		});
 
-		if ($stats.isComplete && !$quiz.showModal && !$quiz.isComplete) {
+		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete) {
 			console.log('Auto-completing quiz...');
-			quiz.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined);
+			quizStore.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined);
 			dispatch('finish');
 		}
 	}
 
 	// Dispatch stats updates for live score display
-	$: if ($stats && $quiz.hasInitialized) {
+	$: if ($stats && $quizStore.hasInitialized) {
 		dispatch('statsUpdate', $stats);
 	}
 
@@ -55,21 +56,21 @@
 		// Handle different types of updates
 		if (updates.cards) {
 			// Update all cards (e.g., shuffle, reset)
-			quiz.update((state) => ({ ...state, ...updates }));
+			quizStore.update((state) => ({ ...state, ...updates }));
 		} else if (updates.hasOwnProperty('isGrid')) {
 			// Toggle grid
-			quiz.toggleGrid();
+			quizStore.toggleGrid();
 		} else if (updates.hasOwnProperty('isFullscreen')) {
 			// Handle fullscreen toggle
-			quiz.update((state) => ({ ...state, ...updates }));
+			quizStore.update((state) => ({ ...state, ...updates }));
 		} else {
 			// Generic update
-			quiz.update((state) => ({ ...state, ...updates }));
+			quizStore.update((state) => ({ ...state, ...updates }));
 		}
 	}
 
 	function onCardLoad(index) {
-		quiz.updateCard(index, { loaded: true });
+		quizStore.updateCard(index, { loaded: true });
 	}
 
 	export function setRevealed(index, value, playerId = null) {
@@ -77,11 +78,11 @@
 		if (playerId) {
 			updates.answerer = playerId;
 		}
-		quiz.updateCard(index, updates);
+		quizStore.updateCard(index, updates);
 	}
 
 	function toggleReveal(index) {
-		quiz.update((state) => ({
+		quizStore.update((state) => ({
 			...state,
 			cards: state.cards.map((card, i) =>
 				i === index ? { ...card, revealed: !card.revealed } : card
@@ -90,18 +91,18 @@
 	}
 
 	function setMode(mode) {
-		quiz.setMode(mode);
+		quizStore.setMode(mode);
 	}
 	function onCorrectAnswer(event) {
 		const { index, answer, userAnswer } = event.detail;
-		quiz.updateCard(index, {
+		quizStore.updateCard(index, {
 			revealed: true,
 			userAnswer: userAnswer || answer
 		});
 
-		const nextCardIndex = $quiz.cards.findIndex((card, i) => i > index && !card.revealed);
+		const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
 		if (nextCardIndex !== -1) {
-			const nextCard = $quiz.cards[nextCardIndex];
+			const nextCard = $quizStore.cards[nextCardIndex];
 			if (nextCard.type === 'audio' && nextCard.audio) {
 				try {
 					youtubePlayerService.loadVideoOnly(nextCard.audio);
@@ -115,71 +116,63 @@
 	}
 
 	function retryFetch() {
-		quiz.retry();
+		quizStore.retry();
 	}
 
 	onMount(() => {
-		if (collectionId && !$quiz.hasInitialized) {
-			quiz.loadCollection(collectionId);
+		if (collectionId && !$quizStore.hasInitialized) {
+			quizStore.loadCollection(collectionId);
 		}
 	});
 
 	export function onQuizStart() {
-		quiz.setIsPractice(practiceMode);
+		quizStore.setIsPractice(practiceMode);
 	}
 
 	export function getStats() {
 		return $stats;
 	}
 
-	$: if (collectionId && !$quiz.hasInitialized && !$quiz.isLoading) {
-		quiz.loadCollection(collectionId);
+	$: if (collectionId && !$quizStore.hasInitialized && !$quizStore.isLoading) {
+		quizStore.loadCollection(collectionId);
 	}
 </script>
 
 <div class="container white pt-3">
-	{#if $quiz.isLoading || (!$quiz.hasInitialized && collectionId)}
+	{#if $quizStore.isLoading || (!$quizStore.hasInitialized && collectionId)}
 		<Loading />
-	{:else if $quiz.loadingError}
-		<ErrorDisplay error={$quiz.loadingError} onRetry={retryFetch} />
-	{:else if $quiz.cards.length > 0}
+	{:else if $quizStore.loadingError}
+		<ErrorDisplay error={$quizStore.loadingError} onRetry={retryFetch} />
+	{:else if $quizStore.cards.length > 0}
 		{#if !isPartyMode}
 			<Toolbar
-				cards={$quiz.cards}
-				isGrid={$quiz.isGrid}
-				isFullscreen={$quiz.isFullscreen}
-				shuffleTrigger={$quiz.shuffleTrigger}
+				cards={$quizStore.cards}
+				isGrid={$quizStore.isGrid}
+				isFullscreen={$quizStore.isFullscreen}
+				shuffleTrigger={$quizStore.shuffleTrigger}
 				on:update={handleToolbarUpdate}
 			/>
 		{/if}
 
-		<QuizHeader
-			collectionName={$quiz.collection.name}
-			author={$quiz.collection.author}
-			authorSlug={$quiz.collection.author_slug}
-			thumbnail={$quiz.collection.thumbnail}
-			description={$quiz.collection.description}
-		/>
-
 		{#if !isPartyMode && practiceMode}
 			<select class="my-3" name="mode" id="mode" on:change={(e) => setMode(e.target.value)}>
 				{#each [['FILL_IN_THE_BLANK', 'Fill in the Blank'], ['TRUE_FALSE', '50/50'], ['MULTIPLE_CHOICE', 'Multiple Choice'], ['FLASH_CARDS', 'Flashcard']] as [mode, label]}
-					<option value={mode} selected={mode === $quiz.currentMode}>
+					<option value={mode} selected={mode === $quizStore.currentMode}>
 						{label}
 					</option>
 				{/each}
 			</select>
 		{/if}
 
-		<div class={'flashcards ' + ($quiz.isGrid ? 'grid' : 'vertical')}>
-			{#if $quiz.hasInitialized}
-				{#each $quiz.cards as item, i (item.id || i)}
+		<div class={'flashcards ' + ($quizStore.isGrid ? 'grid' : 'vertical')}>
+			{#if $quizStore.hasInitialized}
+				{#each $quizStore.cards as item, i (item.id || i)}
 					<Card
 						{item}
 						{i}
-						cards={$quiz.cards}
-						currentMode={$quiz.currentMode}
-						shuffleTrigger={$quiz.shuffleTrigger}
+						cards={$quizStore.cards}
+						currentMode={$quizStore.currentMode}
+						shuffleTrigger={$quizStore.shuffleTrigger}
 						{onCardLoad}
 						{toggleReveal}
 						{isPartyMode}
@@ -195,21 +188,21 @@
 		</div>
 
 		<QuizActions
-			currentMode={$quiz.currentMode}
-			isComplete={$quiz.isComplete}
+			currentMode={$quizStore.currentMode}
+			isComplete={$quizStore.isComplete}
 			on:giveup={() => {
-				quiz.completeQuiz($user?.id, $user?.token);
+				quizStore.completeQuiz($user?.id, $user?.token);
 				dispatch('giveup');
 			}}
-			onCompleteQuiz={() => quiz.completeQuiz($user?.id, $user?.token)}
+			onCompleteQuiz={() => quizStore.completeQuiz($user?.id, $user?.token)}
 			{isPartyMode}
 		/>
 	{/if}
 
 	<div class="youtube-wrapper" id="player" style="width:1px; height:1px; overflow:hidden;"></div>
-	{#if $quiz.isPractice}
+	{#if $quizStore.isPractice}
 		<Modal
-			bind:show={$quiz.showModal}
+			bind:show={$quizStore.showModal}
 			title="Practice Concluded"
 			message="Practice makes perfect!"
 			onClose={() => {
@@ -236,7 +229,7 @@
 		/>
 	{:else}
 		<Modal
-			bind:show={$quiz.showModal}
+			bind:show={$quizStore.showModal}
 			title="Quiz Completed"
 			message={getRandomPhraseForScore($stats.percentage)}
 			grade={toLetterGrade($stats.percentage)}
