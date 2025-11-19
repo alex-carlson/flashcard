@@ -116,6 +116,30 @@ body {
 
     a {
         text-decoration: none;
+        box-shadow: none !important;
+    }
+
+    li {
+        background-color: transparent !important;
+        width: auto !important;
+
+        a {
+            background-color: transparent !important;
+
+            .fit-text-container {
+                height: 3rem !important;
+            }
+
+            h2 {
+                color: white !important;
+                font-size: 2rem !important;
+            }
+
+            .card-meta {
+                color: rgb(212, 212, 212) !important;
+                font-size: 1rem !important;
+            }
+        }
     }
 }
 

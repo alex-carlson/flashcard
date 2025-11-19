@@ -13779,6 +13779,25 @@ body {
 }
 .collections-container.random-daily a {
   text-decoration: none;
+  box-shadow: none !important;
+}
+.collections-container.random-daily li {
+  background-color: transparent !important;
+  width: auto !important;
+}
+.collections-container.random-daily li a {
+  background-color: transparent !important;
+}
+.collections-container.random-daily li a .fit-text-container {
+  height: 3rem !important;
+}
+.collections-container.random-daily li a h2 {
+  color: white !important;
+  font-size: 2rem !important;
+}
+.collections-container.random-daily li a .card-meta {
+  color: rgb(212, 212, 212) !important;
+  font-size: 1rem !important;
 }
 
 .shimmer {
