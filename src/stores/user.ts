@@ -13,6 +13,7 @@ export interface User {
   uid?: string;
   token?: string | null;
   profilePictureUrl?: string;
+  quizzes_completed?: { quizId: number; score: number }[]
 }
 
 export const user = writable<User | null>(null);
@@ -56,6 +57,7 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
       uid: userWithProfile.public_id || sessionUser.public_id, // For backward compatibility
       email: sessionUser.email as string,
       profilePictureUrl: generateProfilePictureUrl(userWithProfile.id || sessionUser.id),
+      quizzes_completed: userWithProfile.quizzes_completed
     };
   } catch (error) {
     console.error('Error fetching user profile:', error);

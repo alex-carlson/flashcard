@@ -25,7 +25,7 @@
 	<div class="image-content my-3 container text-center">
 		<img
 			class="my-2"
-			src="/logo_yellow.png"
+			src="/logo_yellow.webp"
 			alt="Quizzems Logo"
 			fetchpriority="high"
 			aria-label="Quizzems Logo"

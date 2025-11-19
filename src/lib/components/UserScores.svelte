@@ -1,8 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { user } from '$stores/user';
-	import { getUserQuizScores, getCollectionMetadataFromId } from '$lib/api/utils';
-	import { fetchUser, deleteQuizScore } from '$lib/api/user';
+	import { deleteQuizScore } from '$lib/api/user';
 	import { addToast } from '$stores/toast';
 	import Fa from 'svelte-fa';
 	import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -10,67 +9,29 @@
 
 	let scores = [];
 	let page = 1;
-	const pageSize = 5;
+	const pageSize = 25;
 	$: page = Math.min(page, Math.max(1, Math.ceil(scores.length / pageSize)));
 
 	async function getQuizScores() {
 		if ($user) {
-			const data = await getUserQuizScores($user.id);
-			const collectionIds = data.map((score) => score.quiz_id);
+			try {
+				const { data, error } = await supabase.rpc('get_user_completed_quizzes');
 
-			const { data: metadataList, error: metadataError } = await supabase
-				.from('collections')
-				.select('id, category, author, created_at, author_public_id, slug, private')
-				.in('id', collectionIds);
+				if (error) {
+					throw error;
+				}
 
-			if (metadataError) {
-				console.error('Error fetching collection metadata:', metadataError);
-				addToast({
-					type: 'error',
-					message: 'Failed to load scores. Please try again later.'
-				});
-				return;
+				data.sort((a, b) => b.percentage - a.percentage);
+				scores = data;
+			} catch (error) {
+				console.error('Error fetching quiz scores:', error);
+				scores = [];
 			}
-
-			const uniqueAuthorIds = [...new Set(metadataList.map((m) => m.author_public_id))];
-			const { data: users, error: usersError } = await supabase
-				.from('profiles')
-				.select('username_slug, public_id')
-				.in('public_id', uniqueAuthorIds);
-
-			if (usersError) {
-				console.error('Error fetching user data:', usersError);
-				addToast({
-					type: 'error',
-					message: 'Failed to load scores. Please try again later.'
-				});
-				return;
-			}
-
-			const metadataMap = new Map(metadataList.map((m) => [m.id, m]));
-			const usersMap = new Map(users.map((u) => [u.public_id, u.username_slug]));
-
-			const processedScores = data
-				.map((score) => {
-					const metadata = metadataMap.get(score.quiz_id);
-					if (!metadata) {
-						return null;
-					}
-					return {
-						...score,
-						collectionName: metadata.category,
-						author_id: metadata.author_public_id,
-						author: metadata.author,
-						username_slug: usersMap.get(metadata.author_public_id) || 'unknown-author',
-						slug: metadata.slug,
-						private: metadata.private
-					};
-				})
-				.filter(Boolean);
-			processedScores.sort((a, b) => b.percentage - a.percentage);
-			scores = processedScores;
+		} else {
+			scores = [];
 		}
 	}
+
 	onMount(() => {
 		getQuizScores();
 	});
@@ -113,11 +74,11 @@
 				<li class="list-group-item d-flex justify-content-between align-items-center">
 					<div>
 						{#if !score.private}
-							<a href="/quiz/{score.username_slug}/{score.slug}">
-								<strong>{score.collectionName} by {score.author}</strong>
+							<a href="/quiz/{score.author_slug}/{score.collection_slug}">
+								<strong>{score.title} by {score.author}</strong>
 							</a>
 						{:else}
-							<strong style="color: #8a9299;">{score.collectionName} (unavailable)</strong>
+							<strong style="color: #8a9299;">{score.title} (unavailable)</strong>
 						{/if}
 						- {score.percentage}%
 					</div>

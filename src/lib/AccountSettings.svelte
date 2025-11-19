@@ -9,7 +9,27 @@
 	let file = null;
 	let userId = null;
 	let cacheEnabled = CACHE_ENABLED;
+
+	// Track original values to detect changes
+	let originalEmail = '';
+	let originalUsername = '';
+	let originalBio = '';
+
 	$: userId = get(user)?.id ?? null;
+
+	// Initialize original values when user data loads
+	$: if ($user && !originalEmail) {
+		originalEmail = $user.email || '';
+		originalUsername = $user.username || '';
+		originalBio = $user.bio || '';
+	}
+
+	// Check if any changes have been made
+	$: hasChanges =
+		$user?.email !== originalEmail ||
+		$user?.username !== originalUsername ||
+		$user?.bio !== originalBio ||
+		(file && file.length > 0);
 
 	async function getAuthHeaders() {
 		const { data: sessionData, error: sessionError } = await getSession();
@@ -93,6 +113,83 @@
 		}
 	}
 
+	async function revertSettings() {
+		$user.email = originalEmail;
+		$user.username = originalUsername;
+		$user.bio = originalBio;
+		file = null; // Clear the file input
+		message = 'Settings reverted to original values.';
+	}
+
+	async function saveSettings() {
+		message = 'Saving settings...';
+		let success = true;
+		let errors = [];
+
+		try {
+			// Update email
+			const emailResult = await updateEmail($user.email);
+			if (!emailResult) {
+				errors.push('Failed to update email');
+				success = false;
+			}
+		} catch (error) {
+			errors.push('Email update error');
+			success = false;
+		}
+
+		try {
+			// Update username
+			const usernameResult = await updateUsername($user.username);
+			if (!usernameResult) {
+				errors.push('Failed to update username');
+				success = false;
+			}
+		} catch (error) {
+			errors.push('Username update error');
+			success = false;
+		}
+
+		try {
+			// Update bio
+			if (!userId) {
+				errors.push('User ID not found');
+				success = false;
+			} else {
+				const bioResult = await setUserBio(userId, $user.bio);
+				if (!bioResult) {
+					errors.push('Failed to update bio');
+					success = false;
+				}
+			}
+		} catch (error) {
+			errors.push('Bio update error');
+			success = false;
+		}
+
+		// Handle profile picture upload if a file is selected
+		if (file && file.length > 0) {
+			try {
+				await uploadProfilePicture(file);
+			} catch (error) {
+				errors.push('Failed to upload profile picture');
+				success = false;
+			}
+		}
+
+		if (success) {
+			message = 'All settings saved successfully!';
+			file = null; // Clear the file input after successful upload
+
+			// Reset original values to current values
+			originalEmail = $user.email || '';
+			originalUsername = $user.username || '';
+			originalBio = $user.bio || '';
+		} else {
+			message = `Some updates failed: ${errors.join(', ')}`;
+		}
+	}
+
 	function handleCacheToggle() {
 		cacheEnabled = toggleCache(cacheEnabled);
 		message = `Cache ${cacheEnabled ? 'enabled' : 'disabled'}`;
@@ -110,50 +207,35 @@
 				bind:files={file}
 				multiple={false}
 			/>
-			<button on:click={() => uploadProfilePicture(file)}>Upload Profile Picture</button>
 		</div>
 		<div class="text-field padding">
 			<label>
 				<strong>Email:</strong>
 				<input type="email" bind:value={$user.email} />
 			</label>
-			<button on:click={() => updateEmail($user.email)}>Update Email</button>
 		</div>
 		<div class="text-field padding">
 			<label>
 				<strong>Display Name:</strong>
 				<input type="text" bind:value={$user.username} />
 			</label>
-			<button on:click={() => updateUsername($user.username)}>Update Name</button>
 		</div>
 		<div class="text-field padding">
 			<label>
 				<strong>Bio:</strong>
 				<textarea bind:value={$user.bio}></textarea>
 			</label>
-			<button on:click={() => updateBio()}>Update Bio</button>
 		</div>
-		<div class="toggle-field padding">
-			<label>
-				<strong>Cache Settings:</strong>
-				<div class="toggle-container">
-					<input
-						type="checkbox"
-						id="cache-toggle"
-						bind:checked={cacheEnabled}
-						on:change={handleCacheToggle}
-					/>
-					<label for="cache-toggle" class="toggle-label">
-						{cacheEnabled ? 'Cache Enabled' : 'Cache Disabled'}
-					</label>
-				</div>
-			</label>
-			<p class="cache-description">
-				{cacheEnabled
-					? 'Data is cached for better performance. Disable to always fetch fresh data.'
-					: 'Cache is disabled. All data will be fetched fresh on each request.'}
-			</p>
-		</div>
+
+		{#if hasChanges}
+			<div
+				class="save-section padding d-flex justify-content-center gap-3 flex-wrap flex-sm-nowrap"
+			>
+				<button class="btn btn-secondary" on:click={revertSettings}>Revert Changes</button>
+				<button class="btn btn-success" on:click={saveSettings}>Save Changes</button>
+			</div>
+		{/if}
+
 		<p>{message}</p>
 	</div>
 {:else}
@@ -161,59 +243,20 @@
 {/if}
 
 <style>
-	.toggle-field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+	.save-section {
+		text-align: center;
+		margin-top: 1rem;
 	}
 
-	.toggle-container {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	#cache-toggle {
-		appearance: none;
-		width: 48px;
-		height: 24px;
-		background: #ccc;
-		border-radius: 12px;
-		position: relative;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-	}
-
-	#cache-toggle:checked {
+	.save-all-btn {
 		background: #4caf50;
 	}
 
-	#cache-toggle::before {
-		content: '';
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 20px;
-		height: 20px;
-		background: white;
-		border-radius: 50%;
-		transition: transform 0.3s ease;
+	.save-all-btn:hover {
+		background: #45a049;
 	}
 
-	#cache-toggle:checked::before {
-		transform: translateX(24px);
-	}
-
-	.toggle-label {
-		font-weight: 500;
-		color: #333;
-		cursor: pointer;
-	}
-
-	.cache-description {
-		font-size: 0.875rem;
-		color: #666;
-		margin: 0;
-		font-style: italic;
+	.save-all-btn:active {
+		transform: translateY(1px);
 	}
 </style>
