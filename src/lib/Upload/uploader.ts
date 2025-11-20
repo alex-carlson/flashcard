@@ -154,133 +154,156 @@ export function confirmDelete(id, onSuccess = () => { }) {
     }
 }
 
-// Upload data
-export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
+// Unified upload function for all content types
+export async function uploadContent(item, options = {}) {
     const usr = getCurrentUser();
 
-    // If file is a URL (string), call /upload-url
-    if (typeof item.file === 'string') {
-        console.log('Detected URL upload:', item.file);
-        try {
-            const data = {
-                uuid,
-                url: item.file,
-                folder: `/`,
-                forceJpeg: forceJpg,
-                author_uuid: usr.id,
-                author_id: usr.uid,
-                author: usr.username,
-                category: item.category,
-                collection_id: item.collection_id || null,
-                answer: item.answer,
-                question: item.file || null,
-                extra: item.extra || null
-            };
-            const result = await apiFetch('/items/upload-url', 'POST', data);
-            return result;
-        } catch (error) {
-            console.error('Error uploading URL data:', error);
-            return error;
-        }
-    }
+    // Handle options with proper fallbacks
+    const uuid = (options as any).uuid || uuidv4();
+    const forceJpg = (options as any).forceJpg || false;
+    const endpoint = (options as any).endpoint || null;
 
-    // Otherwise, upload as file
-    const formData = new FormData();
-    formData.append('uuid', uuid);
-    formData.append('file', item.file);
-    formData.append('folder', `${usr.username}/${item.category}`);
-    formData.append('forceJpeg', forceJpg.toString());
-    formData.append('answer', item.answer);
-    formData.append('category', item.category);
-    formData.append('author', usr.username);
-    formData.append('author_uuid', usr.id);
-    formData.append('author_id', usr.public_id);
+    console.log('uploadContent called with item:', item);
+    console.log('uploadContent options:', options);
 
-    // Log all FormData entries
-    for (const [key, value] of formData.entries()) {
-        console.log(`formData[${key}] =`, value);
-    }
-
-    try {
-        const result = await apiFetch('/items/upload', 'POST', formData, true);
-        return result;
-    } catch (error) {
-        return error;
-    }
-}
-
-export async function uploadAudio(item) {
-    const usr = getCurrentUser();
-    const username = usr.username;
-    const author_id = usr.public_id;
-
-    const formData = new FormData();
-    const uuid = item.uuid || uuidv4(); // Use provided uuid or generate a new one
-    formData.append('folder', `${username}/${item.category}`);
-    formData.append('author', username);
-    formData.append('author_id', author_id);
-    formData.append('type', 'audio');
-    formData.append('id', uuid);
-
-    // Append all properties from item to formData
-    for (const [key, value] of Object.entries(item)) {
-        if (value !== undefined && value !== null) {
-            formData.append(key, value);
-        }
-    }
-
-    console.log('Uploading audio data:', formData);
-
-    try {
-        const result = await apiFetch('/items/add-audio', 'POST', formData, true);
-        return result;
-    } catch (error) {
-        console.error('Error uploading audio data:', error);
-        return error;
-    }
-}
-
-export async function uploadQuestion(data) {
-    const usr = getCurrentUser();
-    const username = usr.username;
-
-    console.log(data);
-
-    const d = {
-        uuid: uuidv4(),
-        question: data.question,
-        folder: `${username}/${data.category}`,
-        answer: data.answer,
-        category: data.category,
-        author: username,
-        author_id: usr.uid,
-        author_uuid: usr.id
+    // Common data structure for all uploads
+    const commonData = {
+        uuid,
+        folder: `${(usr as any).username}/${item.category}`,
+        author: (usr as any).username,
+        author_uuid: (usr as any).id,
+        author_id: (usr as any).public_id,
+        category: item.category,
+        answer: item.answer || '',
+        answers: item.answers ? JSON.stringify(item.answers) : null,
+        isMultipleChoice: item.isMultipleChoice || false,
+        correctAnswerIndex: item.correctAnswerIndex,
+        numRequired: item.numRequired,
+        question: item.question || '',
+        supplemental_text: item.supplemental_text || '',
+        extra: item.extra || '',
+        type: item.type || '',
+        // Add image-related fields
+        image: item.image || null,
+        src: item.src || null
     };
 
-    console.log('Uploading question data:', d);
+    console.log('commonData prepared:', commonData);
+    console.log('Upload decision logic:');
+    console.log('- item.file:', !!item.file, typeof item.file);
+    console.log('- item.src:', !!item.src, item.src);
+    console.log('- item.videoId:', !!item.videoId);
+    console.log('- item.question:', !!item.question);
 
-    try {
-        const result = await apiFetch('/items/add-question', 'POST', d);
-        return result;
-    } catch (error) {
-        console.error('Error uploading question data:', error);
+    // Handle file uploads (images)
+    if (item.file || item.src) {
+        if (typeof item.file === 'string' || (item.src && !item.src.startsWith('blob:'))) {
+            // URL upload (either from item.file as string or item.src as regular URL)
+            const imageUrl = typeof item.file === 'string' ? item.file : item.src;
+            const data = {
+                ...commonData,
+                url: imageUrl,
+                forceJpeg: forceJpg,
+                src: item.src
+            };
+            const result = await apiFetch('/items/upload-url', 'POST', data);
+            console.log('URL upload result:', result);
+            return result;
+        } else if (item.src && item.src.startsWith('blob:')) {
+            // Blob URL upload - convert blob to file
+            try {
+                const response = await fetch(item.src);
+                const blob = await response.blob();
+
+                // Create a File object from the blob
+                const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' });
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('forceJpeg', forceJpg.toString());
+
+                // Add all common data to FormData, handling arrays properly
+                Object.entries(commonData).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined) {
+                        // Answers are already JSON stringified in commonData, just append as string
+                        formData.append(key, value.toString());
+                    }
+                });
+
+                console.log('Uploading blob as file:', file);
+                const result = await apiFetch('/items/upload', 'POST', formData, true);
+                console.log('Blob upload result:', result);
+                return result;
+            } catch (error) {
+                console.error('Error converting blob to file:', error);
+                throw new Error('Failed to process image data');
+            }
+        } else {
+            // File upload
+            const formData = new FormData();
+            formData.append('file', item.file);
+            formData.append('forceJpeg', forceJpg.toString());
+
+            // Add src if it exists (for image previews)
+            if (item.src) {
+                formData.append('src', item.src);
+            }
+
+            // Add all common data to FormData, handling arrays properly
+            Object.entries(commonData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    // Answers are already JSON stringified in commonData, just append as string
+                    formData.append(key, value.toString());
+                }
+            });
+
+            const result = await apiFetch('/items/upload', 'POST', formData, true);
+            console.log('File upload result:', result);
+            return result;
+        }
     }
-}
 
-export async function uploadThumbnail(data, category) {
-    const usr = getCurrentUser();
-    const formData = new FormData();
-    formData.append('uuid', 'thumbnail');
-    formData.append('file', data);
-    formData.append('folder', `${usr.username}/${category}`);
-    formData.append('forceJpeg', 'true');
+    // Handle audio uploads
+    if (item.videoId) {
+        const formData = new FormData();
+        formData.append('id', uuid);
+        formData.append('audio', item.videoId);
+        formData.append('title', item.title);
+        formData.append('thumbnail', item.thumbnail);
+        formData.append('url', item.videoId);
+        formData.append('type', 'audio');
 
-    // log form data
-    for (const [key, value] of formData.entries()) {
-        console.log(`formData[${key}] =`, value);
+        // Add all common data to FormData
+        Object.entries(commonData).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                formData.append(key, value.toString());
+            }
+        });
+
+        return await apiFetch('/items/add-audio', 'POST', formData, true);
     }
 
-    try {
+    // Handle question-only uploads (no image or audio)
+    if (item.question && !item.file && !item.src && !item.videoId) {
+        return await apiFetch('/items/add-question', 'POST', commonData);
+    }
+
+    // Handle thumbnail uploads
+    if (endpoint === 'thumbnail') {
+        const formData = new FormData();
+        const safeCategory = item.category.replace(/[^a-zA-Z0-9-_]/g, '');
+        formData.append('uuid', `thumbnails/${safeCategory}/thumbnail`);
+        formData.append('file', item.file);
+        formData.append('forceJpeg', 'true');
+        formData.append('folder', `/thumbnails/${item.category}`);
+
+        // Add common data
+        Object.entries(commonData).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && !['uuid', 'folder'].includes(key)) {
+                formData.append(key, value.toString());
+            }
+        });
+
         const result = await apiFetch('/items/add-thumbnail', 'POST', formData, true);
         console.log('Thumbnail upload result:', result);
         addToast({
@@ -289,7 +312,52 @@ export async function uploadThumbnail(data, category) {
             duration: 3000
         });
         return result;
+    }
+
+    throw new Error('Invalid upload type - no file, videoId, question, or thumbnail specified');
+}
+// Legacy wrapper for uploadData - now uses unified function
+export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
+    try {
+        return await uploadContent(item, { uuid, forceJpg });
+    } catch (error) {
+        console.error('Error uploading data:', error);
+        return error;
+    }
+}
+
+// Legacy wrapper for uploadAudio - now uses unified function
+export async function uploadAudio(item) {
+    try {
+        console.log('Uploading audio data:', item);
+        return await uploadContent(item);
+    } catch (error) {
+        console.error('Error uploading audio data:', error);
+        return error;
+    }
+}
+
+// Legacy wrapper for uploadQuestion - now uses unified function
+export async function uploadQuestion(data) {
+    try {
+        console.log('Uploading question data:', data);
+        return await uploadContent(data);
+    } catch (error) {
+        console.error('Error uploading question data:', error);
+        return error;
+    }
+}
+
+// Legacy wrapper for uploadThumbnail - now uses unified function
+export async function uploadThumbnail(data, category) {
+    try {
+        const item = {
+            file: data,
+            category: category
+        };
+        return await uploadContent(item, { endpoint: 'thumbnail' });
     } catch (error) {
         console.error('Error uploading thumbnail:', error);
+        return error;
     }
 }
