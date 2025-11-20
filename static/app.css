@@ -11891,9 +11891,6 @@ button.green {
   background-color: var(--success-color);
   color: white;
 }
-button span {
-  color: var(--button-text-color) !important;
-}
 
 .text-field {
   display: flex;
@@ -12522,16 +12519,24 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 .card.revealed .revealed {
   width: 100%;
-  background-color: rgb(10, 121, 34);
+  background-color: rgb(77, 77, 77);
 }
 
 .card.incorrect .revealed {
-  background-color: rgb(31, 31, 31);
+  background-color: rgb(150, 13, 13);
+}
+
+.card.correct .revealed {
+  background-color: rgb(9, 124, 9);
 }
 
 .card.disabled {
   pointer-events: none;
   opacity: 0.5;
+}
+
+.card.revealed.multiplechoice .answer {
+  display: none;
 }
 
 .card h2 {
@@ -12786,6 +12791,10 @@ header .navContainer ul li.user-tab a .profile-picture img {
   width: auto;
   border-radius: 8px 0 0 8px;
   background-color: var(--danger-color);
+}
+.answerbox .input-container .give-up-btn.small.floating {
+  border-radius: 8px;
+  margin-right: 8px;
 }
 .answerbox .input-container .user-answer {
   border-radius: 0 8px 8px 0;

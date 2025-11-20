@@ -62,6 +62,11 @@ export async function getCollectionMetadataFromId(collectionId) {
 }
 
 export function areStringsClose(a, b, threshold = 1) {
+    // Handle undefined/null values
+    if (a == null || b == null) return false;
+    if (typeof a !== 'string') a = String(a);
+    if (typeof b !== 'string') b = String(b);
+
     const preprocess = (str) =>
         str
             .trim()

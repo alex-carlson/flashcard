@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import Cropper from './Cropper.svelte';
 	import Drawing from './Drawing.svelte';
+	import AnswerInput from '../components/AnswerInput.svelte';
 	import { Fa } from 'svelte-fa';
 	import {
 		faPenToSquare,
@@ -201,52 +202,7 @@
 				{/if}
 			{/if}
 			<textarea bind:value={item.supplemental} placeholder="Supplemental Question Text"></textarea>
-			<div class="answer-edit-group">
-				{#if Array.isArray(item.answer)}
-					{#each item.answer as ans, idx (idx)}
-						<div class="answer-row">
-							<input type="text" bind:value={item.answer[idx]} placeholder="Enter an answer" />
-							<button
-								class="remove-answer-btn danger"
-								type="button"
-								title="Remove this answer"
-								on:click={() => {
-									if (item.answer.length === 2) {
-										// If only two left, revert to string
-										const otherIdx = idx === 0 ? 1 : 0;
-										item.answer = item.answer[otherIdx];
-									} else {
-										item.answer = item.answer.filter((_, i) => i !== idx);
-									}
-								}}>&#x2212;</button
-							>
-							{#if idx === item.answer.length - 1}
-								<button
-									class="add-answer-btn"
-									type="button"
-									on:click={() => (item.answer = [...item.answer, ''])}
-									title="Add another answer">+</button
-								>
-							{/if}
-						</div>
-					{/each}
-				{:else}
-					<div class="answer-row">
-						<input
-							id="editedAnswer"
-							type="text"
-							bind:value={item.answer}
-							placeholder="Enter an answer"
-						/>
-						<button
-							class="add-answer-btn secondary"
-							type="button"
-							on:click={() => (item.answer = item.answer ? [item.answer, ''] : ['', ''])}
-							title="Add another answer"><Fa icon={faPlus} /></button
-						>
-					</div>
-				{/if}
-			</div>
+			<AnswerInput {item} idPrefix="edit-{item.id}" label="Answer:" />
 			<input id="editedExtra" type="text" bind:value={item.extra} placeholder="Enter extra info" />
 			<div class="vertical">
 				<button class="success" on:click={saveEditHandler}><Fa icon={faFloppyDisk} /></button>
@@ -274,7 +230,30 @@
 			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		</div>
 		<div class="answer-field vertical">
-			<span>{item.answer}</span>
+			{#if item.answers && item.answers.length > 0}
+				{#if item.isMultipleChoice}
+					<div class="answer-display">
+						<small class="text-muted">Multiple Choice:</small>
+						{#each item.answers as answer, index}
+							<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
+								{index + 1}. {answer}
+								{#if item.correctAnswerIndex === index}✓{/if}
+							</span>
+						{/each}
+					</div>
+				{:else}
+					<div class="answer-display">
+						<small class="text-muted"
+							>Multi-Answer (Required: {item.numRequired || item.answers.length}):</small
+						>
+						{#each item.answers as answer, index}
+							<span class="answer-option">{index + 1}. {answer}</span>
+						{/each}
+					</div>
+				{/if}
+			{:else}
+				<span>{item.answer}</span>
+			{/if}
 			<span>{item.extra}</span>
 		</div>
 		{#if isReordering}
@@ -300,32 +279,20 @@
 </li>
 
 <style>
-	.answer-edit-group {
+	.answer-display {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 	}
-	.answer-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+	.answer-option {
+		padding: 0.25rem 0.5rem;
+		background: #f8f9fa;
+		border-radius: 0.25rem;
+		font-size: 0.9rem;
 	}
-	.add-answer-btn {
-		background: #4caf50;
-		color: white;
-		border: none;
-		border-radius: 50%;
-		width: 2rem;
-		height: 2rem;
-		font-size: 1.25rem;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-left: 0.25rem;
-		transition: background 0.2s;
-	}
-	.add-answer-btn:hover {
-		background: #388e3c;
+	.answer-option.correct {
+		background: #d4edda;
+		color: #155724;
+		font-weight: 600;
 	}
 </style>

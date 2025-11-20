@@ -72,16 +72,24 @@
 
 .card.revealed .revealed {
     width: 100%;
-    background-color: rgb(10, 121, 34);
+    background-color: rgb(77, 77, 77);
 }
 
 .card.incorrect .revealed {
-    background-color: rgb(31, 31, 31);
+    background-color: rgb(150, 13, 13);
+}
+
+.card.correct .revealed {
+    background-color: rgb(9, 124, 9);
 }
 
 .card.disabled {
     pointer-events: none;
     opacity: 0.5;
+}
+
+.card.revealed.multiplechoice .answer {
+    display: none;
 }
 
 .card h2 {
@@ -349,6 +357,11 @@
             width: auto;
             border-radius: 8px 0 0 8px;
             background-color: var(--danger-color);
+
+            &.floating {
+                border-radius: 8px;
+                margin-right: 8px;
+            }
         }
 
         .user-answer {

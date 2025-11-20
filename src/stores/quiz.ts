@@ -20,6 +20,7 @@ interface Card {
     type: 'image' | 'text' | 'audio' | 'unknown' | 'single' | 'multiplechoice' | 'multianswer';
     answerer?: string;
     incorrect?: boolean;
+    isCorrect?: boolean; // Whether the user's answer was correct
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any; // For additional properties from the API
 }
@@ -90,15 +91,26 @@ export function createQuizStore() {
 
     const stats = derived(store, ($state): QuizStats => {
         const cards = $state.cards || [];
-        console.log('Stats calculation triggered. Cards:', cards.length, 'Revealed:', cards.filter(c => c?.revealed).length);
-
         const revealedCards = cards.filter(c => c?.revealed);
+
         const correctCards = revealedCards.filter(c => {
-            const userAnswer = String(c?.userAnswer || '');
-            const correctAnswer = String(c?.answer || '');
-            const isCorrect = areStringsClose(userAnswer, correctAnswer);
-            console.log(`Card comparison: "${userAnswer}" ≈ "${correctAnswer}" = ${isCorrect}`);
-            return isCorrect;
+            // Use isCorrect flag if available (for multiple choice/multi-answer)
+            if (c?.isCorrect !== undefined) {
+                return c.isCorrect;
+            }
+
+            // Fall back to string comparison for single answer questions
+            const userAnswer = c?.userAnswer;
+            const correctAnswer = c?.answer;
+
+            // Handle undefined/null values
+            if (userAnswer == null || correctAnswer == null) {
+                return false;
+            }
+
+            const userAnswerStr = String(userAnswer);
+            const correctAnswerStr = String(correctAnswer);
+            return areStringsClose(userAnswerStr, correctAnswerStr);
         });
 
         const statsResult = {
@@ -114,9 +126,7 @@ export function createQuizStore() {
         };
 
         return statsResult;
-    });
-
-    async function loadCollection(collectionId: string | null): Promise<void> {
+    }); async function loadCollection(collectionId: string | null): Promise<void> {
         if (!collectionId) {
             update(state => ({
                 ...state,

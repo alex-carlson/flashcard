@@ -35,12 +35,25 @@
 	let userAnswers = [];
 	let isValidated = false;
 	let isLockedIn = false;
+	let multipleChoiceSelected = false; // Track if user has made a selection
 
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
 
 		if (item.type === 'multiplechoice') {
 			userAnswers[0] = e.target.value;
+			multipleChoiceSelected = true;
+			// Lock in immediately for multiple choice to show feedback
+			isLockedIn = true;
+			item.revealed = true; // Mark as completed
+
+			// Always dispatch correctAnswer event for multiple choice
+			dispatch('correctAnswer', {
+				index: i,
+				answer: item.answers[item.correctAnswerIndex || 0],
+				userAnswer: userAnswers[0],
+				isCorrect: isCorrect()
+			});
 		} else {
 			userAnswers[idx] = e.target.value;
 		}
@@ -54,8 +67,9 @@
 			// Dispatch correctAnswer event to notify parent
 			dispatch('correctAnswer', {
 				index: i,
-				answer: item.answer,
-				userAnswer: userAnswers.filter((a) => a?.trim())
+				answer: item.answers || [item.answer],
+				userAnswer: userAnswers.filter((a) => a && a.trim()),
+				isCorrect: isCorrect()
 			});
 		}
 	}
@@ -66,9 +80,22 @@
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
 			return areStringsClose(userAnswers[0], correctAnswer);
 		} else if (item.type === 'multianswer') {
-			const req = item.numRequired ?? item.answer.length;
-			const correct = item.answer.filter((ans, i) => areStringsClose(userAnswers[i], ans));
-			return correct.length >= req;
+			// For multi-answer, check how many correct answers the user provided
+			const req = item.numRequired ?? (item.answers ? item.answers.length : 1);
+			const correctAnswers = item.answers || [item.answer];
+			const filledUserAnswers = userAnswers.filter((ans) => ans && ans.trim());
+
+			// Count how many of the user's answers match correct answers
+			const matchedCorrectAnswers = new Set();
+			filledUserAnswers.forEach((userAns) => {
+				correctAnswers.forEach((correctAns) => {
+					if (areStringsClose(userAns, correctAns)) {
+						matchedCorrectAnswers.add(correctAns);
+					}
+				});
+			});
+
+			return matchedCorrectAnswers.size >= req;
 		} else {
 			if (Array.isArray(item.answer)) {
 				return item.answer.some((ans) => areStringsClose(userAnswers[0], ans));
@@ -79,24 +106,17 @@
 
 	function validateAnswer() {
 		if (item.type === 'multiplechoice') {
-			// For multiple choice, validate if an option is selected
+			// For multiple choice, just validate if an option is selected
+			// Event dispatching is handled in handleInput
 			isValidated = userAnswers[0]?.trim() && isCorrect();
-
-			// Dispatch correctAnswer event if validated
-			if (isValidated) {
-				dispatch('correctAnswer', {
-					index: i,
-					answer: item.answers[item.correctAnswerIndex || 0],
-					userAnswer: userAnswers[0]
-				});
-			}
 		} else if (item.type === 'multianswer') {
-			const req = item.numRequired ?? item.answer.length;
-			const filledAnswers = userAnswers.filter((a) => a?.trim());
+			const correctAnswers = item.answers || [item.answer];
+			const req = item.numRequired ?? correctAnswers.length;
+			const filledAnswers = userAnswers.filter((a) => a && a.trim());
 
 			// Check if all filled answers are correct (green)
 			const correctFilledAnswers = filledAnswers.filter((userAns) =>
-				item.answer.some((correctAns) => areStringsClose(userAns, correctAns))
+				correctAnswers.some((correctAns) => areStringsClose(userAns, correctAns))
 			);
 
 			// Validate if we have enough correct answers and all filled answers are correct
@@ -115,10 +135,9 @@
 				dispatch('correctAnswer', {
 					index: i,
 					answer: Array.isArray(item.answer) ? item.answer[0] : item.answer,
-					userAnswer: userAnswers[0]
-				});
-
-				// select the next input, or if there isn't one, search the whole document for the next input
+					userAnswer: userAnswers[0],
+					isCorrect: true
+				}); // select the next input, or if there isn't one, search the whole document for the next input
 				setTimeout(() => {
 					const inputs = Array.from(document.querySelectorAll('input, textarea'));
 					const currentInput = inputs.find((input) => input.value === userAnswers[0]);
@@ -144,20 +163,41 @@
 			return '';
 		}
 
-		if (!userAnswers[idx]?.trim()) return 'form-control answer-box';
+		return 'form-control answer-box';
+	}
 
-		if (item.type === 'multianswer') {
-			const isThisCorrect = item.answer.some((ans) => areStringsClose(userAnswers[idx], ans));
-			return `form-control answer-box ${isThisCorrect ? 'correct' : 'incorrect'}`;
-		} else {
-			return `form-control answer-box ${isCorrect() ? 'correct' : 'incorrect'}`;
+	// Get class for multiple choice option buttons
+	function getChoiceClass(choice, idx) {
+		let baseClass = 'choice-option';
+
+		if (!multipleChoiceSelected) {
+			// Before selection, show selected state
+			return userAnswers[0] === choice ? `${baseClass} selected` : baseClass;
 		}
+
+		// After selection, show correct/incorrect states
+		const isCorrectChoice = idx === (item.correctAnswerIndex || 0);
+		const isSelectedChoice = userAnswers[0] === choice;
+
+		if (isCorrectChoice) {
+			return `${baseClass} correct`;
+		} else if (isSelectedChoice) {
+			return `${baseClass} incorrect`;
+		}
+
+		return baseClass;
+	}
+
+	// Get class for revealed answer based on correctness
+	function getRevealedClass() {
+		if (!item.revealed) return 'answer';
+		return `answer ${isCorrect() ? 'correct' : 'incorrect'}`;
 	}
 </script>
 
 {#if !item.hidden}
 	<div
-		class="card {item.revealed ? 'revealed' : ''} {item.incorrect ? 'incorrect' : ''}"
+		class="card {item.revealed ? 'revealed' : ''} {item.incorrect ? 'incorrect' : ''} {item.type}"
 		data-card-index={i}
 		role="button"
 		tabindex="-1"
@@ -189,7 +229,7 @@
 					updateCards();
 				}}
 			/>
-		{:else if item.type === 'text'}
+		{:else if item.type === 'text' || item.question}
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
@@ -219,7 +259,7 @@
 					<ProfilePicture userId={item.answerer} size={32} class="answerer" />
 				{/if}
 				<span
-					class={`answer ${item.revealed ? 'revealed' : 'hidden'}`}
+					class={`${getRevealedClass()} ${item.revealed ? 'revealed' : 'hidden'}`}
 					style="transform: scale(1);"
 				>
 					{#if item.revealed}
@@ -239,17 +279,24 @@
 				{/if}
 				<div class="input-container">
 					{#if !item.revealed && !isPartyMode}
-						<button class="give-up-btn small" on:click|stopPropagation={handleGiveUp} tabindex="-1">
+						<button
+							class="give-up-btn small {item.type === 'multiplechoice' ||
+							item.type === 'multianswer'
+								? 'floating'
+								: ''}"
+							on:click|stopPropagation={handleGiveUp}
+							tabindex="-1"
+						>
 							<Fa icon={faFlag} />
 						</button>
 					{/if}
 					{#if item.type === 'multiplechoice'}
 						<!-- Multiple Choice - Radio buttons -->
 						<div class="multiple-choice-inputs">
-							{#each item.userAnswers ? item.userAnswers : [] as choice, idx}
+							{#each item.answers || [] as choice, idx}
 								<button
 									type="button"
-									class="choice-option {userAnswers[0] === choice ? 'selected' : ''}"
+									class={getChoiceClass(choice, idx)}
 									on:click={() => {
 										if (!isLockedIn) {
 											userAnswers[0] = choice;
@@ -265,7 +312,7 @@
 					{:else if item.type === 'multianswer'}
 						<!-- Multi-Answer - Multiple text inputs -->
 						<div class="multi-answer-inputs">
-							{#each Array(item.numRequired || item.answer.length) as _, idx}
+							{#each Array(item.numRequired || (item.answers ? item.answers.length : 1)) as _, idx}
 								<div class="input-row">
 									<input
 										type="text"
@@ -302,15 +349,21 @@
 {/if}
 
 <style>
-	/* .answer-box.correct {
-		border-color: #28a745;
+	.answer.correct {
+		border: 2px solid #28a745;
 		background-color: #d4edda;
+		color: #155724;
+		padding: 0.5rem;
+		border-radius: 0.375rem;
 	}
 
-	.answer-box.incorrect {
-		border-color: #dc3545;
+	.answer.incorrect {
+		border: 2px solid #dc3545;
 		background-color: #f8d7da;
-	} */
+		color: #721c24;
+		padding: 0.5rem;
+		border-radius: 0.375rem;
+	}
 
 	.validation-status {
 		display: inline-block;
@@ -337,6 +390,8 @@
 		flex-direction: column;
 		gap: 0.75rem;
 		margin-bottom: 0.5rem;
+		flex: 1;
+		width: 100%;
 	}
 
 	.multiple-choice-inputs {
@@ -344,6 +399,8 @@
 		flex-direction: column;
 		gap: 0.75rem;
 		margin-bottom: 0.5rem;
+		flex: 1;
+		width: 100%;
 	}
 
 	.choice-option {
@@ -354,19 +411,44 @@
 		border: 1px solid #ddd;
 		border-radius: 0.375rem;
 		cursor: pointer;
+		background-color: white;
+		color: #333;
+		width: 100%;
 		transition:
-			background-color 0.2s,
-			border-color 0.2s;
+			background-color 0.3s ease,
+			border-color 0.3s ease,
+			box-shadow 0.3s ease;
 	}
 
-	.choice-option:hover {
+	.choice-option.selected {
+		background-color: #e3f2fd;
+		border-color: #2196f3;
+		color: #1565c0;
+		box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+	}
+
+	.choice-option.correct {
+		background-color: #d4edda;
+		border-color: #28a745;
+		color: #155724;
+		box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+	}
+
+	.choice-option.incorrect {
+		background-color: #f8d7da;
+		border-color: #dc3545;
+		color: #721c24;
+		box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+	}
+
+	.choice-option:hover:not(.correct):not(.incorrect) {
 		background-color: #f8f9fa;
 		border-color: #adb5bd;
 	}
 
-	.choice-option input[type='radio'] {
-		margin: 0;
-		cursor: pointer;
+	.choice-option:disabled {
+		cursor: not-allowed;
+		opacity: 0.8;
 	}
 
 	.choice-text {
@@ -383,5 +465,20 @@
 	.input-row input {
 		width: 100%;
 		display: block;
+		flex: 1;
+	}
+
+	.input-container {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		gap: 0.75rem;
+		flex: 1;
+		width: 100%;
+	}
+
+	.give-up-btn {
+		flex-shrink: 0;
+		align-self: flex-start;
 	}
 </style>

@@ -28,17 +28,7 @@
 
 	// Auto-trigger completion when all cards are revealed
 	$: {
-		console.log('Quiz state check:', {
-			isComplete: $stats.isComplete,
-			practiceMode: $quizStore.isPractice,
-			showModal: $quizStore.showModal,
-			quizComplete: $quizStore.isComplete,
-			cardsRevealed: $quizStore.cards.filter((c) => c.revealed).length,
-			totalCards: $quizStore.cards.length
-		});
-
 		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete) {
-			console.log('Auto-completing quiz...');
 			quizStore.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined);
 			dispatch('finish');
 		}
@@ -94,10 +84,11 @@
 		quizStore.setMode(mode);
 	}
 	function onCorrectAnswer(event) {
-		const { index, answer, userAnswer } = event.detail;
+		const { index, answer, userAnswer, isCorrect } = event.detail;
 		quizStore.updateCard(index, {
 			revealed: true,
-			userAnswer: userAnswer || answer
+			userAnswer: userAnswer || answer,
+			isCorrect: isCorrect // Store whether the answer was actually correct
 		});
 
 		const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);

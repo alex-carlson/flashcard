@@ -98,9 +98,6 @@
 		preloadImages($quiz.cards);
 	}
 
-	// Debug reactive statement
-	$: console.log('QuizStats changed:', quizStats);
-
 	function startQuiz(isPractice = false) {
 		if (!isPractice) {
 			timer = 0;
@@ -258,7 +255,6 @@
 			on:finish={() => clearInterval(interval)}
 			on:giveup={() => clearInterval(interval)}
 			on:statsUpdate={(e) => {
-				console.log('Stats update received:', e.detail);
 				quizStats = e.detail;
 			}}
 		/>
