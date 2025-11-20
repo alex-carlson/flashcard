@@ -21,8 +21,8 @@
 	// Reactive statement to update searchTerm when answer input changes
 	$: {
 		if (questionType === 'Image') {
-			const currentAnswer = Array.isArray(item.answers) 
-				? item.answers.join(' ').trim() 
+			const currentAnswer = Array.isArray(item.answers)
+				? item.answers.join(' ').trim()
 				: (item.answer || '').trim();
 			if (currentAnswer !== searchTerm) {
 				searchTerm = currentAnswer;
@@ -42,7 +42,8 @@
 	// Upload handlers
 	async function handleImageUpload() {
 		console.log('Uploading image item:', item);
-		console.trace();
+		console.log('Item file:', item.file, 'Item src:', item.src);
+		console.log('Item answers:', item.answers, 'Item answer:', item.answer);
 
 		if (
 			(item.answer ?? '').trim() === '' &&
@@ -56,6 +57,7 @@
 			return;
 		}
 		if (!item.src && !item.file) {
+			console.log('No image found - src:', item.src, 'file:', item.file);
 			addToast({
 				type: 'error',
 				message: 'Please add an image.'

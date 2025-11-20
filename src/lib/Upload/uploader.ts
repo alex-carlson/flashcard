@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
-import { on } from 'svelte/events';
 import { addToast } from '$stores/toast';
 
 // Helper function to safely get current user
@@ -14,16 +13,58 @@ function getCurrentUser() {
     return usr;
 }
 
+// Common helper to add user auth fields to FormData
+function addUserAuthToFormData(formData, usr, category) {
+    formData.append('author', usr.username);
+    formData.append('author_uuid', usr.id);
+    formData.append('author_id', usr.public_id);
+    if (category) {
+        formData.append('folder', `${usr.username}/${category}`);
+        formData.append('category', category);
+    }
+}
+
+// Common helper to add user auth fields to object data
+function addUserAuthToData(data, usr, category) {
+    data.author = usr.username;
+    data.author_uuid = usr.id;
+    data.author_id = usr.public_id;
+    if (category) {
+        data.folder = `${usr.username}/${category}`;
+    }
+    return data;
+}
+
+// Common error handling wrapper
+async function handleUpload(uploadFn, errorMessage, successMessage) {
+    try {
+        const result = await uploadFn();
+        if (successMessage) {
+            addToast({
+                message: successMessage,
+                type: 'success',
+                duration: 3000
+            });
+        }
+        return result;
+    } catch (error) {
+        console.error(errorMessage, error);
+        addToast({
+            message: errorMessage,
+            type: 'error',
+            duration: 3000
+        });
+        return error;
+    }
+}
+
 // Create new collection
 export async function createCollection(category) {
     const usr = getCurrentUser();
     try {
-        const data = {
+        const data = addUserAuthToData({
             category,
-            author_id: usr.public_id,
-            author_uuid: usr.id,
-            author: usr.username
-        };
+        }, usr, undefined);
         const created = await apiFetch('/collections/createCollection', 'POST', data);
         return created;
     } catch (error) {
@@ -67,7 +108,6 @@ export async function reorderItems(prevIndex, newIndex, data) {
     console.log('Reordering items:', { prevIndex, newIndex, data });
     try {
         const currentUser = getCurrentUser();
-        // Make a shallow copy to avoid mutating original array
         const items = [...data.items];
         const [moved] = items.splice(prevIndex, 1);
         items.splice(newIndex, 0, moved);
@@ -142,156 +182,136 @@ export function confirmDelete(id, onSuccess = () => { }) {
 export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
     const usr = getCurrentUser();
 
+    console.log('Upload data called with item:', {
+        file: item.file,
+        answer: item.answer,
+        answers: item.answers,
+        type: typeof item.file,
+        hasFile: !!item.file
+    });
+
     // If file is a URL (string), call /upload-url
     if (typeof item.file === 'string') {
         console.log('Detected URL upload:', item.file);
-        try {
-            const data = {
+        return handleUpload(async () => {
+            const data = addUserAuthToData({
                 uuid,
                 url: item.file,
-                folder: `${usr.username}/${item.category}`,
                 forceJpeg: forceJpg,
-                author_uuid: usr.id,
-                author_id: usr.uid,
-                author: usr.username,
-                category: item.category,
-                answer: item.answer,
+                question: item.question,
+                answer: item.answer ?? item.answers,
+                answers: item.answers,
+                src: item.src,
+                supplemental: item.supplemental_text || item.supplemental,
                 extra: item.extra || null,
-                type: item.type
-            };
-            const result = await apiFetch('/items/upload-url', 'POST', data);
-            return result;
-        } catch (error) {
-            console.error('Error uploading URL data:', error);
-            return error;
-        }
+                type: item.type,
+                category: item.category
+            }, usr, item.category);
+            return await apiFetch('/items/upload-url', 'POST', data);
+        }, 'Error uploading URL data', undefined);
     }
 
     // Otherwise, upload as file
-    const formData = new FormData();
-    formData.append('uuid', uuid);
-    formData.append('file', item.file);
-    formData.append('folder', `${usr.username}/${item.category}`);
-    formData.append('forceJpeg', forceJpg.toString());
-    formData.append('answer', item.answer);
-    formData.append('category', item.category);
-    formData.append('author', usr.username);
-    formData.append('author_uuid', usr.id);
-    formData.append('author_id', usr.public_id);
-    if (item.type) {
-        formData.append('type', item.type);
+    console.log('Taking file upload path, file:', item.file);
+
+    // Validate that file is actually a File or Blob object
+    if (!item.file || (typeof item.file !== 'object') || !(item.file instanceof File || item.file instanceof Blob)) {
+        console.error('Invalid file object:', item.file, 'Type:', typeof item.file);
+        throw new Error('Invalid file object provided for upload');
     }
 
-    // Log all FormData entries
-    for (const [key, value] of formData.entries()) {
-        console.log(`formData[${key}] =`, value);
-    }
+    return handleUpload(async () => {
+        const formData = new FormData();
+        formData.append('uuid', uuid);
+        formData.append('file', item.file);
+        console.log('Added file to FormData:', item.file);
+        formData.append('forceJpeg', forceJpg.toString());
+        formData.append('answer', item.answer || '');
+        addUserAuthToFormData(formData, usr, item.category);
 
-    try {
-        const result = await apiFetch('/items/upload', 'POST', formData, true);
-        return result;
-    } catch (error) {
-        return error;
-    }
+        if (item.question) {
+            formData.append('question', item.question);
+        }
+        if (item.answers) {
+            if (Array.isArray(item.answers)) {
+                formData.append('answers', JSON.stringify(item.answers));
+            } else {
+                formData.append('answers', item.answers);
+            }
+        }
+        if (item.src) {
+            formData.append('src', item.src);
+        }
+        if (item.supplemental_text || item.supplemental) {
+            formData.append('supplemental', item.supplemental_text || item.supplemental);
+        }
+        if (item.extra) {
+            formData.append('extra', item.extra);
+        }
+        if (item.type) {
+            formData.append('type', item.type);
+        }
+
+        return await apiFetch('/items/upload', 'POST', formData as never, true);
+    }, 'Error uploading file', undefined);
 }
 
 export async function uploadAudio(item) {
     const usr = getCurrentUser();
-    const username = usr.username;
-    const author_id = usr.public_id;
+    const uuid = item.uuid || uuidv4();
 
-    // need to send id, audio, title, answer, and thumbnail.
-    // "id": "311bd357-b69a-4def-891e-75416b7babd9",
-    // "audio": "jfL8Vu9PfW8",
-    // "title": "Charli xcx - Sympathy is a knife featuring ariana grande (official audio)",
-    // "answer": "Charli xcx",
-    // "thumbnail": "https://img.youtube.com/vi/jfL8Vu9PfW8/default.jpg"
+    return handleUpload(async () => {
+        const formData = new FormData();
+        addUserAuthToFormData(formData, usr, item.category);
+        formData.append('type', 'audio');
+        formData.append('id', uuid);
+        formData.append('audio', item.videoId);
+        formData.append('title', item.title);
+        formData.append('answer', item.title);
+        formData.append('thumbnail', item.thumbnail);
+        formData.append('url', item.videoId);
 
-    const formData = new FormData();
-    const uuid = item.uuid || uuidv4(); // Use provided uuid or generate a new one
-    formData.append('folder', `${username}/${item.category}`);
-    formData.append('author', username);
-    formData.append('author_id', author_id);
-    formData.append('category', item.category);
-    formData.append('type', 'audio');
-    formData.append('id', uuid);
-    formData.append('audio', item.videoId);
-    formData.append('title', item.title);
-    formData.append('answer', item.title);
-    formData.append('thumbnail', item.thumbnail);
-    formData.append('url', item.videoId);
-
-    console.log('Uploading audio data:', formData);
-
-    try {
-        const result = await apiFetch('/items/add-audio', 'POST', formData, true);
-        return result;
-    } catch (error) {
-        console.error('Error uploading audio data:', error);
-        return error;
-    }
+        console.log('Uploading audio data:', formData);
+        return await apiFetch('/items/add-audio', 'POST', formData as never, true);
+    }, 'Error uploading audio data', undefined);
 }
 
 export async function uploadQuestion(data) {
     const usr = getCurrentUser();
-    const username = usr.username;
-
     console.log("Upload question, data is:", data);
 
-    const d: any = {
-        uuid: uuidv4(),
-        question: data.question,
-        folder: `${username}/${data.category}`,
-        answer: data.answer ?? data.answers,
-        category: data.category,
-        author: username,
-        author_id: usr.uid,
-        author_uuid: usr.id,
-        type: data.type,
-    };
+    return handleUpload(async () => {
+        const questionData = addUserAuthToData({
+            uuid: uuidv4(),
+            question: data.question,
+            answer: data.answer ?? data.answers,
+            category: data.category,
+            type: data.type,
+        }, usr, data.category);
 
-    if (data.numRequired != null) {
-        d.numRequired = data.numRequired;
-    }
+        if (data.numRequired != null) {
+            questionData.numRequired = data.numRequired;
+        }
 
-    console.log('Uploading question data:', d);
-
-    try {
-        const result = await apiFetch('/items/add-question', 'POST', d);
-        return result;
-    } catch (error) {
-        console.error('Error uploading question data:', error);
-    }
+        console.log('Uploading question data:', questionData);
+        return await apiFetch('/items/add-question', 'POST', questionData);
+    }, 'Error uploading question data', undefined);
 }
 
 export async function uploadThumbnail(data, category) {
     const usr = getCurrentUser();
-    const formData = new FormData();
-    formData.append('author', usr.username);
-    formData.append('author_uuid', usr.id);
-    formData.append('author_id', usr.public_id);
-    // Sanitize category to allow only alphanumeric, dash, and underscore
-    const safeCategory = category.replace(/[^a-zA-Z0-9-_]/g, '');
-    formData.append('uuid', 'thumbnails/' + safeCategory + '/thumbnail');
-    formData.append('file', data);
-    formData.append('forceJpeg', 'true');
-    formData.append('category', category);
-    formData.append('folder', `/thumbnails/${category}`);
 
-    // log form data
-    for (const [key, value] of formData.entries()) {
-        console.log(`formData[${key}] =`, value);
-    }
+    return handleUpload(async () => {
+        const formData = new FormData();
+        addUserAuthToFormData(formData, usr, undefined);
 
-    try {
-        const result = await apiFetch('/items/add-thumbnail', 'POST', formData, true);
-        addToast({
-            message: 'Thumbnail uploaded successfully!',
-            type: 'success',
-            duration: 3000
-        });
-        return result;
-    } catch (error) {
-        console.error('Error uploading thumbnail:', error);
-    }
+        const safeCategory = category.replace(/[^a-zA-Z0-9-_]/g, '');
+        formData.append('uuid', 'thumbnails/' + safeCategory + '/thumbnail');
+        formData.append('file', data);
+        formData.append('forceJpeg', 'true');
+        formData.append('category', category);
+        formData.append('folder', `/thumbnails/${category}`);
+
+        return await apiFetch('/items/add-thumbnail', 'POST', formData as never, true);
+    }, 'Error uploading thumbnail', 'Thumbnail uploaded successfully!');
 }

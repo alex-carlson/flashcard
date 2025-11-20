@@ -220,7 +220,9 @@
 					</div>
 				</div>
 			{/if}
-		{:else if item.type === 'image'}
+		{/if}
+
+		{#if item.imageUrl}
 			<LazyLoadImage
 				imageUrl={item.imageUrl}
 				on:load={() => onCardLoad(i)}
@@ -229,7 +231,9 @@
 					updateCards();
 				}}
 			/>
-		{:else if item.type === 'text' || item.question}
+		{/if}
+
+		{#if item.type === 'text' || item.question}
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
