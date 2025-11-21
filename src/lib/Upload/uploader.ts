@@ -100,6 +100,12 @@ export async function saveEdit(data) {
         return result;
     } catch (error) {
         console.error('Error editing item:', error);
+        addToast({
+            message: 'Failed to save item changes. Please try again.',
+            type: 'error',
+            duration: 3000
+        });
+        throw error; // Re-throw the error so the caller knows it failed
     }
 }
 
@@ -205,7 +211,11 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 supplemental: item.supplemental_text || item.supplemental,
                 extra: item.extra || null,
                 type: item.type,
-                category: item.category
+                category: item.category,
+                // Add existing item ID for server validation during updates
+                existingItemId: item.existingItemId,
+                // Add update flag to indicate this is an update operation  
+                isUpdate: item.isUpdate
             }, usr, item.category);
             return await apiFetch('/items/upload-url', 'POST', data);
         }, 'Error uploading URL data', undefined);
@@ -250,6 +260,14 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
         }
         if (item.type) {
             formData.append('type', item.type);
+        }
+        // Add existing item ID for server validation during updates
+        if (item.existingItemId) {
+            formData.append('existingItemId', item.existingItemId);
+        }
+        // Add update flag to indicate this is an update operation
+        if (item.isUpdate) {
+            formData.append('isUpdate', item.isUpdate.toString());
         }
 
         return await apiFetch('/items/upload', 'POST', formData as never, true);

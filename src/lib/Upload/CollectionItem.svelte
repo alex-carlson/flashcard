@@ -13,8 +13,9 @@
 		faChevronDown,
 		faPlus
 	} from '@fortawesome/free-solid-svg-icons';
-	import { uploadData } from './uploader.js';
+	import { uploadData, saveEdit } from './uploader.js';
 	import { addToast } from '../../stores/toast.js';
+	import { user } from '../../stores/user.js';
 	export let item;
 	export let index;
 	export let editableItemId;
@@ -31,9 +32,74 @@
 	function reorderItemHandler(prevIndex, newIndex) {
 		dispatch('reorderItem', { prevIndex, newIndex });
 	}
-	function saveEditHandler() {
-		editableItemId = null;
-		dispatch('saveEdit', item);
+	async function saveEditHandler() {
+		try {
+			// Prepare the edit data in the format expected by the server
+			// Only include fields that have values to avoid sending undefined/null
+			const editData = {
+				id: item.id,
+				category: collection?.category || item.category,
+				collection: collection?.category || item.category,
+				author_id: $user.public_id,
+				isUpdate: true
+			};
+
+			// Only add fields that have values
+			if (item.question !== undefined && item.question !== null) {
+				editData.question = item.question;
+			}
+			if (item.answer !== undefined && item.answer !== null) {
+				editData.answer = item.answer;
+			}
+			if (item.answers !== undefined && item.answers !== null) {
+				editData.answers = item.answers;
+			}
+			if (item.supplemental !== undefined && item.supplemental !== null) {
+				editData.supplemental = item.supplemental;
+			}
+			if (item.extra !== undefined && item.extra !== null) {
+				editData.extra = item.extra;
+			}
+			if (item.image !== undefined && item.image !== null) {
+				editData.image = item.image;
+			}
+			if (item.audio !== undefined && item.audio !== null) {
+				editData.audio = item.audio;
+			}
+			if (item.thumbnail !== undefined && item.thumbnail !== null) {
+				editData.thumbnail = item.thumbnail;
+			}
+			if (item.title !== undefined && item.title !== null) {
+				editData.title = item.title;
+			}
+
+			console.log('Saving edit with data:', editData);
+
+			// Use the saveEdit function from uploader.js
+			const result = await saveEdit(editData);
+
+			console.log('Save edit result structure:', result);
+
+			if (result) {
+				// Handle different possible response structures
+				const updatedItem = result.updatedItem || result.item || result;
+
+				if (updatedItem && updatedItem.id) {
+					// Use the server's returned updated item as the source of truth
+					Object.assign(item, updatedItem);
+					dispatch('saveEdit', updatedItem);
+				}
+
+				// Always clear editableItemId on successful save
+				editableItemId = null;
+			}
+		} catch (error) {
+			console.error('Error saving edit:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to save changes. Please try again.'
+			});
+		}
 	}
 
 	async function addItemMetaData(videoId) {
@@ -74,27 +140,32 @@
 				// Keep the existing answer
 				answer: item.answer,
 				// Add category from collection
-				category: collection?.category || item.category
+				category: collection?.category || item.category,
+				// Send the existing item ID for server validation
+				existingItemId: item.id,
+				// Flag this as an update operation
+				isUpdate: true
 			};
 
-			console.log('Temporary item for upload:', tempItem);
+			console.log('Temporary item for upload with existing ID validation:', tempItem);
 
-			// Upload the new image
+			// Upload the new image with existing item ID for validation
 			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
 
 			if (result && result.length > 0) {
-				// Update the item with the new image URL
+				// Use the server's returned updated item as the source of truth
 				const updatedItem = result[0].items.find((i) => i.id === item.id);
 				if (updatedItem) {
-					item.image = updatedItem.image;
+					// Update all item properties with the server's data
+					Object.assign(item, updatedItem);
 
 					addToast({
 						type: 'success',
 						message: 'Image updated successfully!'
 					});
 
-					// Dispatch event to parent to update the collection
-					dispatch('updateItem', { id: item.id, image: item.image });
+					// Dispatch the complete updated item
+					dispatch('updateItem', updatedItem);
 				}
 			}
 		} catch (error) {

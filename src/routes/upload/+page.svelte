@@ -482,6 +482,7 @@
 									const result = await saveEdit(d);
 									if (result) {
 										collections = result;
+										editableItemId = null;
 									}
 								}}
 								on:updateItem={(e) => {

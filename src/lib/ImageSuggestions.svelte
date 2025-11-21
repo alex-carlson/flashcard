@@ -20,6 +20,16 @@
 	// Use searchOverride if it exists, otherwise use searchTerm
 	$: effectiveSearchTerm = searchOverride || searchTerm;
 
+	// Clear suggestions when fileType changes
+	let previousFileType = fileType;
+	$: if (fileType !== previousFileType && suggestions.length > 0) {
+		suggestions = [];
+		currentStartIndex = 1;
+		hasMoreResults = true;
+		lastLoadTime = 0;
+		previousFileType = fileType;
+	}
+
 	// Image validation function
 	async function validateImageAccess(url, timeout = 5000) {
 		return new Promise((resolve) => {
@@ -148,8 +158,12 @@
 
 		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
 
-		// Add file type filter only if not 'any'
-		if (fileType !== 'any') {
+		// Add file type filter
+		if (fileType === 'any') {
+			// For 'any', we'll exclude vector formats by adding negative terms to the query
+			fullQuery += ' -svg -eps -pdf -ai';
+			url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
+		} else {
 			url += `&fileType=${fileType}`;
 		}
 
@@ -210,6 +224,26 @@
 		// we can directly dispatch for valid images
 		const suggestion = suggestions[index];
 
+		// Check if suggestion exists
+		if (!suggestion) {
+			addToast({
+				type: 'error',
+				message: 'Invalid image selection. Please try again.'
+			});
+			return;
+		}
+
+		// If no validation yet, validate now
+		if (!suggestion.validation && !suggestion.validating) {
+			suggestion.validating = true;
+			suggestions = [...suggestions];
+
+			const validation = await comprehensiveValidation(url);
+			suggestion.validation = validation;
+			suggestion.validating = false;
+			suggestions = [...suggestions];
+		}
+
 		// Double-check validation state
 		if (suggestion.validation && !suggestion.validation.valid) {
 			addToast({
@@ -227,11 +261,33 @@
 			});
 		}
 
-		dispatch('addImage', url);
-		searchOverride = null;
-	}
+		// Create proper data structure with src and answers
+		const imageData = {
+			file: url, // For URL-based uploads
+			src: url // Set src to the image URL
+		};
 
-	// Auto-validate a single image
+		// Set answers based on searchTerm - this should contain the answer(s)
+		if (effectiveSearchTerm && effectiveSearchTerm.trim()) {
+			// Check if it looks like multiple answers (contains commas, semicolons, or "and")
+			const answerText = effectiveSearchTerm.trim();
+			if (answerText.includes(',') || answerText.includes(';') || answerText.includes(' and ')) {
+				// Split into array of answers
+				const answers = answerText
+					.split(/[,;]|and/)
+					.map((a) => a.trim())
+					.filter((a) => a);
+				imageData.answers = answers;
+				imageData.answer = answers[0]; // Set primary answer to first one
+			} else {
+				// Single answer - only set answer, not answers
+				imageData.answer = answerText;
+				// Don't set imageData.answers for single answers
+			}
+		}
+
+		dispatch('addImage', imageData);
+	} // Auto-validate a single image
 	async function autoValidateImage(index) {
 		if (suggestions[index].validation || suggestions[index].validating) {
 			return; // Already validated or validating
@@ -297,7 +353,7 @@
 		<div class="file-type-selector">
 			<label for="fileType">File Type:</label>
 			<select id="fileType" bind:value={fileType}>
-				<option value="image">Any</option>
+				<option value="any">Any (PNG, JPG, GIF, etc.)</option>
 				<option value="png">PNG</option>
 				<option value="jpg">JPG</option>
 				<option value="gif">GIF</option>
@@ -379,8 +435,7 @@
 						<div class="button-group">
 							<button
 								on:click={() => handleAddImage(suggestion.url, originalIndex)}
-								disabled={suggestion.validating ||
-									(suggestion.validation && !suggestion.validation.valid)}
+								disabled={suggestion.validating}
 								class:warning={suggestion.validation && suggestion.validation.warning}
 							>
 								{#if suggestion.validating}
@@ -464,12 +519,16 @@
 		gap: 1rem;
 		width: 100%;
 		box-sizing: border-box;
+		grid-auto-rows: min-content;
+		align-items: start;
 	}
 
 	/* 4x4 grid on desktop/tablet */
 	@media (min-width: 768px) {
 		.suggestion {
 			grid-template-columns: repeat(4, 1fr);
+			grid-auto-rows: min-content;
+			grid-template-rows: none; /* Let rows auto-size */
 		}
 	}
 
@@ -483,6 +542,8 @@
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
+		align-self: start;
+		justify-self: stretch;
 	}
 
 	.suggestion-item.invalid {
