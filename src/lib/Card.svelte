@@ -204,19 +204,22 @@
 		on:keydown={(e) => currentMode === 'FLASH_CARDS' && e.key === 'Enter' && toggleReveal(i)}
 		on:click={() => currentMode === 'FLASH_CARDS' && toggleReveal(i)}
 	>
-		{#if item.type === 'audio'}
+		{#if item.audio}
 			<YoutubeAudioPlayer id={item.id} videoId={item.audio} />
 			{#if item.revealed}
 				<div class="audio-revealed">
-					<a
-						href={`https://www.youtube.com/watch?v=${item.audio}`}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
-					</a>
+					<img src={item.thumbnail} alt="YouTube thumbnail" class="youtube-thumbnail" />
 					<div class="youtube-title">
+						<a
+							href={`https://www.youtube.com/watch?v=${item.audio}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							on:click|preventDefault={(e) => {
+								window.open(e.currentTarget.href, '_blank', 'noopener,noreferrer');
+							}}
+						>
 						{item.title}
+					</a>
 					</div>
 				</div>
 			{/if}

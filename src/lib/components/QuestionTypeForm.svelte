@@ -90,7 +90,9 @@
 	}
 
 	async function handleAudioUpload() {
-		const newItems = await uploadAudio(item);
+		// Add type property for audio uploads
+		const audioItem = { ...item, type: 'audio' };
+		const newItems = await uploadAudio(audioItem);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
