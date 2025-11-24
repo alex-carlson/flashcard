@@ -3,7 +3,7 @@
 	import Cropper from './Cropper.svelte';
 	import Drawing from './Drawing.svelte';
 	import AnswerInput from '../components/AnswerInput.svelte';
-	import { QuestionType, AnswerType } from '$lib/types/enums';
+	import { QuestionType, AnswerType, isValidAnswerType } from '$lib/types/enums';
 	import { Fa } from 'svelte-fa';
 	import {
 		faPenToSquare,
@@ -326,11 +326,11 @@
 		</div>
 		<div class="answer-field vertical">
 			<div class="answer-display">
-				{#if item.answerType === AnswerType.SINGLE}
+				{#if item.answerType === AnswerType.SINGLE || !isValidAnswerType(item.answerType)}
 					<span>{item.answer}</span>
 				{:else if item.answerType === AnswerType.MULTIPLE_CHOICE}
 					<small class="text-muted">Multiple Choice:</small>
-					{#each item.answers as answer, index}
+					{#each item.answers || [] as answer, index}
 						<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
 							{index + 1}. {answer}
 							{#if item.correctAnswerIndex === index}✓{/if}
@@ -339,9 +339,11 @@
 				{:else}
 					<div class="answer-display">
 						<small class="text-muted"
-							>Multi-Answer (Required: {item.numRequired || item.answers.length}):</small
+							>Multi-Answer (Required: {item.numRequired ||
+								(item.answers && item.answers.length) ||
+								0}):</small
 						>
-						{#each item.answers as answer, index}
+						{#each item.answers || [] as answer, index}
 							<span class="answer-option">{index + 1}. {answer}</span>
 						{/each}
 					</div>
