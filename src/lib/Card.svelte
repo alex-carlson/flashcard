@@ -277,7 +277,18 @@
 						{#if item.answerType === AnswerType.MULTIPLE_CHOICE}
 							{item.answers[item.correctAnswerIndex || 0]}
 						{:else if item.answerType === AnswerType.MULTI_ANSWER}
-							{userAnswers.filter((a) => a?.trim()).join(', ') || 'No answers provided'}
+							{#each userAnswers.filter((a) => a?.trim()) as userAnswer}
+								{#if item.answers}
+									{#each item.answers as answer, index}
+										{#if areStringsClose(userAnswer, answer)}
+											{answer}{#if index < userAnswers.length - 1},
+											{/if}
+										{/if}
+									{/each}
+								{:else}
+									{userAnswer}
+								{/if}
+							{/each}
 						{:else}
 							{Array.isArray(item.answer) ? item.answer[0] : item.answer}
 						{/if}
