@@ -68,7 +68,7 @@ export function areStringsClose(a, b, threshold = 1) {
     if (typeof b !== 'string') b = String(b);
 
     const preprocess = (str) =>
-        str
+        normalizeRoman(str) // First normalize roman numerals to arabic numbers
             .trim()
             .toLowerCase()
             .replace(/\b(the|and|a|an|of|in|on|at|to|for|with|by|from|as|is|are|was|were|be|been|has|have|had|do|does|did|but|or|nor|so|yet|if|then|else|when|while|about|into|over|after|before|between|under|again|further|once)\b/gi, "") // remove common stopwords
@@ -113,6 +113,39 @@ export function areStringsClose(a, b, threshold = 1) {
 
     return similarity >= threshold;
 }
+
+function romanToInt(roman) {
+    if (!roman) return null;
+    roman = roman.toUpperCase();
+
+    const map = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+    let value = 0;
+
+    for (let i = 0; i < roman.length; i++) {
+        const curr = map[roman[i]];
+        const next = map[roman[i + 1]];
+
+        if (next && curr < next) {
+            value -= curr;
+        } else {
+            value += curr;
+        }
+    }
+
+    return value;
+}
+
+function normalizeRoman(str) {
+    // Regex for roman numerals up to 3999
+    const romanRegex = /\bM{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\b/gi;
+
+    return str.toLowerCase().replace(romanRegex, match => {
+        const value = romanToInt(match);
+        // If conversion fails (empty string), keep original
+        return value ?? match;
+    });
+}
+
 
 import { QuestionType, AnswerType, toQuestionType, toAnswerType } from '$lib/types/enums';
 

@@ -72,12 +72,42 @@
 	}
 
 	function toggleReveal(index) {
+		const card = $quizStore.cards[index];
+		const wasRevealed = card.revealed;
+
 		quizStore.update((state) => ({
 			...state,
 			cards: state.cards.map((card, i) =>
 				i === index ? { ...card, revealed: !card.revealed } : card
 			)
 		}));
+
+		// If card was just revealed (not hidden), trigger auto-play for next audio
+		if (!wasRevealed) {
+			console.log('Card revealed in FLASH_CARDS mode, checking for next audio');
+			// Auto-play next audio question when a card is revealed
+			const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
+			console.log('Looking for next card after index', index, 'found:', nextCardIndex);
+
+			if (nextCardIndex !== -1) {
+				const nextCard = $quizStore.cards[nextCardIndex];
+				console.log('Next card:', nextCard);
+
+				// Check if the next card has audio content
+				if (nextCard.audio) {
+					try {
+						console.log('Auto-playing next audio question:', nextCard.audio);
+						youtubePlayerService.loadVideoOnly(nextCard.audio);
+					} catch (error) {
+						console.error('Failed to auto-play next audio question:', error);
+					}
+				} else {
+					console.log('Next card has no audio content');
+				}
+			} else {
+				console.log('No next card found');
+			}
+		}
 	}
 
 	function setMode(mode) {
@@ -85,22 +115,35 @@
 	}
 	function onCorrectAnswer(event) {
 		const { index, answer, userAnswer, isCorrect } = event.detail;
+		console.log('Correct answer event received:', { index, answer, userAnswer, isCorrect });
+
 		quizStore.updateCard(index, {
 			revealed: true,
 			userAnswer: userAnswer || answer,
 			isCorrect: isCorrect // Store whether the answer was actually correct
 		});
 
+		// Auto-play next audio question when a correct answer is given
 		const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
+		console.log('Looking for next card after index', index, 'found:', nextCardIndex);
+
 		if (nextCardIndex !== -1) {
 			const nextCard = $quizStore.cards[nextCardIndex];
-			if (nextCard.questionType === 'audio' && nextCard.audio) {
+			console.log('Next card:', nextCard);
+
+			// Check if the next card has audio content
+			if (nextCard.audio) {
 				try {
+					console.log('Auto-playing next audio question:', nextCard.audio);
 					youtubePlayerService.loadVideoOnly(nextCard.audio);
 				} catch (error) {
 					console.error('Failed to auto-play next audio question:', error);
 				}
+			} else {
+				console.log('Next card has no audio content');
 			}
+		} else {
+			console.log('No next card found');
 		}
 
 		dispatch('correctAnswer', event.detail);
