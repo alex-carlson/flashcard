@@ -268,33 +268,12 @@
 			});
 		}
 
-		// Create proper data structure with src and answers
+		// Create proper data structure with src - let QuestionTypeForm handle answers
 		const imageData = {
 			file: url, // Pass URL string directly for URL-based uploads
 			src: url, // Set src to the image URL
-			type: 'image', // Specify the type
-			question: effectiveSearchTerm || '', // Add question field
 			url: url // Ensure url field is present for URL uploads
 		};
-
-		// Set answers based on searchTerm - this should contain the answer(s)
-		if (effectiveSearchTerm && effectiveSearchTerm.trim()) {
-			// Check if it looks like multiple answers (contains commas, semicolons, or "and")
-			const answerText = effectiveSearchTerm.trim();
-			if (answerText.includes(',') || answerText.includes(';') || answerText.includes(' and ')) {
-				// Split into array of answers
-				const answers = answerText
-					.split(/[,;]|and/)
-					.map((a) => a.trim())
-					.filter((a) => a);
-				imageData.answers = answers;
-				imageData.answer = answers[0]; // Set primary answer to first one
-			} else {
-				// Single answer - only set answer, not answers
-				imageData.answer = answerText;
-				// Don't set imageData.answers for single answers
-			}
-		}
 
 		dispatch('addImage', imageData);
 	} // Auto-validate a single image

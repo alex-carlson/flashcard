@@ -231,14 +231,8 @@
 								bind:searchTerm
 								bind:suggestions={imageSuggestions}
 								on:addImage={(e) => {
-									// Extract just the URL string for proper URL upload handling
 									item.file = e.detail.file;
-									// Copy other properties that might be needed, but NOT answer/answers
-									// to preserve what user typed in AnswerInput component
-									if (e.detail.question) item.question = e.detail.question;
 									if (e.detail.src) item.src = e.detail.src;
-									if (e.detail.questionType) item.questionType = e.detail.questionType;
-									if (e.detail.answerType) item.answerType = e.detail.answerType;
 								}}
 							/>
 						{/if}
