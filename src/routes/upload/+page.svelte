@@ -149,7 +149,7 @@
 			// Upload the new image
 			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
 
-			if (result && result.length > 0) {
+			if (result && Array.isArray(result) && result.length > 0 && result[0]?.items) {
 				// Update the item with the new image URL
 				const updatedItem = result[0].items.find((i) => i.id === item.id);
 				if (updatedItem) {
@@ -163,6 +163,12 @@
 					// Dispatch event to parent to update the collection
 					dispatch('updateItem', { id: item.id, image: item.image });
 				}
+			} else {
+				console.warn('Upload result structure unexpected:', result);
+				addToast({
+					type: 'warning',
+					message: 'Image uploaded but response format unexpected. Please refresh.'
+				});
 			}
 		} catch (error) {
 			console.error('Error updating image:', error);

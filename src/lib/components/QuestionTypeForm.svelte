@@ -74,7 +74,7 @@
 			undefined,
 			false
 		);
-		if (newItems) {
+		if (newItems && Array.isArray(newItems) && newItems.length > 0 && newItems[0]?.items) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,
@@ -106,7 +106,7 @@
 			answerType: item.answerType || AnswerType.SINGLE
 		};
 		const newItems = await uploadAudio(audioItem);
-		if (newItems) {
+		if (newItems && Array.isArray(newItems) && newItems.length > 0 && newItems[0]?.items) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,
@@ -142,7 +142,7 @@
 			questionType: QuestionType.TEXT,
 			answerType: item.answerType || AnswerType.SINGLE
 		});
-		if (newItems) {
+		if (newItems && Array.isArray(newItems) && newItems.length > 0 && newItems[0]?.items) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,

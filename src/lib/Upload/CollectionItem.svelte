@@ -168,7 +168,7 @@
 			// Upload the new image with existing item ID for validation
 			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
 
-			if (result && result.length > 0) {
+			if (result && Array.isArray(result) && result.length > 0 && result[0]?.items) {
 				// Use the server's returned updated item as the source of truth
 				const updatedItem = result[0].items.find((i) => i.id === item.id);
 				if (updatedItem) {
@@ -183,6 +183,12 @@
 					// Dispatch the complete updated item
 					dispatch('updateItem', updatedItem);
 				}
+			} else {
+				console.warn('Upload result structure unexpected:', result);
+				addToast({
+					type: 'warning',
+					message: 'Image uploaded but response format unexpected. Please refresh.'
+				});
 			}
 		} catch (error) {
 			console.error('Error updating image:', error);
