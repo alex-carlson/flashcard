@@ -3,6 +3,7 @@
 	import Cropper from './Cropper.svelte';
 	import Drawing from './Drawing.svelte';
 	import AnswerInput from '../components/AnswerInput.svelte';
+	import { QuestionType, AnswerType } from '$lib/types/enums';
 	import { Fa } from 'svelte-fa';
 	import {
 		faPenToSquare,
@@ -35,56 +36,62 @@
 	async function saveEditHandler() {
 		try {
 			// Prepare the edit data in the format expected by the server
-			// Only include fields that have values to avoid sending undefined/null
 			const editData = {
 				id: item.id,
-				category: collection?.category || item.category,
 				collection: collection?.category || item.category,
 				author_id: $user.public_id,
-				isUpdate: true
+				isUpdate: true // Required by server to use addItemToCollectionHelper path
 			};
 
-			// Only add fields that have values
-			if (item.question !== undefined && item.question !== null) {
+			// Only add fields that have values and are not undefined/null/empty
+			if (item.question !== undefined && item.question !== null && item.question !== '') {
 				editData.question = item.question;
 			}
-			if (item.answer !== undefined && item.answer !== null) {
+			if (item.answer !== undefined && item.answer !== null && item.answer !== '') {
 				editData.answer = item.answer;
 			}
-			if (item.answers !== undefined && item.answers !== null) {
+			if (
+				item.answers !== undefined &&
+				item.answers !== null &&
+				item.answerType !== AnswerType.SINGLE
+			) {
 				editData.answers = item.answers;
 			}
-			if (item.supplemental !== undefined && item.supplemental !== null) {
+			if (
+				item.supplemental !== undefined &&
+				item.supplemental !== null &&
+				item.supplemental !== ''
+			) {
 				editData.supplemental = item.supplemental;
 			}
-			if (item.extra !== undefined && item.extra !== null) {
+			if (item.extra !== undefined && item.extra !== null && item.extra !== '') {
 				editData.extra = item.extra;
 			}
-			if (item.image !== undefined && item.image !== null) {
+			if (item.image !== undefined && item.image !== null && item.image !== '') {
 				editData.image = item.image;
 			}
-			if (item.audio !== undefined && item.audio !== null) {
+			if (item.audio !== undefined && item.audio !== null && item.audio !== '') {
 				editData.audio = item.audio;
 			}
-			if (item.thumbnail !== undefined && item.thumbnail !== null) {
+			if (item.thumbnail !== undefined && item.thumbnail !== null && item.thumbnail !== '') {
 				editData.thumbnail = item.thumbnail;
 			}
-			if (item.title !== undefined && item.title !== null) {
+			if (item.title !== undefined && item.title !== null && item.title !== '') {
 				editData.title = item.title;
 			}
-			if (item.questionType !== undefined && item.questionType !== null) {
+			if (
+				item.questionType !== undefined &&
+				item.questionType !== null &&
+				item.questionType !== ''
+			) {
 				editData.questionType = item.questionType;
 			}
-			if (item.answerType !== undefined && item.answerType !== null) {
+			if (item.answerType !== undefined && item.answerType !== null && item.answerType !== '') {
 				editData.answerType = item.answerType;
 			}
 
-			console.log('Saving edit with data:', editData);
-
 			// Use the saveEdit function from uploader.js
 			const result = await saveEdit(editData);
-
-			console.log('Save edit result structure:', result);
 
 			if (result) {
 				// Handle different possible response structures
@@ -152,8 +159,8 @@
 				// Flag this as an update operation
 				isUpdate: true,
 				// Include type information
-				questionType: item.questionType || 'image',
-				answerType: item.answerType || 'single'
+				questionType: item.questionType || QuestionType.IMAGE,
+				answerType: item.answerType || AnswerType.SINGLE
 			};
 
 			console.log('Temporary item for upload with existing ID validation:', tempItem);
@@ -252,21 +259,7 @@
 <li class={isReordering ? 'item reorder' : 'item'} draggable={isReordering}>
 	{#if editableItemId === item.id && item.id != null}
 		<div class="editing">
-			{#if item.question != null}
-				<input
-					id="editedQuestion"
-					type="text"
-					bind:value={item.question}
-					placeholder="Enter a question"
-				/>
-			{:else if item.audio != null}
-				<input
-					id="editedAudio"
-					type="text"
-					bind:value={item.audio}
-					placeholder="Enter an audio URL"
-				/>
-			{:else}
+			{#if item.image != null}
 				<img src={item.image} alt="To crop" class="border" />
 				{#if !isCropping && !isDrawing}
 					<div class="actions my-3">
@@ -281,6 +274,21 @@
 					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
 				{/if}
 			{/if}
+			{#if item.questionType == QuestionType.TEXT}
+				<input
+					id="editedQuestion"
+					type="text"
+					bind:value={item.question}
+					placeholder="Enter a question"
+				/>
+			{:else if item.audio != null}
+				<input
+					id="editedAudio"
+					type="text"
+					bind:value={item.audio}
+					placeholder="Enter an audio URL"
+				/>
+			{/if}
 			<textarea bind:value={item.supplemental} placeholder="Supplemental Question Text"></textarea>
 			<AnswerInput {item} idPrefix="edit-{item.id}" label="Answer:" />
 			<input id="editedExtra" type="text" bind:value={item.extra} placeholder="Enter extra info" />
@@ -291,7 +299,7 @@
 		</div>
 	{:else}
 		<div class="vertical">
-			{#if item.file || item.image || item.questionType == 'image'}
+			{#if item.file || item.image || item.questionType == QuestionType.IMAGE}
 				<img class="preview" src={item.file || item.image} alt="Preview" />
 			{:else if item.audio != null}
 				<div class="audio">

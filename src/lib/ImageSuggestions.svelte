@@ -1,6 +1,8 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { addToast } from '../stores/toast';
+	import { Fa } from 'svelte-fa';
+	import { faSearch } from '@fortawesome/free-solid-svg-icons';
 	const dispatch = createEventDispatcher();
 	const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 	const CX = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID;
@@ -19,6 +21,11 @@
 
 	// Use searchOverride if it exists, otherwise use searchTerm
 	$: effectiveSearchTerm = searchOverride || searchTerm;
+
+	// Auto-update searchOverride when searchTerm changes (from answer text box)
+	$: if (searchTerm) {
+		searchOverride = searchTerm;
+	}
 
 	// Clear suggestions when fileType changes
 	let previousFileType = fileType;
@@ -313,7 +320,7 @@
 
 <div class="suggestions">
 	<div class="search-controls">
-		<label for="searchOverride">Search Override:</label>
+		<label for="searchOverride">Search Override</label>
 		<input
 			name="searchOverride"
 			type="text"
@@ -321,22 +328,25 @@
 			placeholder="Search for images..."
 			class="search-input"
 		/>
-		<div class="file-type-selector">
-			<label for="fileType">File Type:</label>
-			<select id="fileType" bind:value={fileType}>
-				<option value="any">Any (PNG, JPG, GIF, etc.)</option>
-				<option value="png">PNG</option>
-				<option value="jpg">JPG</option>
-				<option value="gif">GIF</option>
-			</select>
+		<div class="d-flex align-items-end gap-3 w-100">
+			<div class="file-type-selector flex-fill">
+				<label for="fileType" class="form-label">File Type:</label>
+				<select id="fileType" bind:value={fileType}>
+					<option value="any">Any (PNG, JPG, GIF, etc.)</option>
+					<option value="png">PNG</option>
+					<option value="jpg">JPG</option>
+					<option value="gif">GIF</option>
+				</select>
+			</div>
+			<button
+				class="btn btn-primary"
+				on:click|preventDefault={() => fetchSuggestions(false)}
+				disabled={!effectiveSearchTerm || effectiveSearchTerm.length <= 3}
+				style="max-width: 50px;"
+			>
+				<Fa icon={faSearch} />
+			</button>
 		</div>
-		<button
-			class="search-btn"
-			on:click|preventDefault={() => fetchSuggestions(false)}
-			disabled={!effectiveSearchTerm || effectiveSearchTerm.length <= 3}
-		>
-			Show Results
-		</button>
 		{#if suggestions.length > 0}
 			<h6 class="mt-2">Showing results for {effectiveSearchTerm}</h6>
 		{/if}

@@ -3,6 +3,7 @@ import { fetchCollectionById } from '$lib/api/collections';
 import { completeQuiz } from '$lib/api/user';
 import { mapCards, areStringsClose } from '$lib/api/utils';
 import { addToast } from './toast';
+import { QuestionType, AnswerType } from '$lib/types/enums';
 
 // Types
 interface Card {
@@ -17,8 +18,8 @@ interface Card {
     hidden: boolean;
     scale: number;
     userAnswer: string;
-    questionType: 'image' | 'text' | 'audio';
-    answerType: 'single' | 'multiplechoice' | 'multianswer';
+    questionType: QuestionType;
+    answerType: AnswerType;
     answerer?: string;
     incorrect?: boolean;
     isCorrect?: boolean; // Whether the user's answer was correct

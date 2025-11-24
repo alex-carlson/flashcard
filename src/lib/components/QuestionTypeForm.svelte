@@ -6,6 +6,7 @@
 	import AnswerInput from './AnswerInput.svelte';
 	import { addToast } from '../../stores/toast';
 	import { uploadData, uploadQuestion, uploadAudio } from '../Upload/uploader';
+	import { QuestionType, AnswerType } from '$lib/types/enums';
 
 	const dispatch = createEventDispatcher();
 
@@ -67,8 +68,8 @@
 		const newItems = await uploadData(
 			{
 				...item,
-				questionType: 'image',
-				answerType: item.answerType || 'single'
+				questionType: QuestionType.IMAGE,
+				answerType: item.answerType || AnswerType.SINGLE
 			},
 			undefined,
 			false
@@ -101,8 +102,8 @@
 		// Add type properties for audio uploads
 		const audioItem = {
 			...item,
-			questionType: 'audio',
-			answerType: item.answerType || 'single'
+			questionType: QuestionType.AUDIO,
+			answerType: item.answerType || AnswerType.SINGLE
 		};
 		const newItems = await uploadAudio(audioItem);
 		if (newItems) {
@@ -138,8 +139,8 @@
 		console.log('Uploading question:', item);
 		const newItems = await uploadQuestion({
 			...item,
-			questionType: 'text',
-			answerType: item.answerType || 'single'
+			questionType: QuestionType.TEXT,
+			answerType: item.answerType || AnswerType.SINGLE
 		});
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
@@ -232,9 +233,8 @@
 								on:addImage={(e) => {
 									// Extract just the URL string for proper URL upload handling
 									item.file = e.detail.file;
-									// Copy other properties that might be needed
-									if (e.detail.answer) item.answer = e.detail.answer;
-									if (e.detail.answers) item.answers = e.detail.answers;
+									// Copy other properties that might be needed, but NOT answer/answers
+									// to preserve what user typed in AnswerInput component
 									if (e.detail.question) item.question = e.detail.question;
 									if (e.detail.src) item.src = e.detail.src;
 									if (e.detail.questionType) item.questionType = e.detail.questionType;

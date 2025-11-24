@@ -1,6 +1,7 @@
 <script>
 	import { Fa } from 'svelte-fa';
 	import { faTimes } from '@fortawesome/free-solid-svg-icons';
+	import { AnswerType } from '$lib/types/enums';
 
 	export let item;
 	export let idPrefix = 'answer';
@@ -11,9 +12,9 @@
 
 	// Initialize answer mode based on current item state
 	$: {
-		if (item.questionType === 'multiple-choice' || item.correctAnswerIndex !== undefined) {
+		if (item.answerType === AnswerType.MULTIPLE_CHOICE) {
 			answerMode = 'multiple-choice';
-		} else if (item.answers && item.answers.length > 0) {
+		} else if (item.answerType === AnswerType.MULTI_ANSWER) {
 			answerMode = 'multi-answer';
 		} else {
 			answerMode = 'single';
@@ -29,7 +30,7 @@
 				delete item.answers;
 				delete item.isMultipleChoice;
 				delete item.numRequired;
-				item.answerType = 'single';
+				item.answerType = AnswerType.SINGLE;
 				break;
 			case 'multiple-choice':
 				// Convert to multiple choice (one correct answer from multiple options)
@@ -38,7 +39,7 @@
 				}
 				item.isMultipleChoice = true;
 				item.numRequired = 1;
-				item.answerType = 'multiplechoice';
+				item.answerType = AnswerType.MULTIPLE_CHOICE;
 				break;
 			case 'multi-answer':
 				// Convert to multi-answer (multiple correct answers)
@@ -49,7 +50,7 @@
 				if (!item.numRequired) {
 					item.numRequired = item.answers.length;
 				}
-				item.answerType = 'multianswer';
+				item.answerType = AnswerType.MULTI_ANSWER;
 				break;
 		}
 	}

@@ -114,23 +114,25 @@ export function areStringsClose(a, b, threshold = 1) {
     return similarity >= threshold;
 }
 
+import { QuestionType, AnswerType, toQuestionType, toAnswerType } from '$lib/types/enums';
+
 export function mapCards(rawItems) {
     return rawItems
         .filter((card) => card != null)
         .map((card) => {
             // Determine question type based on content
-            let questionType = "text";
-            if (card.image) questionType = "image";
-            else if (card.audio) questionType = "audio";
+            let questionType = QuestionType.TEXT;
+            if (card.image) questionType = QuestionType.IMAGE;
+            else if (card.audio) questionType = QuestionType.AUDIO;
 
             // Determine answer type based on card properties
-            let answerType = "single";
+            let answerType = AnswerType.SINGLE;
             if (card.answerType) {
-                answerType = card.answerType;
+                answerType = toAnswerType(card.answerType);
             } else if (card.answers && Array.isArray(card.answers) && card.answers.length > 1) {
-                answerType = "multianswer";
+                answerType = AnswerType.MULTI_ANSWER;
             } else if (card.type === "multiplechoice") {
-                answerType = "multiplechoice";
+                answerType = AnswerType.MULTIPLE_CHOICE;
             }
 
             return {
@@ -142,8 +144,8 @@ export function mapCards(rawItems) {
                 scale: 1,
                 userAnswer: "",
                 answer: card.answer || "",
-                questionType: card.questionType || questionType,
-                answerType: card.answerType || answerType,
+                questionType: toQuestionType(card.questionType) || questionType,
+                answerType: toAnswerType(card.answerType) || answerType,
                 // Keep old type field for backward compatibility if needed
                 type: card.type || questionType
             };

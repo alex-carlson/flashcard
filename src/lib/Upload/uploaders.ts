@@ -8,6 +8,7 @@ import {
     type ItemAddedEventDetail
 } from './uploadBase';
 import { v4 as uuidv4 } from 'uuid';
+import { QuestionType, AnswerType } from '$lib/types/enums';
 
 // Specific upload data interfaces
 export interface ImageUploadData extends BaseUploadData {
@@ -60,6 +61,8 @@ export async function uploadData(item: ImageUploadData, uuid = uuidv4(), forceJp
         uuid,
         file: item.file,
         forceJpeg: forceJpg.toString(),
+        questionType: (item.questionType as QuestionType) || QuestionType.IMAGE,
+        answerType: (item.answerType as AnswerType) || AnswerType.SINGLE,
     };
 
     return baseUpload(formDataItem, {
@@ -74,7 +77,8 @@ export async function uploadData(item: ImageUploadData, uuid = uuidv4(), forceJp
 export async function uploadAudio(item: AudioUploadData) {
     const audioData = {
         ...item,
-        questionType: 'audio',
+        questionType: QuestionType.AUDIO,
+        answerType: item.answerType || AnswerType.SINGLE,
         id: item.uuid || uuidv4(),
         audio: item.videoId,
         answer: item.title,
@@ -96,6 +100,8 @@ export async function uploadQuestion(data: QuestionUploadData) {
         ...data,
         answer: data.answer ?? data.answers,
         uuid: uuidv4(),
+        questionType: (data.questionType as QuestionType) || QuestionType.TEXT,
+        answerType: (data.answerType as AnswerType) || AnswerType.SINGLE,
         author_id: undefined, // Will be overwritten by baseUpload with correct field name
     };
 
@@ -141,7 +147,7 @@ export {
 
 // Common upload handler factory for components
 export function createUploadHandler(
-    questionType: 'image' | 'audio' | 'question',
+    questionType: QuestionType,
     onSuccess?: (event: ItemAddedEventDetail) => void,
     focusSelector = '#question-input-question'
 ) {
@@ -149,19 +155,19 @@ export function createUploadHandler(
         let result;
 
         switch (questionType) {
-            case 'image':
+            case QuestionType.IMAGE:
                 result = await uploadData(item as ImageUploadData);
                 break;
-            case 'audio':
+            case QuestionType.AUDIO:
                 result = await uploadAudio(item as AudioUploadData);
                 break;
-            case 'question':
+            case QuestionType.TEXT:
                 result = await uploadQuestion(item as QuestionUploadData);
                 break;
         }
 
         if (result && onSuccess) {
-            const eventData = createItemAddedEvent(result, type);
+            const eventData = createItemAddedEvent(result, questionType);
             if (eventData) {
                 onSuccess(eventData);
             }

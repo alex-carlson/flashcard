@@ -13,7 +13,6 @@ function getCurrentUser() {
     return usr;
 }
 
-// Common helper to add user auth fields to FormData
 function addUserAuthToFormData(formData, usr, category) {
     formData.append('author', usr.username);
     formData.append('author_uuid', usr.id);
@@ -24,7 +23,6 @@ function addUserAuthToFormData(formData, usr, category) {
     }
 }
 
-// Common helper to add user auth fields to object data
 function addUserAuthToData(data, usr, category) {
     data.author = usr.username;
     data.author_uuid = usr.id;
@@ -128,37 +126,6 @@ export async function reorderItems(prevIndex, newIndex, data) {
         return result;
     } catch (error) {
         console.error('Error reordering items:', error);
-        return null;
-    }
-}
-
-export async function shuffleItems(data: { category: string; items: any[] }) {
-    try {
-        console.log('Shuffling items:', data);
-        const currentUser = getCurrentUser();
-        const items = [...data.items];
-        const shuffledItems = items.sort(() => Math.random() - 0.5);
-        console.log('Shuffling items:', { original: items, shuffled: shuffledItems });
-        const payload = {
-            category: data.category,
-            items: shuffledItems,
-            author_id: currentUser.public_id,
-        };
-
-        const result = await apiFetch('/items/reorder', 'POST', payload);
-        addToast({
-            message: 'Items shuffled successfully!',
-            type: 'success',
-            duration: 3000
-        });
-        return result;
-    } catch (error) {
-        console.error('Error shuffling items:', error);
-        addToast({
-            message: 'Failed to shuffle items. Please try again.',
-            type: 'error',
-            duration: 3000
-        });
         return null;
     }
 }

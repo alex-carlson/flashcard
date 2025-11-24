@@ -3,6 +3,7 @@ import { apiFetch } from '$lib/api/fetchdata';
 import { get } from 'svelte/store';
 import { user } from '$stores/user';
 import { addToast } from '$stores/toast';
+import { QuestionType, AnswerType } from '$lib/types/enums';
 
 // User interface for type safety
 interface User {
@@ -38,8 +39,8 @@ export interface BaseUploadData {
     answer?: string | string[];
     answers?: string[];
     type?: string;
-    questionType?: 'image' | 'text' | 'audio';
-    answerType?: 'single' | 'multiplechoice' | 'multianswer';
+    questionType?: QuestionType;
+    answerType?: AnswerType;
     extra?: string;
     [key: string]: unknown;
 }
