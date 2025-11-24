@@ -17,7 +17,6 @@
 	let isLoading = false;
 	let hasMoreResults = true;
 	let totalResults = 0;
-	let lastLoadTime = 0; // Track when last load occurred for 10s timeout
 
 	// Use searchOverride if it exists, otherwise use searchTerm
 	$: effectiveSearchTerm = searchOverride || searchTerm;
@@ -33,116 +32,7 @@
 		suggestions = [];
 		currentStartIndex = 1;
 		hasMoreResults = true;
-		lastLoadTime = 0;
 		previousFileType = fileType;
-	}
-
-	// Image validation function
-	async function validateImageAccess(url, timeout = 5000) {
-		return new Promise((resolve) => {
-			const img = new Image();
-			const timeoutId = setTimeout(() => {
-				resolve({
-					valid: false,
-					error: 'timeout',
-					message: 'Image load timed out'
-				});
-			}, timeout);
-
-			img.onload = () => {
-				clearTimeout(timeoutId);
-				resolve({
-					valid: true,
-					width: img.naturalWidth,
-					height: img.naturalHeight,
-					size: `${img.naturalWidth}x${img.naturalHeight}`
-				});
-			};
-
-			img.onerror = () => {
-				clearTimeout(timeoutId);
-				// Try to determine the type of error
-				fetch(url, { method: 'HEAD', mode: 'no-cors' })
-					.then(() => {
-						resolve({
-							valid: false,
-							error: 'cors',
-							message: 'Image blocked by CORS policy'
-						});
-					})
-					.catch(() => {
-						resolve({
-							valid: false,
-							error: 'access',
-							message: 'Image access forbidden or not found'
-						});
-					});
-			};
-
-			img.src = url;
-		});
-	}
-
-	// Enhanced validation with HEAD request
-	async function validateImageWithFetch(url) {
-		try {
-			const response = await fetch(url, {
-				method: 'HEAD',
-				mode: 'cors' // This will fail with CORS issues
-			});
-
-			if (!response.ok) {
-				return {
-					valid: false,
-					error: `http_${response.status}`,
-					message: `HTTP ${response.status}: ${response.statusText}`
-				};
-			}
-
-			const contentType = response.headers.get('content-type');
-			if (!contentType || !contentType.startsWith('image/')) {
-				return {
-					valid: false,
-					error: 'not_image',
-					message: 'URL does not point to an image'
-				};
-			}
-
-			return { valid: true, contentType };
-		} catch (error) {
-			// CORS or network error
-			return {
-				valid: false,
-				error: 'network',
-				message: error.message.includes('CORS') ? 'CORS policy blocks access' : 'Network error'
-			};
-		}
-	}
-
-	// Comprehensive validation combining both methods
-	async function comprehensiveValidation(url) {
-		const [fetchResult, imageResult] = await Promise.all([
-			validateImageWithFetch(url).catch(() => ({ valid: false, error: 'fetch_failed' })),
-			validateImageAccess(url)
-		]);
-
-		// If fetch validation passes, use it
-		if (fetchResult.valid) {
-			return { ...fetchResult, ...imageResult };
-		}
-
-		// If image validation passes but fetch failed, it might be a CORS issue
-		if (imageResult.valid && !fetchResult.valid) {
-			return {
-				...imageResult,
-				warning: 'CORS_WARNING',
-				warningMessage:
-					'Image loads in browser but may fail server-side upload due to CORS restrictions'
-			};
-		}
-
-		// Both failed
-		return fetchResult.error === 'network' ? fetchResult : imageResult;
 	}
 
 	export async function fetchSuggestions(append = false) {
@@ -154,7 +44,6 @@
 			currentStartIndex = 1;
 			hasMoreResults = true;
 			suggestions = [];
-			lastLoadTime = 0; // Reset timeout for new searches
 		}
 
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
@@ -196,9 +85,7 @@
 						title: item.title,
 						thumbnail: item.image.thumbnailLink,
 						url: item.link,
-						loaded: false, // Track if full image is loaded
-						validating: false, // Track validation state
-						validation: null // Store validation result
+						loaded: false // Track if full image is loaded
 					}));
 
 				if (append) {
@@ -226,46 +113,14 @@
 
 		isLoading = false;
 	}
-	async function handleAddImage(url, index) {
-		// Since we auto-validate and filter out warning images,
-		// we can directly dispatch for valid images
-		const suggestion = suggestions[index];
-
+	function handleAddImage(url, index) {
 		// Check if suggestion exists
-		if (!suggestion) {
+		if (!suggestions[index]) {
 			addToast({
 				type: 'error',
 				message: 'Invalid image selection. Please try again.'
 			});
 			return;
-		}
-
-		// If no validation yet, validate now
-		if (!suggestion.validation && !suggestion.validating) {
-			suggestion.validating = true;
-			suggestions = [...suggestions];
-
-			const validation = await comprehensiveValidation(url);
-			suggestion.validation = validation;
-			suggestion.validating = false;
-			suggestions = [...suggestions];
-		}
-
-		// Double-check validation state
-		if (suggestion.validation && !suggestion.validation.valid) {
-			addToast({
-				type: 'error',
-				message: `Cannot add image: ${suggestion.validation.message}`
-			});
-			return;
-		}
-
-		if (suggestion.validation && suggestion.validation.warning) {
-			addToast({
-				type: 'warning',
-				message: suggestion.validation.warningMessage,
-				duration: 8000
-			});
 		}
 
 		// Create proper data structure with src - let QuestionTypeForm handle answers
@@ -276,19 +131,6 @@
 		};
 
 		dispatch('addImage', imageData);
-	} // Auto-validate a single image
-	async function autoValidateImage(index) {
-		if (suggestions[index].validation || suggestions[index].validating) {
-			return; // Already validated or validating
-		}
-
-		suggestions[index].validating = true;
-		suggestions = [...suggestions];
-
-		const validation = await comprehensiveValidation(suggestions[index].url);
-		suggestions[index].validation = validation;
-		suggestions[index].validating = false;
-		suggestions = [...suggestions];
 	}
 
 	// Handle load more button click
@@ -333,50 +175,35 @@
 	<div class="scroll-wrapper">
 		<div class="suggestions-list">
 			{#each suggestions as suggestion, originalIndex}
-				{#if !suggestion.validation || (suggestion.validation.valid && !suggestion.validation.warning)}
-					<div class="suggestion-item">
-						<div class="image-container">
-							<img
-								src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
-								alt={suggestion.title}
-								loading="lazy"
-								on:load={async () => {
-									if (!suggestion.loaded && !suggestion.url.includes('nocookie')) {
-										const img = new window.Image();
-										img.src = suggestion.url;
-										img.onload = () => {
-											suggestions[originalIndex].loaded = true;
-											suggestions = [...suggestions];
-										};
-									}
-									// Auto-validate when image loads
-									autoValidateImage(originalIndex);
-								}}
-								on:error={(e) => {
-									// fallback to thumbnail if main image fails
-									suggestions[originalIndex].loaded = false;
-									suggestions = [...suggestions];
-									e.target.src = suggestion.thumbnail;
-									// Also auto-validate on error to mark as invalid
-									autoValidateImage(originalIndex);
-								}}
-							/>
-						</div>
-						<p class="suggestion-title">{suggestion.title}</p>
-						<div class="button-group">
-							<button
-								on:click={() => handleAddImage(suggestion.url, originalIndex)}
-								disabled={suggestion.validating}
-							>
-								{#if suggestion.validating}
-									Validating...
-								{:else}
-									Add
-								{/if}
-							</button>
-						</div>
+				<div class="suggestion-item">
+					<div class="image-container">
+						<img
+							src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
+							alt={suggestion.title}
+							loading="lazy"
+							on:load={() => {
+								if (!suggestion.loaded && !suggestion.url.includes('nocookie')) {
+									const img = new window.Image();
+									img.src = suggestion.url;
+									img.onload = () => {
+										suggestions[originalIndex].loaded = true;
+										suggestions = [...suggestions];
+									};
+								}
+							}}
+							on:error={(e) => {
+								// fallback to thumbnail if main image fails
+								suggestions[originalIndex].loaded = false;
+								suggestions = [...suggestions];
+								e.target.src = suggestion.thumbnail;
+							}}
+						/>
 					</div>
-				{/if}
+					<p class="suggestion-title">{suggestion.title}</p>
+					<div class="button-group">
+						<button on:click={() => handleAddImage(suggestion.url, originalIndex)}> Add </button>
+					</div>
+				</div>
 			{/each}
 		</div>
 		{#if suggestions.length > 0}
