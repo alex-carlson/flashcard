@@ -94,7 +94,7 @@
 		const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
 		if (nextCardIndex !== -1) {
 			const nextCard = $quizStore.cards[nextCardIndex];
-			if (nextCard.type === 'audio' && nextCard.audio) {
+			if (nextCard.questionType === 'audio' && nextCard.audio) {
 				try {
 					youtubePlayerService.loadVideoOnly(nextCard.audio);
 				} catch (error) {

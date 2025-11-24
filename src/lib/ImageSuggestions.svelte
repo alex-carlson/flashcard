@@ -153,7 +153,7 @@
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
 		let fullQuery = effectiveSearchTerm;
 		if (fileType === 'png') {
-			fullQuery += ' transparent isolated no background';
+			// fullQuery += ' transparent isolated no background';
 		}
 
 		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
@@ -263,8 +263,11 @@
 
 		// Create proper data structure with src and answers
 		const imageData = {
-			file: url, // For URL-based uploads
-			src: url // Set src to the image URL
+			file: url, // Pass URL string directly for URL-based uploads
+			src: url, // Set src to the image URL
+			type: 'image', // Specify the type
+			question: effectiveSearchTerm || '', // Add question field
+			url: url // Ensure url field is present for URL uploads
 		};
 
 		// Set answers based on searchTerm - this should contain the answer(s)
@@ -302,41 +305,9 @@
 		suggestions = [...suggestions];
 	}
 
-	// Batch validate all suggestions
-	async function validateAllSuggestions() {
-		for (let i = 0; i < suggestions.length; i++) {
-			if (!suggestions[i].validation && !suggestions[i].validating) {
-				suggestions[i].validating = true;
-				suggestions = [...suggestions];
-
-				const validation = await comprehensiveValidation(suggestions[i].url);
-				suggestions[i].validation = validation;
-				suggestions[i].validating = false;
-				suggestions = [...suggestions];
-
-				// Small delay to avoid overwhelming the server
-				await new Promise((resolve) => setTimeout(resolve, 100));
-			}
-		}
-	}
-
-	// Handle infinite scroll
-	function handleScroll(e) {
-		const { scrollTop, scrollHeight, clientHeight } = e.target;
-		const scrollThreshold = 100; // Load more when 100px from bottom
-		const currentTime = Date.now();
-		const timeoutDuration = 10000; // 10 seconds in milliseconds
-
-		if (
-			scrollHeight - scrollTop - clientHeight < scrollThreshold &&
-			hasMoreResults &&
-			!isLoading &&
-			suggestions.length > 0 &&
-			currentTime - lastLoadTime >= timeoutDuration
-		) {
-			lastLoadTime = currentTime;
-			fetchSuggestions(true); // append = true
-		}
+	// Handle load more button click
+	function loadMoreImages() {
+		fetchSuggestions(true); // append = true
 	}
 </script>
 
@@ -361,7 +332,7 @@
 		</div>
 		<button
 			class="search-btn"
-			on:click|preventDefault={fetchSuggestions}
+			on:click|preventDefault={() => fetchSuggestions(false)}
 			disabled={!effectiveSearchTerm || effectiveSearchTerm.length <= 3}
 		>
 			Show Results
@@ -370,18 +341,12 @@
 			<h6 class="mt-2">Showing results for {effectiveSearchTerm}</h6>
 		{/if}
 	</div>
-	<div class="scroll-wrapper" on:scroll={handleScroll}>
-		<div class="suggestion">
+	<div class="scroll-wrapper">
+		<div class="suggestions-list">
 			{#each suggestions as suggestion, originalIndex}
-				{#if !suggestion.validation?.warning}
-					<div
-						class="suggestion-item"
-						class:warning={suggestion.validation && suggestion.validation.warning}
-					>
-						<div
-							class="image-container"
-							class:invalid={suggestion.validation && !suggestion.validation.valid}
-						>
+				{#if !suggestion.validation || (suggestion.validation.valid && !suggestion.validation.warning)}
+					<div class="suggestion-item">
+						<div class="image-container">
 							<img
 								src={suggestion.loaded ? suggestion.url : suggestion.thumbnail}
 								alt={suggestion.title}
@@ -407,43 +372,15 @@
 									autoValidateImage(originalIndex);
 								}}
 							/>
-							{#if suggestion.validation}
-								<div class="validation-overlay">
-									{#if suggestion.validation.valid}
-										<span class="validation-icon valid">✓</span>
-										{#if suggestion.validation.size}
-											<span class="image-info">{suggestion.validation.size}</span>
-										{/if}
-									{:else}
-										<span class="validation-icon invalid">✗</span>
-										<span class="error-info">{suggestion.validation.error}</span>
-									{/if}
-								</div>
-							{:else if suggestion.validating}
-								<div class="validation-overlay">
-									<span class="validation-icon validating">⟳</span>
-								</div>
-							{/if}
 						</div>
 						<p class="suggestion-title">{suggestion.title}</p>
-						{#if suggestion.validation && !suggestion.validation.valid}
-							<p class="error-message">{suggestion.validation.message}</p>
-						{/if}
-						{#if suggestion.validation && suggestion.validation.warning}
-							<p class="warning-message">{suggestion.validation.warningMessage}</p>
-						{/if}
 						<div class="button-group">
 							<button
 								on:click={() => handleAddImage(suggestion.url, originalIndex)}
 								disabled={suggestion.validating}
-								class:warning={suggestion.validation && suggestion.validation.warning}
 							>
 								{#if suggestion.validating}
 									Validating...
-								{:else if suggestion.validation && !suggestion.validation.valid}
-									Cannot Add
-								{:else if suggestion.validation && suggestion.validation.warning}
-									Add (Risky)
 								{:else}
 									Add
 								{/if}
@@ -453,15 +390,22 @@
 				{/if}
 			{/each}
 		</div>
-		{#if isLoading}
-			<div class="loading-indicator">
-				<div class="loading-spinner"></div>
-				<p>Loading more images...</p>
-			</div>
-		{/if}
-		{#if suggestions.length > 0 && !hasMoreResults}
-			<div class="end-message">
-				<p>No more results available (showing {suggestions.length} images)</p>
+		{#if suggestions.length > 0}
+			<div class="load-more-section">
+				{#if hasMoreResults}
+					<button class="load-more-btn" on:click={loadMoreImages} disabled={isLoading}>
+						{#if isLoading}
+							<div class="loading-spinner-small"></div>
+							Loading...
+						{:else}
+							More
+						{/if}
+					</button>
+				{:else}
+					<div class="end-message">
+						<p>No more results available (showing {suggestions.length} images)</p>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -486,26 +430,6 @@
 		border-radius: 4px;
 	}
 
-	.search-btn,
-	.validate-btn {
-		background: #007bff;
-		color: white;
-		border: none;
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.validate-btn {
-		background: #28a745;
-	}
-
-	.search-btn:disabled,
-	.validate-btn:disabled {
-		background: #6c757d;
-		cursor: not-allowed;
-	}
-
 	.scroll-wrapper {
 		max-height: 75vh;
 		overflow-y: auto;
@@ -513,23 +437,12 @@
 		width: 100%;
 	}
 
-	.suggestion {
-		display: grid;
-		grid-template-columns: 1fr; /* 1x1 on mobile */
+	.suggestions-list {
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 		width: 100%;
 		box-sizing: border-box;
-		grid-auto-rows: min-content;
-		align-items: start;
-	}
-
-	/* 4x4 grid on desktop/tablet */
-	@media (min-width: 768px) {
-		.suggestion {
-			grid-template-columns: repeat(4, 1fr);
-			grid-auto-rows: min-content;
-			grid-template-rows: none; /* Let rows auto-size */
-		}
 	}
 
 	.suggestion-item {
@@ -542,29 +455,52 @@
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
-		align-self: start;
-		justify-self: stretch;
+		gap: 1rem;
 	}
 
-	.suggestion-item.invalid {
-		border-color: #dc3545;
-		background-color: #f8f9fa;
-	}
-
-	.suggestion-item.warning {
-		border-color: #ffc107;
-		background-color: #fff3cd;
+	/* Horizontal layout on desktop */
+	@media (min-width: 768px) {
+		.suggestion-item {
+			flex-direction: row;
+			align-items: flex-start;
+		}
 	}
 
 	.image-container {
 		position: relative;
-		margin-bottom: 0.5rem;
+		flex-shrink: 0;
+		width: 100%;
+		max-width: 400px;
+		height: 400px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #f8f9fa;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	/* Desktop: fixed width, mobile: constrained width */
+	@media (min-width: 768px) {
+		.image-container {
+			width: 400px;
+		}
+	}
+
+	.suggestion-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		min-height: 120px;
 	}
 
 	.suggestion-item img {
-		width: 100%;
-		max-height: 400px;
-		object-fit: cover;
+		max-width: 100%;
+		max-height: 100%;
+		width: auto;
+		height: auto;
+		object-fit: contain;
 		border-radius: 4px;
 	}
 
@@ -591,10 +527,6 @@
 		color: #28a745;
 	}
 
-	.validation-icon.invalid {
-		color: #dc3545;
-	}
-
 	.validation-icon.validating {
 		color: #ffc107;
 		animation: spin 1s linear infinite;
@@ -609,8 +541,7 @@
 		}
 	}
 
-	.image-info,
-	.error-info {
+	.image-info {
 		color: white;
 		font-size: 10px;
 	}
@@ -625,23 +556,10 @@
 		-webkit-box-orient: vertical;
 	}
 
-	.error-message {
-		color: #dc3545;
-		font-size: 12px;
-		margin: 0.25rem 0;
-		font-style: italic;
-	}
-
-	.warning-message {
-		color: #856404;
-		font-size: 12px;
-		margin: 0.25rem 0;
-		font-style: italic;
-	}
-
 	.button-group {
 		display: flex;
 		gap: 0.5rem;
+		margin-top: auto;
 	}
 
 	.button-group button {
@@ -659,47 +577,49 @@
 		color: white;
 	}
 
-	.button-group button:first-child.warning {
-		background: #ffc107;
-		color: #212529;
-	}
-
 	.button-group button:first-child:disabled {
 		background: #6c757d;
 		cursor: not-allowed;
 	}
 
-	.validate-single {
-		background: #17a2b8;
-		color: white;
-	}
-
-	.validate-single:hover {
-		background: #138496;
-	}
-
-	.image-container.invalid {
-		opacity: 0.5;
-		transition: opacity 0.3s ease;
-	}
-
-	.image-container.invalid img {
-		filter: grayscale(50%);
-	}
-
-	.loading-indicator {
+	.load-more-section {
 		display: flex;
-		flex-direction: column;
-		align-items: center;
+		justify-content: center;
 		padding: 2rem;
-		gap: 1rem;
 	}
 
-	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 4px solid #f3f3f3;
-		border-top: 4px solid #007bff;
+	.load-more-btn {
+		padding: 1rem 2rem;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: 500;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 200px;
+		justify-content: center;
+	}
+
+	.load-more-btn:hover:not(:disabled) {
+		background: #0056b3;
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+	}
+
+	.load-more-btn:disabled {
+		background: #6c757d;
+		cursor: not-allowed;
+		transform: none;
+		box-shadow: none;
+	}
+
+	.loading-spinner-small {
+		width: 16px;
+		height: 16px;
+		border: 2px solid transparent;
+		border-top: 2px solid currentColor;
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}

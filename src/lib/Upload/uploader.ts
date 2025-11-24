@@ -211,6 +211,8 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 supplemental: item.supplemental_text || item.supplemental,
                 extra: item.extra || null,
                 type: item.type,
+                questionType: item.questionType,
+                answerType: item.answerType,
                 category: item.category,
                 // Add existing item ID for server validation during updates
                 existingItemId: item.existingItemId,
@@ -261,6 +263,12 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
         if (item.type) {
             formData.append('type', item.type);
         }
+        if (item.questionType) {
+            formData.append('questionType', item.questionType);
+        }
+        if (item.answerType) {
+            formData.append('answerType', item.answerType);
+        }
         // Add existing item ID for server validation during updates
         if (item.existingItemId) {
             formData.append('existingItemId', item.existingItemId);
@@ -282,6 +290,8 @@ export async function uploadAudio(item) {
         const formData = new FormData();
         addUserAuthToFormData(formData, usr, item.category);
         formData.append('type', 'audio');
+        formData.append('questionType', item.questionType || 'audio');
+        formData.append('answerType', item.answerType || 'single');
         formData.append('id', uuid);
         formData.append('audio', item.videoId);
         formData.append('title', item.title);
@@ -305,6 +315,8 @@ export async function uploadQuestion(data) {
             answer: data.answer ?? data.answers,
             category: data.category,
             type: data.type,
+            questionType: data.questionType || 'text',
+            answerType: data.answerType || 'single',
         }, usr, data.category);
 
         if (data.numRequired != null) {

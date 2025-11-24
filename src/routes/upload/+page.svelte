@@ -2,14 +2,10 @@
 	import { user } from '$stores/user';
 	import Collections from '$lib/Collections.svelte';
 	import FileUpload from '$lib/Upload/FileUpload.svelte';
-	import AudioUploader from '$lib/Upload/AudioUploader.svelte';
-	import ImageSuggestions from '$lib/ImageSuggestions.svelte';
 	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
 	import { fetchUserCollections, fetchCollectionById } from '$lib/api/collections';
 	import {
 		uploadThumbnail,
-		uploadQuestion,
-		uploadAudio,
 		uploadData,
 		removeItem,
 		createCollection,
@@ -20,9 +16,6 @@
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
 	import Cropper from '$lib/Upload/Cropper.svelte';
-	import TabNavigation from '$lib/components/TabNavigation.svelte';
-	import { Fa } from 'svelte-fa';
-	import { faList } from '@fortawesome/free-solid-svg-icons';
 	import QuestionTypeForm from '$lib/components/QuestionTypeForm.svelte';
 	let collection = null;
 	let questionType = 'Image';
@@ -30,7 +23,6 @@
 	let editableItemId = null;
 	let isReordering = false;
 	let collections = [];
-	let showImageSuggestions = false;
 	let showCropper = false;
 	let item = {};
 	let tempCategory = '';
@@ -39,13 +31,10 @@
 	let isShuffle = false;
 	let answerInput; // Reference to the answer input field
 	let questionInput; // Reference to the question input field
-	let thumbnailUploader; // Reference to the thumbnail FileUpload component
-	let itemUploader; // Reference to the item FileUpload component
+	let thumbnailUploader; // Reference to the thumbnail FileUpload
 	let suggestedTags = [];
 
 	let tagDebounceTimeout;
-
-	let imageSuggestionFileType = 'any';
 
 	$: if ($user?.public_id) {
 		console.log('User public_id:', $user.public_id);

@@ -9,7 +9,8 @@
 	import { faFlag } from '@fortawesome/free-solid-svg-icons';
 
 	export let item = {
-		type: 'text',
+		answerType: 'single',
+		questionType: 'text',
 		question: '',
 		answer: '',
 		userAnswer: '',
@@ -40,7 +41,7 @@
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
 
-		if (item.type === 'multiplechoice') {
+		if (item.answerType === 'multiplechoice') {
 			userAnswers[0] = e.target.value;
 			multipleChoiceSelected = true;
 			// Lock in immediately for multiple choice to show feedback
@@ -60,7 +61,7 @@
 		validateAnswer();
 
 		// Lock in if all required answers are correct for multi-answer questions
-		if (item.type === 'multianswer' && isValidated) {
+		if (item.answerType === 'multianswer' && isValidated) {
 			isLockedIn = true;
 			item.revealed = true; // Mark as completed
 
@@ -75,11 +76,11 @@
 	}
 
 	function isCorrect() {
-		if (item.type === 'multiplechoice') {
+		if (item.answerType === 'multiplechoice') {
 			// For multiple choice, check if selected answer matches the correct one
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
 			return areStringsClose(userAnswers[0], correctAnswer);
-		} else if (item.type === 'multianswer') {
+		} else if (item.answerType === 'multianswer') {
 			// For multi-answer, check how many correct answers the user provided
 			const req = item.numRequired ?? (item.answers ? item.answers.length : 1);
 			const correctAnswers = item.answers || [item.answer];
@@ -105,11 +106,11 @@
 	}
 
 	function validateAnswer() {
-		if (item.type === 'multiplechoice') {
+		if (item.answerType === 'multiplechoice') {
 			// For multiple choice, just validate if an option is selected
 			// Event dispatching is handled in handleInput
 			isValidated = userAnswers[0]?.trim() && isCorrect();
-		} else if (item.type === 'multianswer') {
+		} else if (item.answerType === 'multianswer') {
 			const correctAnswers = item.answers || [item.answer];
 			const req = item.numRequired ?? correctAnswers.length;
 			const filledAnswers = userAnswers.filter((a) => a && a.trim());
@@ -158,7 +159,7 @@
 	}
 
 	function getInputClass(idx) {
-		if (item.type === 'multiplechoice') {
+		if (item.answerType === 'multiplechoice') {
 			// For multiple choice, we don't need input styling since we use radio buttons
 			return '';
 		}
@@ -197,7 +198,9 @@
 
 {#if !item.hidden}
 	<div
-		class="card {item.revealed ? 'revealed' : ''} {item.incorrect ? 'incorrect' : ''} {item.type}"
+		class="card {item.revealed ? 'revealed' : ''} {item.incorrect
+			? 'incorrect'
+			: ''} {item.questionType} {item.answerType}"
 		data-card-index={i}
 		role="button"
 		tabindex="-1"
@@ -218,8 +221,8 @@
 								window.open(e.currentTarget.href, '_blank', 'noopener,noreferrer');
 							}}
 						>
-						{item.title}
-					</a>
+							{item.title}
+						</a>
 					</div>
 				</div>
 			{/if}
@@ -236,7 +239,7 @@
 			/>
 		{/if}
 
-		{#if item.type === 'text' || item.question}
+		{#if item.questionType === 'text' || item.question}
 			<h2 class="p-3">{item.question || 'Loading'}</h2>
 		{/if}
 
@@ -270,9 +273,9 @@
 					style="transform: scale(1);"
 				>
 					{#if item.revealed}
-						{#if item.type === 'multiplechoice'}
+						{#if item.answerType === 'multiplechoice'}
 							{item.answers[item.correctAnswerIndex || 0]}
-						{:else if item.type === 'multianswer'}
+						{:else if item.answerType === 'multianswer'}
 							{userAnswers.filter((a) => a?.trim()).join(', ') || 'No answers provided'}
 						{:else}
 							{Array.isArray(item.answer) ? item.answer[0] : item.answer}
@@ -287,8 +290,8 @@
 				<div class="input-container">
 					{#if !item.revealed && !isPartyMode}
 						<button
-							class="give-up-btn small {item.type === 'multiplechoice' ||
-							item.type === 'multianswer'
+							class="give-up-btn small {item.answerType === 'multiplechoice' ||
+							item.answerType === 'multianswer'
 								? 'floating'
 								: ''}"
 							on:click|stopPropagation={handleGiveUp}
@@ -297,7 +300,7 @@
 							<Fa icon={faFlag} />
 						</button>
 					{/if}
-					{#if item.type === 'multiplechoice'}
+					{#if item.answerType === 'multiplechoice'}
 						<!-- Multiple Choice - Radio buttons -->
 						<div class="multiple-choice-inputs">
 							{#each item.answers || [] as choice, idx}
@@ -316,7 +319,7 @@
 								</button>
 							{/each}
 						</div>
-					{:else if item.type === 'multianswer'}
+					{:else if item.answerType === 'multianswer'}
 						<!-- Multi-Answer - Multiple text inputs -->
 						<div class="multi-answer-inputs">
 							{#each Array(item.numRequired || (item.answers ? item.answers.length : 1)) as _, idx}

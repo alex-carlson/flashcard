@@ -17,7 +17,8 @@ interface Card {
     hidden: boolean;
     scale: number;
     userAnswer: string;
-    type: 'image' | 'text' | 'audio' | 'unknown' | 'single' | 'multiplechoice' | 'multianswer';
+    questionType: 'image' | 'text' | 'audio';
+    answerType: 'single' | 'multiplechoice' | 'multianswer';
     answerer?: string;
     incorrect?: boolean;
     isCorrect?: boolean; // Whether the user's answer was correct

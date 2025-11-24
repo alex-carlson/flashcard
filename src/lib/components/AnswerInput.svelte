@@ -11,8 +11,10 @@
 
 	// Initialize answer mode based on current item state
 	$: {
-		if (item.answers && item.answers.length > 0) {
-			answerMode = item.isMultipleChoice ? 'multiple-choice' : 'multi-answer';
+		if (item.questionType === 'multiple-choice' || item.correctAnswerIndex !== undefined) {
+			answerMode = 'multiple-choice';
+		} else if (item.answers && item.answers.length > 0) {
+			answerMode = 'multi-answer';
 		} else {
 			answerMode = 'single';
 		}
@@ -27,7 +29,7 @@
 				delete item.answers;
 				delete item.isMultipleChoice;
 				delete item.numRequired;
-				item.type = 'single';
+				item.answerType = 'single';
 				break;
 			case 'multiple-choice':
 				// Convert to multiple choice (one correct answer from multiple options)
@@ -36,7 +38,7 @@
 				}
 				item.isMultipleChoice = true;
 				item.numRequired = 1;
-				item.type = 'multiplechoice';
+				item.answerType = 'multiplechoice';
 				break;
 			case 'multi-answer':
 				// Convert to multi-answer (multiple correct answers)
@@ -47,7 +49,7 @@
 				if (!item.numRequired) {
 					item.numRequired = item.answers.length;
 				}
-				item.type = 'multianswer';
+				item.answerType = 'multianswer';
 				break;
 		}
 	}
@@ -74,11 +76,11 @@
 <div class="form-group white">
 	<div class="d-flex justify-content-between align-items-center mb-2">
 		<label for="{idPrefix}-0">{label}</label>
-        <select
-            class="form-select form-select-sm"
-            bind:value={answerMode}
-            on:change={handleModeChange}
-            style="width: auto; min-width: 150px; background-color: white; color: #343a40;"
+		<select
+			class="form-select form-select-sm"
+			bind:value={answerMode}
+			on:change={handleModeChange}
+			style="width: auto; min-width: 150px; background-color: white; color: #343a40;"
 		>
 			<option value="single">Single Answer</option>
 			<option value="multiple-choice">Multiple Choice</option>
@@ -99,7 +101,9 @@
 	{:else if answerMode === 'multiple-choice'}
 		<div class="multiple-choice-container">
 			<div class="mb-2">
-				<small class="text-muted">Enter multiple options. Mark the correct answer with a checkmark.</small>
+				<small class="text-muted"
+					>Enter multiple options. Mark the correct answer with a checkmark.</small
+				>
 			</div>
 			{#each item.answers as answer, index}
 				<div class="input-group mb-2">
@@ -135,18 +139,17 @@
 					{/if}
 				</div>
 			{/each}
-			<button
-				type="button"
-				class="btn btn-outline-primary btn-sm"
-				on:click={addAnswer}
-			>
+			<button type="button" class="btn btn-outline-primary btn-sm" on:click={addAnswer}>
 				Add Option
 			</button>
 		</div>
 	{:else if answerMode === 'multi-answer'}
 		<div class="multi-answer-container">
 			<div class="mb-2">
-				<small class="text-muted">Enter multiple correct answers. Players need to answer the defined number of correct options</small>
+				<small class="text-muted"
+					>Enter multiple correct answers. Players need to answer the defined number of correct
+					options</small
+				>
 			</div>
 			{#each item.answers as answer, index}
 				<div class="input-group mb-2">
@@ -170,11 +173,7 @@
 				</div>
 			{/each}
 			<div class="multi-answer-controls d-flex gap-2 align-items-center">
-				<button
-					type="button"
-					class="btn btn-outline-primary btn-sm"
-					on:click={addAnswer}
-				>
+				<button type="button" class="btn btn-outline-primary btn-sm" on:click={addAnswer}>
 					Add Answer
 				</button>
 				{#if item.answers.length > 1}
@@ -234,7 +233,7 @@
 		border-color: #ced4da;
 	}
 
-	.input-group-text input[type="radio"] {
+	.input-group-text input[type='radio'] {
 		margin: 0;
 	}
 

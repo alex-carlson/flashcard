@@ -38,6 +38,8 @@ export interface BaseUploadData {
     answer?: string | string[];
     answers?: string[];
     type?: string;
+    questionType?: 'image' | 'text' | 'audio';
+    answerType?: 'single' | 'multiplechoice' | 'multianswer';
     extra?: string;
     [key: string]: unknown;
 }

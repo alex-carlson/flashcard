@@ -32,7 +32,7 @@
 		const imageUrls = [
 			...new Set([
 				...cards
-					.filter((card) => card.type === 'image' && card.imageUrl)
+					.filter((card) => card.questionType === 'image' && card.imageUrl)
 					.map((card) => card.imageUrl)
 			])
 		];
@@ -63,9 +63,6 @@
 					} else {
 						failedImages++;
 					}
-					console.log(
-						`Image ${imagePreloadCount}/${totalImages} ${loaded ? 'loaded' : 'failed'}: ${url}`
-					);
 					resolve(loaded);
 				};
 

@@ -74,7 +74,7 @@ export async function uploadData(item: ImageUploadData, uuid = uuidv4(), forceJp
 export async function uploadAudio(item: AudioUploadData) {
     const audioData = {
         ...item,
-        type: 'audio',
+        questionType: 'audio',
         id: item.uuid || uuidv4(),
         audio: item.videoId,
         answer: item.title,
@@ -141,14 +141,14 @@ export {
 
 // Common upload handler factory for components
 export function createUploadHandler(
-    type: 'image' | 'audio' | 'question',
+    questionType: 'image' | 'audio' | 'question',
     onSuccess?: (event: ItemAddedEventDetail) => void,
     focusSelector = '#question-input-question'
 ) {
     return async (item: BaseUploadData) => {
         let result;
 
-        switch (type) {
+        switch (questionType) {
             case 'image':
                 result = await uploadData(item as ImageUploadData);
                 break;

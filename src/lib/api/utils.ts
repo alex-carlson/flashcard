@@ -118,14 +118,20 @@ export function mapCards(rawItems) {
     return rawItems
         .filter((card) => card != null)
         .map((card) => {
-            const hasImage = !!card.image;
-            const hasText = !!card.question;
-            const hasAudio = !!card.audio;
+            // Determine question type based on content
+            let questionType = "text";
+            if (card.image) questionType = "image";
+            else if (card.audio) questionType = "audio";
 
-            let type = "unknown";
-            if (hasImage) type = "image";
-            else if (hasText) type = "text";
-            else if (hasAudio) type = "audio";
+            // Determine answer type based on card properties
+            let answerType = "single";
+            if (card.answerType) {
+                answerType = card.answerType;
+            } else if (card.answers && Array.isArray(card.answers) && card.answers.length > 1) {
+                answerType = "multianswer";
+            } else if (card.type === "multiplechoice") {
+                answerType = "multiplechoice";
+            }
 
             return {
                 ...card,
@@ -136,7 +142,10 @@ export function mapCards(rawItems) {
                 scale: 1,
                 userAnswer: "",
                 answer: card.answer || "",
-                type: card.type || type, // Use database type if available, otherwise fallback to inferred type
+                questionType: card.questionType || questionType,
+                answerType: card.answerType || answerType,
+                // Keep old type field for backward compatibility if needed
+                type: card.type || questionType
             };
         });
 }

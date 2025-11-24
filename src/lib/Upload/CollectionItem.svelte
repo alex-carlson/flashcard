@@ -72,6 +72,12 @@
 			if (item.title !== undefined && item.title !== null) {
 				editData.title = item.title;
 			}
+			if (item.questionType !== undefined && item.questionType !== null) {
+				editData.questionType = item.questionType;
+			}
+			if (item.answerType !== undefined && item.answerType !== null) {
+				editData.answerType = item.answerType;
+			}
 
 			console.log('Saving edit with data:', editData);
 
@@ -144,7 +150,10 @@
 				// Send the existing item ID for server validation
 				existingItemId: item.id,
 				// Flag this as an update operation
-				isUpdate: true
+				isUpdate: true,
+				// Include type information
+				questionType: item.questionType || 'image',
+				answerType: item.answerType || 'single'
 			};
 
 			console.log('Temporary item for upload with existing ID validation:', tempItem);
@@ -282,8 +291,8 @@
 		</div>
 	{:else}
 		<div class="vertical">
-			{#if item.question != null}
-				<span class="question">{item.question}</span>
+			{#if item.file || item.image || item.questionType == 'image'}
+				<img class="preview" src={item.file || item.image} alt="Preview" />
 			{:else if item.audio != null}
 				<div class="audio">
 					{#if item.thumbnail}
@@ -297,6 +306,7 @@
 				</div>
 			{:else}
 				<img class="preview" src={item.file || item.image} alt="Preview" />
+				<span class="question">{item.question}</span>
 			{/if}
 			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		</div>

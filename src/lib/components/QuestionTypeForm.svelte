@@ -64,13 +64,21 @@
 			});
 			return;
 		}
-		const newItems = await uploadData(item, undefined, false);
+		const newItems = await uploadData(
+			{
+				...item,
+				questionType: 'image',
+				answerType: item.answerType || 'single'
+			},
+			undefined,
+			false
+		);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,
 				itemsLength: newItems[0].items.length,
-				type: 'image'
+				questionType: 'image'
 			});
 
 			addToast({
@@ -90,15 +98,19 @@
 	}
 
 	async function handleAudioUpload() {
-		// Add type property for audio uploads
-		const audioItem = { ...item, type: 'audio' };
+		// Add type properties for audio uploads
+		const audioItem = {
+			...item,
+			questionType: 'audio',
+			answerType: item.answerType || 'single'
+		};
 		const newItems = await uploadAudio(audioItem);
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,
 				itemsLength: newItems[0].items.length,
-				type: 'audio'
+				questionType: 'audio'
 			});
 
 			addToast({
@@ -124,13 +136,17 @@
 			return;
 		}
 		console.log('Uploading question:', item);
-		const newItems = await uploadQuestion(item);
+		const newItems = await uploadQuestion({
+			...item,
+			questionType: 'text',
+			answerType: item.answerType || 'single'
+		});
 		if (newItems) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
 				items: newItems[0].items,
 				itemsLength: newItems[0].items.length,
-				type: 'question'
+				questionType: 'text'
 			});
 
 			addToast({
@@ -152,7 +168,7 @@
 	}
 </script>
 
-<div class="question-type-form w-100">
+<div class="question-type-form w-100 px-2">
 	<!-- Navigation Tabs -->
 	<nav class="nav nav-tabs">
 		<button
@@ -214,7 +230,15 @@
 								bind:searchTerm
 								bind:suggestions={imageSuggestions}
 								on:addImage={(e) => {
-									item.file = e.detail;
+									// Extract just the URL string for proper URL upload handling
+									item.file = e.detail.file;
+									// Copy other properties that might be needed
+									if (e.detail.answer) item.answer = e.detail.answer;
+									if (e.detail.answers) item.answers = e.detail.answers;
+									if (e.detail.question) item.question = e.detail.question;
+									if (e.detail.src) item.src = e.detail.src;
+									if (e.detail.questionType) item.questionType = e.detail.questionType;
+									if (e.detail.answerType) item.answerType = e.detail.answerType;
 								}}
 							/>
 						{/if}
@@ -259,13 +283,6 @@
 </div>
 
 <style>
-	.question-type-form {
-		background: white;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
 	.nav-tabs {
 		border-bottom: 1px solid #dee2e6;
 		margin-bottom: 20px;
