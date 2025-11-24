@@ -319,17 +319,17 @@
 			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		</div>
 		<div class="answer-field vertical">
-			{#if item.answers && item.answers.length > 0}
-				{#if item.isMultipleChoice}
-					<div class="answer-display">
-						<small class="text-muted">Multiple Choice:</small>
-						{#each item.answers as answer, index}
-							<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
-								{index + 1}. {answer}
-								{#if item.correctAnswerIndex === index}✓{/if}
-							</span>
-						{/each}
-					</div>
+			<div class="answer-display">
+				{#if item.answerType === AnswerType.SINGLE}
+					<span>{item.answer}</span>
+				{:else if item.answerType === AnswerType.MULTIPLE_CHOICE}
+					<small class="text-muted">Multiple Choice:</small>
+					{#each item.answers as answer, index}
+						<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
+							{index + 1}. {answer}
+							{#if item.correctAnswerIndex === index}✓{/if}
+						</span>
+					{/each}
 				{:else}
 					<div class="answer-display">
 						<small class="text-muted"
@@ -340,9 +340,7 @@
 						{/each}
 					</div>
 				{/if}
-			{:else}
-				<span>{item.answer}</span>
-			{/if}
+			</div>
 			<span>{item.extra}</span>
 		</div>
 		{#if isReordering}
