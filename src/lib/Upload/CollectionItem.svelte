@@ -85,9 +85,23 @@
 				item.questionType !== ''
 			) {
 				editData.questionType = item.questionType;
+			} else {
+				if (item.image) {
+					editData.questionType = QuestionType.IMAGE;
+				} else if (item.audio) {
+					editData.questionType = QuestionType.AUDIO;
+				} else {
+					editData.questionType = QuestionType.TEXT;
+				}
 			}
 			if (item.answerType !== undefined && item.answerType !== null && item.answerType !== '') {
 				editData.answerType = item.answerType;
+			}
+			if (item.numRequired !== undefined && item.numRequired !== null && item.numRequired !== '') {
+				editData.numRequired = item.numRequired;
+			}
+			if (item.correctAnswerIndex !== undefined && item.correctAnswerIndex !== null) {
+				editData.correctAnswerIndex = item.correctAnswerIndex;
 			}
 
 			// Use the saveEdit function from uploader.js
