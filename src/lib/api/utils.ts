@@ -72,7 +72,7 @@ export function areStringsClose(a, b, threshold = 1) {
             .trim()
             .toLowerCase()
             .replace(/\b(the|and|a|an|of|in|on|at|to|for|with|by|from|as|is|are|was|were|be|been|has|have|had|do|does|did|but|or|nor|so|yet|if|then|else|when|while|about|into|over|after|before|between|under|again|further|once)\b/gi, "") // remove common stopwords
-            .replace(/[^\w\s]|_/g, "") // remove all punctuation
+            .replace(/[^\w\s]|_|[-–—]/g, "") // remove all punctuation, underscores, hyphens, and em/en dashes
             .replace(/\s+/g, "") // remove all spaces
 
     a = preprocess(a);
@@ -145,6 +145,7 @@ function normalizeRoman(str) {
         return value ?? match;
     });
 }
+
 
 
 import { QuestionType, AnswerType, toQuestionType, toAnswerType } from '$lib/types/enums';

@@ -101,10 +101,12 @@
 
 			return matchedCorrectAnswers.size >= req;
 		} else {
+			// Check both userAnswers[0] and item.userAnswer for single answer type
+			const userInput = userAnswers[0] || item.userAnswer || '';
 			if (Array.isArray(item.answer)) {
-				return item.answer.some((ans) => areStringsClose(userAnswers[0], ans));
+				return item.answer.some((ans) => areStringsClose(userInput, ans));
 			}
-			return areStringsClose(userAnswers[0], item.answer);
+			return areStringsClose(userInput, item.answer);
 		}
 	}
 
@@ -129,7 +131,9 @@
 				correctFilledAnswers.length === filledAnswers.length &&
 				correctFilledAnswers.length >= req;
 		} else {
-			isValidated = userAnswers[0]?.trim() && isCorrect();
+			// Check both userAnswers[0] and item.userAnswer for validation
+			const userInput = userAnswers[0] || item.userAnswer || '';
+			isValidated = userInput.trim() && isCorrect();
 			// if is valid, lock in the answer
 			if (isValidated) {
 				isLockedIn = true;
@@ -139,12 +143,12 @@
 				dispatch('correctAnswer', {
 					index: i,
 					answer: Array.isArray(item.answer) ? item.answer[0] : item.answer,
-					userAnswer: userAnswers[0],
+					userAnswer: userInput,
 					isCorrect: true
 				}); // select the next input, or if there isn't one, search the whole document for the next input
 				setTimeout(() => {
 					const inputs = Array.from(document.querySelectorAll('input, textarea'));
-					const currentInput = inputs.find((input) => input.value === userAnswers[0]);
+					const currentInput = inputs.find((input) => input.value === userInput);
 					if (currentInput) {
 						const currentIndex = inputs.indexOf(currentInput);
 						if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
