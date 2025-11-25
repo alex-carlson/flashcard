@@ -210,6 +210,7 @@
 						{onCardLoad}
 						{toggleReveal}
 						{isPartyMode}
+						isPractice={practiceMode}
 						updateCards={() => {}}
 						on:correctAnswer={onCorrectAnswer}
 						on:giveUp={(e) => {

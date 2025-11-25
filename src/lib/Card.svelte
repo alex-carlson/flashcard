@@ -8,6 +8,7 @@
 	import { QuestionType, AnswerType } from '$lib/types/enums';
 	import Fa from 'svelte-fa';
 	import { faFlag } from '@fortawesome/free-solid-svg-icons';
+	import Hint from './components/quiz/Hint.svelte';
 
 	export let item = {
 		answerType: AnswerType.SINGLE,
@@ -27,6 +28,7 @@
 	export let toggleReveal = () => {};
 	export let updateCards = () => {};
 	export let isPartyMode = false;
+	export let isPractice = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -353,9 +355,18 @@
 							type="text"
 							class={getInputClass(0)}
 							placeholder="Enter your answer"
-							value={userAnswers[0] || ''}
+							bind:value={userAnswers[0]}
 							on:input={(e) => handleInput(0, e)}
 						/>
+						{#if isPractice && !isPartyMode}
+							<Hint
+								answer={item.answer}
+								on:reveal={(e) => {
+									userAnswers[0] = e.detail.revealedAnswer;
+									validateAnswer();
+								}}
+							/>
+						{/if}
 					{/if}
 				</div>
 			{:else}

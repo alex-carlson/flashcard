@@ -309,12 +309,21 @@
 					class="btn btn-primary"
 					on:click={async () => {
 						const result = await createCollection(tempCategory);
-						if (result && result.length > 0) {
+						if (result) {
 							await loadCollections();
-							// Find the new collection by id and set it
-							const newCol = result[0];
-							collection = collections.find((c) => c.id === newCol.id) || newCol;
-							setCollection(newCol.id);
+							// Handle both array and single object responses
+							const newCol = Array.isArray(result) ? result[0] : result;
+							if (newCol && newCol.id) {
+								// Find the collection in the loaded collections or use the returned data
+								collection = collections.find((c) => c.id === newCol.id) || newCol;
+								setCollection(newCol.id);
+							} else {
+								console.error('Invalid collection response:', result);
+								addToast({
+									type: 'error',
+									message: 'Collection created but failed to load. Please refresh the page.'
+								});
+							}
 						}
 					}}
 				>
