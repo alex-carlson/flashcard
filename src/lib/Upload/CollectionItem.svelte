@@ -94,9 +94,21 @@
 					editData.questionType = QuestionType.TEXT;
 				}
 			}
+
 			if (item.answerType !== undefined && item.answerType !== null && item.answerType !== '') {
 				editData.answerType = item.answerType;
+			} else {
+				if (item.answers) {
+					if (item.correctAnswerIndex !== undefined && item.correctAnswerIndex !== null) {
+						editData.answerType = AnswerType.MULTIPLE_CHOICE;
+					} else {
+						editData.answerType = AnswerType.MULTI_ANSWER;
+					}
+				} else {
+					editData.answerType = AnswerType.SINGLE;
+				}
 			}
+
 			if (item.numRequired !== undefined && item.numRequired !== null && item.numRequired !== '') {
 				editData.numRequired = item.numRequired;
 			}
@@ -104,22 +116,11 @@
 				editData.correctAnswerIndex = item.correctAnswerIndex;
 			}
 
-			// Use the saveEdit function from uploader.js
-			const result = await saveEdit(editData);
-
-			if (result) {
-				// Handle different possible response structures
-				const updatedItem = result.updatedItem || result.item || result;
-
-				if (updatedItem && updatedItem.id) {
-					// Use the server's returned updated item as the source of truth
-					Object.assign(item, updatedItem);
-					dispatch('saveEdit', updatedItem);
-				}
-
-				// Always clear editableItemId on successful save
-				editableItemId = null;
+			if (editData && editData.id) {
+				// Use the server's returned updated item as the source of truth
+				dispatch('saveEdit', editData);
 			}
+			editableItemId = null;
 		} catch (error) {
 			console.error('Error saving edit:', error);
 			addToast({
@@ -276,7 +277,7 @@
 	}
 </script>
 
-<li class={isReordering ? 'item reorder' : 'item'} draggable={isReordering}>
+<li class="d-flex {isReordering ? 'item reorder' : 'item'}" draggable={isReordering}>
 	{#if editableItemId === item.id && item.id != null}
 		<div class="editing">
 			{#if item.image != null}
@@ -318,7 +319,7 @@
 			</div>
 		</div>
 	{:else}
-		<div class="vertical">
+		<div class="vertical flex-half d-flex flex-column h-100">
 			{#if item.file || item.image || item.questionType == QuestionType.IMAGE}
 				<img class="preview" src={item.file || item.image} alt="Preview" />
 			{:else if item.audio != null}
@@ -333,12 +334,11 @@
 					{/if}
 				</div>
 			{:else}
-				<img class="preview" src={item.file || item.image} alt="Preview" />
 				<span class="question">{item.question}</span>
 			{/if}
 			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
 		</div>
-		<div class="answer-field vertical">
+		<div class="answer-field vertical flex-half d-flex flex-column">
 			<div class="answer-display">
 				{#if item.answerType === AnswerType.SINGLE || !isValidAnswerType(item.answerType)}
 					<span>{item.answer}</span>

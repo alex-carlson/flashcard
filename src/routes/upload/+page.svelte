@@ -428,7 +428,6 @@
 								bind:checked={isPublic}
 								aria-label="Privacy"
 							/> <span>{isPublic ? 'Public' : 'Private'}</span>
-							<span class="small-text">({collection.itemsLength} questions)</span>
 						</form>
 						<form class="shuffle-form form-check form-switch d-flex align-items-center gap-3 mb-2">
 							<label for="shuffle-toggle" class="form-label me-5 mb-0">Shuffle Questions</label>
@@ -438,7 +437,7 @@
 								class="form-check-input"
 								bind:checked={isShuffle}
 								aria-label="Shuffle Questions"
-							/> <span>{isShuffle ? 'Shuffle for each play' : "Don't shuffle"}</span>
+							/>
 						</form>
 						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
 							Save Changes
@@ -449,7 +448,7 @@
 		{/if}
 		{#if collection}
 			<div class="uploads py-2">
-				<h4>Questions</h4>
+				<h4>Questions ({collection.items.length})</h4>
 				<ul class="items-list list-group mb-4">
 					{#if collection.items && collection.items.length > 0}
 						{#each collection.items as item, index (item.id)}
