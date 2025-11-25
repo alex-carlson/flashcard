@@ -358,7 +358,7 @@
 							bind:value={userAnswers[0]}
 							on:input={(e) => handleInput(0, e)}
 						/>
-						{#if isPractice && !isPartyMode}
+						{#if isPractice && !isPartyMode && !item.revealed}
 							<Hint
 								answer={item.answer}
 								on:reveal={(e) => {
