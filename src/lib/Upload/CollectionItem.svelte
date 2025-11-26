@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { v4 as uuidv4 } from 'uuid';
 	import Cropper from './Cropper.svelte';
 	import Drawing from './Drawing.svelte';
 	import AnswerInput from '../components/AnswerInput.svelte';
@@ -180,8 +181,8 @@
 
 			console.log('Temporary item for upload with existing ID validation:', tempItem);
 
-			// Upload the new image with existing item ID for validation
-			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
+			// Upload the new image with existing item ID for validation - use a new UUID but include update flags
+			const result = await uploadData(tempItem, item.id, false);
 
 			if (result && Array.isArray(result) && result.length > 0 && result[0]?.items) {
 				// Use the server's returned updated item as the source of truth

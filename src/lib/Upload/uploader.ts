@@ -201,6 +201,7 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
 
     return handleUpload(async () => {
         const formData = new FormData();
+        formData.append('id', item.id || uuid);
         formData.append('uuid', uuid);
         formData.append('file', item.file);
         console.log('Added file to FormData:', item.file);
