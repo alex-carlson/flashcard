@@ -82,13 +82,6 @@
 		});
 	}
 
-	// Load quiz data on mount
-	onMount(() => {
-		if (collectionId) {
-			quiz.loadCollection(collectionId);
-		}
-	});
-
 	// Preload images when cards are loaded
 	$: if ($quiz.hasInitialized && $quiz.cards.length > 0 && !imagesPreloaded && !preloadStarted) {
 		preloadStarted = true;
@@ -115,7 +108,59 @@
 			flashCardsComponent.onQuizStart();
 		}
 	}
-	onDestroy(() => clearInterval(interval));
+
+	// Track quiz completion state
+	let quizCompleted = false;
+	
+	// Handle quiz finish
+	function handleQuizFinish() {
+		quizCompleted = true;
+		clearInterval(interval);
+	}
+
+	// Add beforeunload warning when quiz is active
+	function handleBeforeUnload(event) {
+		if (quizStarted && !quizCompleted && !practiceMode) {
+			const message = 'You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.';
+			event.preventDefault();
+			event.returnValue = message;
+			return message;
+		}
+	}
+
+	// Handle back button navigation
+	function handlePopState(event) {
+		if (quizStarted && !quizCompleted && !practiceMode) {
+			const confirmed = confirm('You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.');
+			if (!confirmed) {
+				// Push the current state back to prevent navigation
+				history.pushState(null, '', window.location.href);
+				return;
+			} else {
+				// User confirmed, allow navigation
+				quizCompleted = true;
+			}
+		}
+	}
+
+	// Add event listener on mount and remove on destroy
+	onMount(() => {
+		if (collectionId) {
+			quiz.loadCollection(collectionId);
+		}
+		
+		// Add a history state to catch back button
+		history.pushState(null, '', window.location.href);
+		
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		window.addEventListener('popstate', handlePopState);
+	});
+
+	onDestroy(() => {
+		clearInterval(interval);
+		window.removeEventListener('beforeunload', handleBeforeUnload);
+		window.removeEventListener('popstate', handlePopState);
+	});
 </script>
 
 <svelte:head>
@@ -249,8 +294,8 @@
 			{practiceMode}
 			{collectionId}
 			{quiz}
-			on:finish={() => clearInterval(interval)}
-			on:giveup={() => clearInterval(interval)}
+			on:finish={handleQuizFinish}
+			on:giveup={handleQuizFinish}
 			on:statsUpdate={(e) => {
 				quizStats = e.detail;
 			}}
