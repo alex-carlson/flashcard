@@ -111,7 +111,7 @@
 
 	// Track quiz completion state
 	let quizCompleted = false;
-	
+
 	// Handle quiz finish
 	function handleQuizFinish() {
 		quizCompleted = true;
@@ -121,7 +121,8 @@
 	// Add beforeunload warning when quiz is active
 	function handleBeforeUnload(event) {
 		if (quizStarted && !quizCompleted && !practiceMode) {
-			const message = 'You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.';
+			const message =
+				'You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.';
 			event.preventDefault();
 			event.returnValue = message;
 			return message;
@@ -131,7 +132,9 @@
 	// Handle back button navigation
 	function handlePopState(event) {
 		if (quizStarted && !quizCompleted && !practiceMode) {
-			const confirmed = confirm('You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.');
+			const confirmed = confirm(
+				'You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.'
+			);
 			if (!confirmed) {
 				// Push the current state back to prevent navigation
 				history.pushState(null, '', window.location.href);
@@ -148,18 +151,22 @@
 		if (collectionId) {
 			quiz.loadCollection(collectionId);
 		}
-		
-		// Add a history state to catch back button
-		history.pushState(null, '', window.location.href);
-		
-		window.addEventListener('beforeunload', handleBeforeUnload);
-		window.addEventListener('popstate', handlePopState);
+
+		// Add a history state to catch back button (browser only)
+		if (typeof window !== 'undefined') {
+			history.pushState(null, '', window.location.href);
+
+			window.addEventListener('beforeunload', handleBeforeUnload);
+			window.addEventListener('popstate', handlePopState);
+		}
 	});
 
 	onDestroy(() => {
 		clearInterval(interval);
-		window.removeEventListener('beforeunload', handleBeforeUnload);
-		window.removeEventListener('popstate', handlePopState);
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+			window.removeEventListener('popstate', handlePopState);
+		}
 	});
 </script>
 
