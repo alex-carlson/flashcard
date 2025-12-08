@@ -29,8 +29,9 @@
 	// Auto-trigger completion when all cards are revealed
 	$: {
 		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete) {
-			quizStore.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined);
-			dispatch('finish');
+			quizStore.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined).then(() => {
+				dispatch('finish');
+			});
 		}
 	}
 
