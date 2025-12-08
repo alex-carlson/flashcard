@@ -26,46 +26,54 @@
 		searchOverride = searchTerm;
 	}
 
-	// Clear suggestions when fileType changes
+	// Clear suggestions when fileType changes (but only for user-initiated changes)
 	let previousFileType = fileType;
-	$: if (fileType !== previousFileType && suggestions.length > 0) {
-		suggestions = [];
-		currentStartIndex = 1;
-		hasMoreResults = true;
+	$: {
+		if (fileType !== previousFileType && suggestions.length > 0) {
+			// Only clear if we're not currently fetching and this is a true file type change
+			if (!isLoading) {
+				suggestions = [];
+				currentStartIndex = 1;
+				hasMoreResults = true;
+			}
+		}
 		previousFileType = fileType;
 	}
 
 	export async function fetchSuggestions(append = false) {
-		if (isLoading) return;
+		if (isLoading) {
+			return;
+		}
 		isLoading = true;
 
 		// Reset pagination for new searches
 		if (!append) {
 			currentStartIndex = 1;
 			hasMoreResults = true;
-			suggestions = [];
 		}
 
 		// if filetype is png, add transparent, no background, isolated, etc. to the query
 		let fullQuery = effectiveSearchTerm;
-		if (fileType === 'png') {
-			// fullQuery += ' transparent isolated no background';
-		}
-
-		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
 
 		// Add file type filter
 		if (fileType === 'any') {
 			// For 'any', we'll exclude vector formats by adding negative terms to the query
 			fullQuery += ' -svg -eps -pdf -ai';
-			url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
-		} else {
+		}
+
+		// Build the URL with the final query
+		let url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(fullQuery)}&searchType=image&key=${API_KEY}&cx=${CX}&start=${currentStartIndex}`;
+
+		// Add specific file type filter if not 'any'
+		if (fileType !== 'any') {
 			url += `&fileType=${fileType}`;
 		}
 
 		try {
+			console.log('Making API call to:', url);
 			const res = await fetch(url);
 			const data = await res.json();
+			console.log('API response received:', data);
 
 			if (data.error && data.error.errors && data.error.errors[0].reason === 'dailyLimitExceeded') {
 				addToast({
@@ -75,6 +83,7 @@
 				});
 				if (!append) suggestions = [];
 				isLoading = false;
+				console.error(data.error);
 				return;
 			}
 
@@ -108,6 +117,8 @@
 				type: 'error',
 				message: 'Failed to fetch image suggestions. Please try again later.'
 			});
+			// Only clear suggestions for new searches
+			if (!append) suggestions = [];
 			hasMoreResults = false;
 		}
 
@@ -131,6 +142,9 @@
 		};
 
 		dispatch('addImage', imageData);
+
+		// Clear search override after adding image
+		searchOverride = '';
 	}
 
 	// Handle load more button click

@@ -165,7 +165,6 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
 
     // If file is a URL (string), call /upload-url
     if (typeof item.file === 'string') {
-        console.log('Detected URL upload:', item.file);
         return handleUpload(async () => {
             const data = addUserAuthToData({
                 uuid,

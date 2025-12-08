@@ -79,13 +79,17 @@
 				item.category = collection.category || '';
 				tempCategory = collection.category || '';
 				tempDescription = collection.description || '';
-				tempTags = Array.isArray(collection.tags)
-					? collection.tags.join(', ')
-					: typeof collection.tags === 'string'
-						? collection.tags.includes('[')
-							? JSON.parse(collection.tags).join(', ')
-							: collection.tags
-						: '';
+				if (collection.tags) {
+					tempTags = Array.isArray(collection.tags)
+						? collection.tags.join(', ')
+						: typeof collection.tags === 'string'
+							? collection.tags.includes('[')
+								? JSON.parse(collection.tags).join(', ')
+								: collection.tags
+							: '';
+				} else {
+					tempTags = '';
+				}
 				isPublic = !collection.private || false;
 				isShuffle = collection.shuffle || false;
 
@@ -95,9 +99,11 @@
 				}
 
 				// Set items length
-				collection.itemsLength = collection.items ? collection.items.length : 0;
-
-				console.log('Collection set with', collection.itemsLength, 'items');
+				if (collection.items) {
+					collection.itemsLength = collection.items.length;
+				} else {
+					collection.itemsLength = 0;
+				}
 			} else {
 				console.error('No collection data received');
 				addToast({
@@ -457,76 +463,84 @@
 		{/if}
 		{#if collection}
 			<div class="uploads py-2">
-				<h4>Questions ({collection.items.length})</h4>
-				<ul class="items-list list-group mb-4">
-					{#if collection.items && collection.items.length > 0}
-						{#each collection.items as item, index (item.id)}
-							<CollectionItem
-								{item}
-								{index}
-								{collection}
-								bind:editableItemId
-								on:removeItem={async () => {
-									const updatedItems = await removeItem(item.id, collection.category);
-									if (updatedItems) {
-										console.log('updatedItems:', updatedItems);
-										collection.items = updatedItems.items;
-										collection.itemsLength = updatedItems.items.length;
-									}
-								}}
-								on:saveEdit={async (e) => {
-									console.log('Save edit event:', e.detail);
-									const d = {
-										collection: collection.category,
-										author_id: $user.public_id,
-										...e.detail
-									};
-									console.log('Data to save:', d);
-									const result = await saveEdit(d);
-									if (result) {
-										collections = result;
-										editableItemId = null;
-									}
-								}}
-								on:updateItem={(e) => {
-									const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
-									if (itemIndex !== -1) {
-										const updatedItem = {
-											...collection.items[itemIndex],
+				<details open>
+					<summary
+						>Questions ({collection.items
+							? collection.items.length
+								? collection.items.length
+								: 0
+							: 0})</summary
+					>
+					<ul class="items-list list-group mb-4">
+						{#if collection.items && collection.items.length > 0}
+							{#each collection.items as item, index (item.id)}
+								<CollectionItem
+									{item}
+									{index}
+									{collection}
+									bind:editableItemId
+									on:removeItem={async () => {
+										const updatedItems = await removeItem(item.id, collection.category);
+										if (updatedItems) {
+											console.log('updatedItems:', updatedItems);
+											collection.items = updatedItems.items;
+											collection.itemsLength = updatedItems.items.length;
+										}
+									}}
+									on:saveEdit={async (e) => {
+										console.log('Save edit event:', e.detail);
+										const d = {
+											collection: collection.category,
+											author_id: $user.public_id,
 											...e.detail
 										};
-
-										// If the image was updated, append a cache-busting param
-										if (updatedItem.image) {
-											const timestamp = Date.now();
-											const url = new URL(updatedItem.image, window.location.origin);
-											url.searchParams.set('v', timestamp);
-											updatedItem.image = url.toString();
+										console.log('Data to save:', d);
+										const result = await saveEdit(d);
+										if (result) {
+											collections = result;
+											editableItemId = null;
 										}
+									}}
+									on:updateItem={(e) => {
+										const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
+										if (itemIndex !== -1) {
+											const updatedItem = {
+												...collection.items[itemIndex],
+												...e.detail
+											};
 
-										collection.items[itemIndex] = updatedItem;
-										collection.items = [...collection.items]; // Trigger reactivity
-									}
-								}}
-								on:reorderItem={async (e) => {
-									const result = await reorderItems(
-										e.detail.prevIndex,
-										e.detail.newIndex,
-										collection
-									);
-									if (result) {
-										console.log('Reordered items:', result);
-										collection.items = result[0].items;
-										collection.itemsLength = result[0].items.length;
-									}
-								}}
-								{isReordering}
-							/>
-						{/each}
-					{:else}
-						<li class="list-group-item text-muted">No questions yet. Add some below!</li>
-					{/if}
-				</ul>
+											// If the image was updated, append a cache-busting param
+											if (updatedItem.image) {
+												const timestamp = Date.now();
+												const url = new URL(updatedItem.image, window.location.origin);
+												url.searchParams.set('v', timestamp);
+												updatedItem.image = url.toString();
+											}
+
+											collection.items[itemIndex] = updatedItem;
+											collection.items = [...collection.items]; // Trigger reactivity
+										}
+									}}
+									on:reorderItem={async (e) => {
+										const result = await reorderItems(
+											e.detail.prevIndex,
+											e.detail.newIndex,
+											collection
+										);
+										if (result) {
+											console.log('Reordered items:', result);
+											collection.items = result[0].items;
+											collection.itemsLength = result[0].items.length;
+										}
+									}}
+									{isReordering}
+								/>
+							{/each}
+						{:else}
+							<li class="list-group-item text-muted">No questions yet. Add some below!</li>
+						{/if}
+					</ul>
+				</details>
 			</div>
 
 			<div class="uploader card mb-4">

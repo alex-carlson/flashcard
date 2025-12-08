@@ -42,10 +42,6 @@
 
 	// Upload handlers
 	async function handleImageUpload() {
-		console.log('Uploading image item:', item);
-		console.log('Item file:', item.file, 'Item src:', item.src);
-		console.log('Item answers:', item.answers, 'Item answer:', item.answer);
-
 		if (
 			(item.answer ?? '').trim() === '' &&
 			(Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) ===
@@ -90,6 +86,7 @@
 			item.answer = '';
 			item.answers = '';
 			item.src = '';
+			item.file = null;
 			item.supplemental_text = '';
 			imageSuggestions = [];
 			searchTerm = '';
@@ -238,7 +235,9 @@
 						{/if}
 					</div>
 				</div>
-				<button type="submit" class="btn btn-success mt-2">Add Image</button>
+				{#if item.file}
+					<button type="submit" class="btn btn-success mt-2">Add Image</button>
+				{/if}
 			</form>
 		{:else if questionType === 'Audio'}
 			<form on:submit|preventDefault={handleAudioUpload}>
