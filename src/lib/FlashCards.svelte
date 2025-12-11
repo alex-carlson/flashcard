@@ -10,7 +10,6 @@
 	import Card from './Card.svelte';
 	import Loading from './components/Loading.svelte';
 	import Toolbar from './components/quiz/Toolbar.svelte';
-	import QuizHeader from './components/quiz/QuizHeader.svelte';
 	import QuizActions from './components/quiz/QuizActions.svelte';
 	import ErrorDisplay from './components/quiz/ErrorDisplay.svelte';
 	// Props
@@ -26,12 +25,27 @@
 	// Access stats as a separate reactive store
 	$: stats = quizStore.stats;
 
+	// Flag to prevent multiple completion attempts
+	let isCompletingQuiz = false;
+
 	// Auto-trigger completion when all cards are revealed
 	$: {
-		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete) {
-			quizStore.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined).then(() => {
-				dispatch('finish');
-			});
+		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete && !isCompletingQuiz) {
+			isCompletingQuiz = true;
+			quizStore
+				.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined)
+				.then(() => {
+					dispatch('finish');
+				})
+				.catch((error) => {
+					console.error('Error completing quiz:', error);
+					// Reset flag on error so user can try again
+					isCompletingQuiz = false;
+				})
+				.finally(() => {
+					// Reset flag after completion (success or error)
+					isCompletingQuiz = false;
+				});
 		}
 	}
 
@@ -76,12 +90,7 @@
 		const card = $quizStore.cards[index];
 		const wasRevealed = card.revealed;
 
-		quizStore.update((state) => ({
-			...state,
-			cards: state.cards.map((card, i) =>
-				i === index ? { ...card, revealed: !card.revealed } : card
-			)
-		}));
+		quizStore.updateCard(index, { revealed: !card.revealed });
 
 		// If card was just revealed (not hidden), trigger auto-play for next audio
 		if (!wasRevealed) {
@@ -114,37 +123,57 @@
 	function setMode(mode) {
 		quizStore.setMode(mode);
 	}
+
+	// Throttle answer processing to prevent hangs from rapid submissions
+	let isProcessingAnswer = false;
+
 	function onCorrectAnswer(event) {
-		const { index, answer, userAnswer, isCorrect } = event.detail;
-		console.log('Correct answer event received:', { index, answer, userAnswer, isCorrect });
+		if (isProcessingAnswer) {
+			console.log('Already processing an answer, ignoring duplicate event');
+			return;
+		}
 
-		quizStore.updateCard(index, {
-			revealed: true,
-			userAnswer: userAnswer || answer,
-			isCorrect: isCorrect // Store whether the answer was actually correct
-		});
+		isProcessingAnswer = true;
 
-		// Auto-play next audio question when a correct answer is given
-		const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
-		console.log('Looking for next card after index', index, 'found:', nextCardIndex);
+		try {
+			const { index, answer, userAnswer, isCorrect } = event.detail;
+			console.log('Correct answer event received:', { index, answer, userAnswer, isCorrect });
 
-		if (nextCardIndex !== -1) {
-			const nextCard = $quizStore.cards[nextCardIndex];
-			console.log('Next card:', nextCard);
+			quizStore.updateCard(index, {
+				revealed: true,
+				userAnswer: userAnswer || answer,
+				isCorrect: isCorrect // Store whether the answer was actually correct
+			});
 
-			// Check if the next card has audio content
-			if (nextCard.audio) {
-				try {
-					console.log('Auto-playing next audio question:', nextCard.audio);
-					youtubePlayerService.loadVideoOnly(nextCard.audio);
-				} catch (error) {
-					console.error('Failed to auto-play next audio question:', error);
+			// Auto-play next audio question when a correct answer is given
+			const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
+			console.log('Looking for next card after index', index, 'found:', nextCardIndex);
+
+			if (nextCardIndex !== -1) {
+				const nextCard = $quizStore.cards[nextCardIndex];
+				console.log('Next card:', nextCard);
+
+				// Check if the next card has audio content
+				if (nextCard.audio) {
+					try {
+						console.log('Auto-playing next audio question:', nextCard.audio);
+						youtubePlayerService.loadVideoOnly(nextCard.audio);
+					} catch (error) {
+						console.error('Failed to auto-play next audio question:', error);
+					}
+				} else {
+					console.log('Next card has no audio content');
 				}
 			} else {
-				console.log('Next card has no audio content');
+				console.log('No next card found');
 			}
-		} else {
-			console.log('No next card found');
+		} catch (error) {
+			console.error('Error processing correct answer:', error);
+		} finally {
+			// Reset the processing flag after a short delay to prevent rapid-fire events
+			setTimeout(() => {
+				isProcessingAnswer = false;
+			}, 100);
 		}
 
 		dispatch('correctAnswer', event.detail);

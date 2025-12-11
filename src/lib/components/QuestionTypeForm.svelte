@@ -203,6 +203,7 @@
 						<FileUpload
 							on:uploadImage={(event) => {
 								item.file = event.detail;
+								clearImage();
 							}}
 						/>
 					</div>

@@ -261,22 +261,37 @@ export function createQuizStore() {
         }));
     }
 
-    function completeQuizAction(userId?: string, token?: string): void {
-        update(state => {
-            const correctAnswers = state.cards.filter(
-                card => card?.revealed && card.incorrect !== true
-            ).length;
-            const percentage = Math.round((correctAnswers / state.cards.length) * 100);
+    async function completeQuizAction(userId?: string, token?: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            update(state => {
+                const correctAnswers = state.cards.filter(
+                    card => card?.revealed && card.incorrect !== true
+                ).length;
+                const percentage = Math.round((correctAnswers / state.cards.length) * 100);
 
-            if (userId && token) {
-                completeQuiz(userId, state.collection.id, percentage, token);
-            }
+                // Handle API call if user data is available
+                if (userId && token && state.collection.id) {
+                    completeQuiz(userId, state.collection.id, percentage, token)
+                        .then(() => {
+                            console.log('Quiz completion API call successful');
+                            resolve();
+                        })
+                        .catch((error) => {
+                            console.error('Quiz completion API call failed:', error);
+                            // Still resolve - don't fail the whole completion process for API errors
+                            resolve();
+                        });
+                } else {
+                    // No user data, just resolve immediately
+                    resolve();
+                }
 
-            return {
-                ...state,
-                showModal: true,
-                isComplete: true
-            };
+                return {
+                    ...state,
+                    showModal: true,
+                    isComplete: true
+                };
+            });
         });
     }
 

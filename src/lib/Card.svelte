@@ -145,20 +145,25 @@
 					answer: Array.isArray(item.answer) ? item.answer[0] : item.answer,
 					userAnswer: userInput,
 					isCorrect: true
-				}); // select the next input, or if there isn't one, search the whole document for the next input
-				setTimeout(() => {
-					const inputs = Array.from(document.querySelectorAll('input, textarea'));
-					const currentInput = inputs.find((input) => input.value === userInput);
-					if (currentInput) {
-						const currentIndex = inputs.indexOf(currentInput);
-						if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
-							inputs[currentIndex + 1].focus();
-						} else {
-							// If no next input, focus the first input in the document
-							if (inputs.length > 0) {
-								inputs[0].focus();
+				});
+				// Use requestAnimationFrame for better performance and avoid blocking
+				requestAnimationFrame(() => {
+					try {
+						// Only query inputs within the quiz container to limit scope
+						const container = document.querySelector('.flash-cards, main') || document;
+						const inputs = Array.from(
+							container.querySelectorAll('input[type="text"]:not([disabled])')
+						);
+						const currentInput = inputs.find((input) => input.value === userInput);
+
+						if (currentInput && inputs.length > 1) {
+							const currentIndex = inputs.indexOf(currentInput);
+							if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
+								inputs[currentIndex + 1].focus();
 							}
 						}
+					} catch (error) {
+						console.warn('Error focusing next input:', error);
 					}
 				});
 			}
