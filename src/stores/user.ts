@@ -75,9 +75,11 @@ async function fetchUserProfile(sessionUser: { id: string; email?: string; user_
   }
 }
 
-// Initialize auth state on app load
+// Initialize auth state on app load with error handling
+let authInitialized = false;
 async function initializeAuth() {
-  if (!browser) return;
+  if (!browser || authInitialized) return;
+  authInitialized = true;
 
   try {
     const session = await getSession();
@@ -104,19 +106,52 @@ export function getCurrentUserFromStore(): User | null {
   return currentUser;
 }
 
-// Listen for Supabase auth state changes
-supabase.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth state changed:', event);
+// Throttle auth state changes to prevent excessive updates
+let authChangeTimeout: number | null = null;
+let authStateChangeSubscription: any = null;
 
-  if (event === 'SIGNED_OUT' || !session?.user) {
-    user.set(null);
-    return;
-  } if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userWithProfile = await fetchUserProfile(session.user as any, session.access_token);
-    user.set(userWithProfile);
+// Listen for Supabase auth state changes with throttling
+if (browser && !authStateChangeSubscription) {
+  authStateChangeSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state changed:', event);
+
+    // Throttle auth state changes
+    if (authChangeTimeout) {
+      clearTimeout(authChangeTimeout);
+    }
+
+    authChangeTimeout = window.setTimeout(async () => {
+      try {
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          user.set(null);
+          return;
+        }
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const userWithProfile = await fetchUserProfile(session.user as any, session.access_token);
+          user.set(userWithProfile);
+        }
+      } catch (error) {
+        console.error('Error handling auth state change:', error);
+      } finally {
+        authChangeTimeout = null;
+      }
+    }, 100); // 100ms throttle
+  });
+}
+
+// Cleanup function for auth subscriptions
+export function cleanupAuthSubscriptions() {
+  if (authChangeTimeout) {
+    clearTimeout(authChangeTimeout);
+    authChangeTimeout = null;
   }
-});
+  if (authStateChangeSubscription) {
+    authStateChangeSubscription.data?.subscription?.unsubscribe?.();
+    authStateChangeSubscription = null;
+  }
+}
 
 // Log out and clear the store
 export async function logOutUser() {

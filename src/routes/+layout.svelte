@@ -3,6 +3,8 @@
 	import Header from '$lib/Header.svelte';
 	import Footer from '$lib/Footer.svelte';
 	import Toasts from '$lib/components/Toasts.svelte';
+	import { onDestroy } from 'svelte';
+	import { cleanupAuthSubscriptions } from '$stores/user';
 
 	export let data;
 
@@ -16,6 +18,11 @@
 		siteName: 'Quizzems',
 		themeColor: '#6F1D1B'
 	};
+
+	// Cleanup auth subscriptions on app unmount
+	onDestroy(() => {
+		cleanupAuthSubscriptions();
+	});
 </script>
 
 <Header />

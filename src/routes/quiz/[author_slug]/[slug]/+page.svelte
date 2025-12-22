@@ -82,10 +82,18 @@
 		});
 	}
 
-	// Preload images when cards are loaded
-	$: if ($quiz.hasInitialized && $quiz.cards.length > 0 && !imagesPreloaded && !preloadStarted) {
-		preloadStarted = true;
-		preloadImages($quiz.cards);
+	// Preload images when cards are loaded (memoized to prevent excessive checks)
+	let lastCardsHash = '';
+	$: {
+		if ($quiz.hasInitialized && $quiz.cards.length > 0 && !imagesPreloaded && !preloadStarted) {
+			// Create a hash to avoid redundant preload triggers
+			const cardsHash = `${$quiz.cards.length}-${$quiz.hasInitialized}`;
+			if (cardsHash !== lastCardsHash) {
+				lastCardsHash = cardsHash;
+				preloadStarted = true;
+				preloadImages($quiz.cards);
+			}
+		}
 	}
 
 	function startQuiz(isPractice = false) {
@@ -163,6 +171,10 @@
 
 	onDestroy(() => {
 		clearInterval(interval);
+		// Cleanup quiz store
+		if (quiz?.cleanup) {
+			quiz.cleanup();
+		}
 		if (typeof window !== 'undefined') {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 			window.removeEventListener('popstate', handlePopState);

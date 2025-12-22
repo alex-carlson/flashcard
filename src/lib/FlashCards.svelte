@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { user } from '../stores/user';
 	import { youtubePlayerService } from './api/youtubePlayer.js';
 	import { getRandomPhraseForScore, toLetterGrade } from './api/quizScore';
@@ -22,8 +22,17 @@
 	const quizStore = quiz ?? createQuizStore();
 	const dispatch = createEventDispatcher();
 
-	// Access stats as a separate reactive store
-	$: stats = quizStore.stats;
+	// Access stats as a separate reactive store with throttling
+	let statsUpdateTimeout;
+	let currentStats = quizStore.stats;
+	$: {
+		// Throttle stats updates to prevent excessive recalculations
+		if (statsUpdateTimeout) clearTimeout(statsUpdateTimeout);
+		statsUpdateTimeout = setTimeout(() => {
+			currentStats = quizStore.stats;
+		}, 50); // 50ms throttle
+	}
+	$: stats = currentStats;
 
 	// Flag to prevent multiple completion attempts
 	let isCompletingQuiz = false;
@@ -32,15 +41,27 @@
 	$: {
 		if ($stats.isComplete && !$quizStore.showModal && !$quizStore.isComplete && !isCompletingQuiz) {
 			isCompletingQuiz = true;
+
+			// Add timeout to prevent hanging
+			const completionTimeout = setTimeout(() => {
+				console.warn('Quiz completion timed out, forcing completion');
+				isCompletingQuiz = false;
+				dispatch('finish');
+			}, 10000); // 10 second timeout
+
 			quizStore
 				.completeQuiz($user?.id ?? undefined, $user?.token ?? undefined)
 				.then(() => {
+					clearTimeout(completionTimeout);
 					dispatch('finish');
 				})
 				.catch((error) => {
 					console.error('Error completing quiz:', error);
+					clearTimeout(completionTimeout);
 					// Reset flag on error so user can try again
 					isCompletingQuiz = false;
+					// Still dispatch finish to show results
+					dispatch('finish');
 				})
 				.finally(() => {
 					// Reset flag after completion (success or error)
@@ -86,6 +107,10 @@
 		quizStore.updateCard(index, updates);
 	}
 
+	export function shuffleCards(seed) {
+		quizStore.shuffleCards(seed);
+	}
+
 	function toggleReveal(index) {
 		const card = $quizStore.cards[index];
 		const wasRevealed = card.revealed;
@@ -126,6 +151,7 @@
 
 	// Throttle answer processing to prevent hangs from rapid submissions
 	let isProcessingAnswer = false;
+	let answerProcessingTimeout;
 
 	function onCorrectAnswer(event) {
 		if (isProcessingAnswer) {
@@ -139,44 +165,53 @@
 			const { index, answer, userAnswer, isCorrect } = event.detail;
 			console.log('Correct answer event received:', { index, answer, userAnswer, isCorrect });
 
-			quizStore.updateCard(index, {
-				revealed: true,
-				userAnswer: userAnswer || answer,
-				isCorrect: isCorrect // Store whether the answer was actually correct
+			// Use requestAnimationFrame for better performance
+			requestAnimationFrame(() => {
+				quizStore.updateCard(index, {
+					revealed: true,
+					userAnswer: userAnswer || answer,
+					isCorrect: isCorrect // Store whether the answer was actually correct
+				});
 			});
 
-			// Auto-play next audio question when a correct answer is given
-			const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
-			console.log('Looking for next card after index', index, 'found:', nextCardIndex);
+			// Auto-play next audio question when a correct answer is given (debounced)
+			setTimeout(() => {
+				const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
+				console.log('Looking for next card after index', index, 'found:', nextCardIndex);
 
-			if (nextCardIndex !== -1) {
-				const nextCard = $quizStore.cards[nextCardIndex];
-				console.log('Next card:', nextCard);
+				if (nextCardIndex !== -1) {
+					const nextCard = $quizStore.cards[nextCardIndex];
+					console.log('Next card:', nextCard);
 
-				// Check if the next card has audio content
-				if (nextCard.audio) {
-					try {
-						console.log('Auto-playing next audio question:', nextCard.audio);
-						youtubePlayerService.loadVideoOnly(nextCard.audio);
-					} catch (error) {
-						console.error('Failed to auto-play next audio question:', error);
+					// Check if the next card has audio content
+					if (nextCard.audio) {
+						try {
+							console.log('Auto-playing next audio question:', nextCard.audio);
+							youtubePlayerService.loadVideoOnly(nextCard.audio);
+						} catch (error) {
+							console.error('Failed to auto-play next audio question:', error);
+						}
+					} else {
+						console.log('Next card has no audio content');
 					}
 				} else {
-					console.log('Next card has no audio content');
+					console.log('No next card found');
 				}
-			} else {
-				console.log('No next card found');
-			}
+			}, 100); // Delay auto-play slightly
 		} catch (error) {
 			console.error('Error processing correct answer:', error);
 		} finally {
-			// Reset the processing flag after a short delay to prevent rapid-fire events
-			setTimeout(() => {
+			// Reset the processing flag after a delay to prevent rapid-fire events
+			if (answerProcessingTimeout) clearTimeout(answerProcessingTimeout);
+			answerProcessingTimeout = setTimeout(() => {
 				isProcessingAnswer = false;
-			}, 100);
+			}, 150); // Slightly longer delay
 		}
 
-		dispatch('correctAnswer', event.detail);
+		// Dispatch event on next tick to prevent blocking
+		setTimeout(() => {
+			dispatch('correctAnswer', event.detail);
+		}, 0);
 	}
 
 	function retryFetch() {
@@ -193,11 +228,26 @@
 		quizStore.setIsPractice(practiceMode);
 	}
 
+	onDestroy(() => {
+		// Clean up timeouts to prevent memory leaks
+		if (statsUpdateTimeout) {
+			clearTimeout(statsUpdateTimeout);
+			statsUpdateTimeout = null;
+		}
+		if (answerProcessingTimeout) {
+			clearTimeout(answerProcessingTimeout);
+			answerProcessingTimeout = null;
+		}
+		// Reset processing flags
+		isProcessingAnswer = false;
+		isCompletingQuiz = false;
+	});
+
 	export function getStats() {
 		return $stats;
 	}
 
-	$: if (collectionId && !$quizStore.hasInitialized && !$quizStore.isLoading) {
+	$: if (collectionId && !$quizStore.hasInitialized && !$quizStore.isLoading && !isPartyMode) {
 		quizStore.loadCollection(collectionId);
 	}
 </script>

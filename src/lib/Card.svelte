@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 	import LazyLoadImage from './LazyLoadImage.svelte';
 	import Options from './Options.svelte';
 	import ProfilePicture from './ProfilePicture.svelte';
@@ -40,6 +40,7 @@
 	let isValidated = false;
 	let isLockedIn = false;
 	let multipleChoiceSelected = false; // Track if user has made a selection
+	let validationTimeout; // For debouncing validation
 
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
@@ -60,8 +61,12 @@
 			});
 		} else {
 			userAnswers[idx] = e.target.value;
+			// Debounce validation to prevent excessive calls
+			if (validationTimeout) clearTimeout(validationTimeout);
+			validationTimeout = setTimeout(() => {
+				validateAnswer();
+			}, 100); // 100ms debounce
 		}
-		validateAnswer();
 
 		// Lock in if all required answers are correct for multi-answer questions
 		if (item.answerType === AnswerType.MULTI_ANSWER && isValidated) {
@@ -206,6 +211,14 @@
 		if (!item.revealed) return 'answer';
 		return `answer ${isCorrect() ? 'correct' : 'incorrect'}`;
 	}
+
+	// Cleanup validation timeout on destroy
+	onDestroy(() => {
+		if (validationTimeout) {
+			clearTimeout(validationTimeout);
+			validationTimeout = null;
+		}
+	});
 </script>
 
 {#if !item.hidden}

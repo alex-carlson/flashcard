@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { fetchCollectionById } from '$lib/api/collections';
 import { completeQuiz } from '$lib/api/user';
 import { mapCards, areStringsClose } from '$lib/api/utils';
@@ -91,8 +91,35 @@ export function createQuizStore() {
     const store = writable(initialState);
     const { subscribe, update } = store;
 
+    // Add memoization to prevent unnecessary recalculations
+    let lastStatsStateHash = '';
+    let memoizedStats: QuizStats = {
+        total: 0,
+        answered: 0,
+        correct: 0,
+        percentage: 0,
+        areAnyRevealed: false,
+        canReset: false,
+        isComplete: false
+    };
+
     const stats = derived(store, ($state): QuizStats => {
         const cards = $state.cards || [];
+
+        // Create a hash of the current state to detect changes
+        const stateHash = JSON.stringify({
+            cardsLength: cards.length,
+            revealedCards: cards.map(c => ({ id: c?.id, revealed: c?.revealed, userAnswer: c?.userAnswer, isCorrect: c?.isCorrect })),
+            isComplete: $state.isComplete
+        });
+
+        // Return memoized result if state hasn't changed
+        if (stateHash === lastStatsStateHash) {
+            return memoizedStats;
+        }
+
+        lastStatsStateHash = stateHash;
+
         const revealedCards = cards.filter(c => c?.revealed);
 
         const correctCards = revealedCards.filter(c => {
@@ -115,7 +142,7 @@ export function createQuizStore() {
             return areStringsClose(userAnswerStr, correctAnswerStr);
         });
 
-        const statsResult = {
+        memoizedStats = {
             total: cards.length,
             answered: revealedCards.length,
             correct: correctCards.length,
@@ -127,7 +154,7 @@ export function createQuizStore() {
             isComplete: cards.length > 0 && cards.every(card => card?.revealed)
         };
 
-        return statsResult;
+        return memoizedStats;
     }); async function loadCollection(collectionId: string | null): Promise<void> {
         if (!collectionId) {
             update(state => ({
@@ -139,6 +166,13 @@ export function createQuizStore() {
                 type: 'error',
                 message: 'No collection ID provided'
             });
+            return;
+        }
+
+        // Check if quiz is already in progress (has revealed cards) and prevent reload
+        const currentState = get(store);
+        if (currentState.hasInitialized && currentState.cards.some(card => card?.revealed)) {
+            console.log('Quiz already in progress - skipping collection reload');
             return;
         }
 
@@ -210,29 +244,74 @@ export function createQuizStore() {
         }));
     }
 
+    // Throttle card updates to prevent excessive reactive recalculations
+    let updateTimeout: number | null = null;
+    let pendingUpdates: Map<number, Partial<Card>> = new Map();
+
     function updateCard(index: number, updates: Partial<Card>): void {
-        update(state => {
-            const newState = {
-                ...state,
-                cards: state.cards.map((card, i) =>
-                    i === index ? { ...card, ...updates } : card
-                )
-            };
-            return newState;
-        });
+        // Merge updates for the same card index
+        const existing = pendingUpdates.get(index) || {};
+        pendingUpdates.set(index, { ...existing, ...updates });
+
+        // Clear existing timeout
+        if (updateTimeout !== null) {
+            clearTimeout(updateTimeout);
+        }
+
+        // Batch updates with a small delay
+        updateTimeout = window.setTimeout(() => {
+            if (pendingUpdates.size === 0) return;
+
+            update(state => {
+                const newCards = [...state.cards];
+
+                // Apply all pending updates
+                for (const [cardIndex, cardUpdates] of pendingUpdates) {
+                    if (cardIndex >= 0 && cardIndex < newCards.length) {
+                        newCards[cardIndex] = { ...newCards[cardIndex], ...cardUpdates };
+                    }
+                }
+
+                pendingUpdates.clear();
+                updateTimeout = null;
+
+                return {
+                    ...state,
+                    cards: newCards
+                };
+            });
+        }, 16); // ~60fps throttle
     }
 
-    function shuffleCards(): void {
+    function shuffleCards(seed?: number): void {
         update(state => {
             const newCards = [...state.cards];
+            const shuffleSeed = seed !== undefined ? seed : state.shuffleSeed;
+
+            // Use seeded random if seed is provided (for party mode), otherwise use Math.random
+            let random: () => number;
+            if (shuffleSeed !== undefined) {
+                // Simple seeded random number generator (LCG)
+                let seedValue = shuffleSeed;
+                random = () => {
+                    seedValue = (seedValue * 1664525 + 1013904223) % 4294967296;
+                    return seedValue / 4294967296;
+                };
+            } else {
+                random = Math.random;
+            }
+
+            // Fisher-Yates shuffle with seeded random
             for (let i = newCards.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = Math.floor(random() * (i + 1));
                 [newCards[i], newCards[j]] = [newCards[j], newCards[i]];
             }
+
             return {
                 ...state,
                 cards: newCards,
-                shuffleTrigger: state.shuffleTrigger + 1
+                shuffleTrigger: state.shuffleTrigger + 1,
+                shuffleSeed: shuffleSeed
             };
         });
     }
@@ -246,6 +325,13 @@ export function createQuizStore() {
                 scale: 1,
                 revealed: false
             }))
+        }));
+    }
+
+    function setShuffleSeed(seed: number): void {
+        update(state => ({
+            ...state,
+            shuffleSeed: seed
         }));
     }
 
@@ -271,12 +357,20 @@ export function createQuizStore() {
 
                 // Handle API call if user data is available
                 if (userId && token && state.collection.id) {
+                    // Add timeout to prevent hanging
+                    const apiTimeout = setTimeout(() => {
+                        console.warn('Quiz completion API call timed out');
+                        resolve(); // Resolve anyway to not block UI
+                    }, 5000); // 5 second timeout
+
                     completeQuiz(userId, state.collection.id, percentage, token)
                         .then(() => {
+                            clearTimeout(apiTimeout);
                             console.log('Quiz completion API call successful');
                             resolve();
                         })
                         .catch((error) => {
+                            clearTimeout(apiTimeout);
                             console.error('Quiz completion API call failed:', error);
                             // Still resolve - don't fail the whole completion process for API errors
                             resolve();
@@ -337,6 +431,17 @@ export function createQuizStore() {
             isComplete: false
         }));
     }
+
+    // Add cleanup function
+    function cleanup(): void {
+        if (updateTimeout !== null) {
+            clearTimeout(updateTimeout);
+            updateTimeout = null;
+        }
+        pendingUpdates.clear();
+        lastStatsStateHash = '';
+    }
+
     return {
         subscribe,
         stats,
@@ -352,6 +457,7 @@ export function createQuizStore() {
         closeModal,
         revealCards,
         resetCardsToInitialState,
+        cleanup,
         retry: () => {
             resetCardsToInitialState();
             update(state => ({ ...state, hasInitialized: false }));

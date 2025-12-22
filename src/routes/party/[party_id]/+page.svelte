@@ -37,9 +37,20 @@
 	function startGame() {
 		if (!partyData || !isHost) return;
 
-		partyData.isStarted = true;
+		console.log('Host starting game for party:', party_id);
+		addToast({
+			type: 'info',
+			message: 'Starting game...'
+		});
 
-		socketInstance.emit('start-game', party_id);
+		// Don't update local state until server confirms
+		// partyData.isStarted = true;
+
+		// Generate shuffle seed for synchronized card order across all clients
+
+		socketInstance.emit('start-game', {
+			code: party_id
+		});
 	}
 
 	// Setup socket event listeners when socket is ready
@@ -49,6 +60,13 @@
 		// Remove any previous listeners to avoid duplicates
 		socketInstance.off('room-update');
 		socketInstance.off('game-started');
+		socketInstance.off('game-state-response');
+		socketInstance.off('score-updated');
+		socketInstance.off('player-gave-up');
+		socketInstance.off('game-finished');
+		socketInstance.off('room-closed');
+		socketInstance.off('room-reset');
+		socketInstance.off('collection-changed');
 
 		socketInstance.on('room-update', (room) => {
 			console.log('Room updated:', room);
@@ -56,19 +74,81 @@
 			if (room.collectionId && room.collectionId !== partyData?.collectionId) {
 				// getCollectionInformation(room.collectionId);
 			}
+
+			// Handle late join: if game is in progress, sync revealed cards
+			const wasGameStarted = partyData?.isStarted;
+			const isGameStartedNow = room.isStarted;
+
 			partyData = {
 				...partyData,
 				...room
 			};
+
+			// If joining a game that's already in progress, sync the revealed cards
+			if (!wasGameStarted && isGameStartedNow && room.cards && room.cards.length > 0) {
+				console.log('Syncing revealed cards for late join:', room.cards);
+				// Wait for FlashCards component to be ready, then sync revealed state
+				setTimeout(() => {
+					if (flashCardsRef && room.cards) {
+						room.cards.forEach((cardIndex, arrayIndex) => {
+							console.log('Setting card revealed for late join:', cardIndex, arrayIndex);
+							flashCardsRef.setRevealed(cardIndex, true, arrayIndex);
+						});
+					}
+				}, 100);
+			}
+
 			updatePre();
 		});
 
 		socketInstance.on('game-started', (data) => {
 			console.log('Game started:', data);
-			partyData = { ...partyData, isStarted: true };
+			addToast({
+				type: 'success',
+				message: 'Game started!'
+			});
+			partyData = { ...partyData, isStarted: true, ...data };
+
+			// Apply shuffle seed for synchronized card order
+			if (data.shuffleSeed) {
+				console.log('Applying shuffle seed for synchronized order:', data.shuffleSeed);
+				// Wait longer for FlashCards component to render and initialize
+				setTimeout(() => {
+					if (flashCardsRef) {
+						// Access the quiz store from FlashCards and set shuffle seed
+						flashCardsRef.setShuffleSeed(data.shuffleSeed);
+						// Trigger shuffle with the seed
+						flashCardsRef.shuffleCards(data.shuffleSeed);
+					} else {
+						console.warn('FlashCards not ready yet, retrying shuffle...');
+						// Retry after another delay
+						setTimeout(() => {
+							if (flashCardsRef) {
+								flashCardsRef.setShuffleSeed(data.shuffleSeed);
+								flashCardsRef.shuffleCards(data.shuffleSeed);
+							} else {
+								console.error('FlashCards still not ready for shuffle');
+							}
+						}, 200);
+					}
+				}, 200);
+			}
+
+			// If there are already revealed cards (late join scenario), sync them
+			if (data.cards && data.cards.length > 0) {
+				console.log('Syncing revealed cards from game-started event:', data.cards);
+				setTimeout(() => {
+					if (flashCardsRef && data.cards) {
+						data.cards.forEach((cardIndex, arrayIndex) => {
+							console.log('Setting card revealed from game-started:', cardIndex, arrayIndex);
+							flashCardsRef.setRevealed(cardIndex, true, arrayIndex);
+						});
+					}
+				}, 100);
+			}
+
 			updatePre();
 		});
-
 		socketInstance.on('score-updated', (data) => {
 			const { scores: newScores, cardIndex, playerId: pID, cards } = data;
 
@@ -167,6 +247,7 @@
 					collection = d;
 					collectionName = d.category;
 					authorName = d.author; // Assuming you have authorName in the collection data
+					console.log('new collection data:', d);
 				} else {
 					collectionName = null;
 					authorName = null;
@@ -177,6 +258,45 @@
 				authorName = null;
 			}
 			updatePre();
+		});
+
+		// Handler for game state response when joining a game in progress
+		socketInstance.on('game-state-response', (gameState) => {
+			console.log('Received current game state:', gameState);
+
+			if (gameState && gameState.isStarted) {
+				// Update party data with current game state
+				partyData = {
+					...partyData,
+					...gameState
+				};
+
+				// Apply shuffle seed first if available
+				if (gameState.shuffleSeed && flashCardsRef) {
+					console.log('Applying shuffle seed for late joiner:', gameState.shuffleSeed);
+					setTimeout(() => {
+						if (flashCardsRef) {
+							flashCardsRef.setShuffleSeed(gameState.shuffleSeed);
+							flashCardsRef.shuffleCards(gameState.shuffleSeed);
+						}
+					}, 100);
+				}
+
+				// Sync revealed cards if any
+				if (gameState.cards && gameState.cards.length > 0) {
+					console.log('Syncing revealed cards from game state:', gameState.cards);
+					setTimeout(() => {
+						if (flashCardsRef && gameState.cards) {
+							gameState.cards.forEach((cardIndex, arrayIndex) => {
+								console.log('Game state sync - setting card revealed:', cardIndex, arrayIndex);
+								flashCardsRef.setRevealed(cardIndex, true, arrayIndex);
+							});
+						}
+					}, 200);
+				}
+
+				updatePre();
+			}
 		});
 	}
 
@@ -202,6 +322,12 @@
 			const waitForSocket = setInterval(() => {
 				if (socketInstance) {
 					setupSocketListeners();
+					// Join the room when socket is ready
+					if (party_id) {
+						socketInstance.emit('join-room', { code: party_id });
+						// Request current game state in case we're joining a game in progress
+						socketInstance.emit('request-game-state', { code: party_id });
+					}
 					clearInterval(waitForSocket);
 				}
 			}, 100);
@@ -229,6 +355,56 @@
 
 			partyData.hostId = data.hostId;
 			partyData.collectionId = data.collectionId;
+
+			// Load collection if collectionId exists
+			if (data.collectionId) {
+				try {
+					console.log('Loading collection for party:', data.collectionId);
+					const collectionData = await fetchCollectionById(data.collectionId);
+					if (collectionData) {
+						collection = collectionData;
+						collectionName = collectionData.category;
+						authorName = collectionData.author;
+						console.log('Collection loaded:', collectionData);
+					} else {
+						console.warn('Collection not found:', data.collectionId);
+						collectionName = null;
+						authorName = null;
+						collection = null;
+					}
+				} catch (collectionError) {
+					console.error('Error loading collection:', collectionError);
+					collectionName = null;
+					authorName = null;
+					collection = null;
+				}
+			}
+
+			// If joining a game that's already in progress, sync revealed cards
+			if (partyData.isStarted && partyData.cards && partyData.cards.length > 0) {
+				console.log('Joining game in progress - syncing revealed cards:', partyData.cards);
+
+				// Apply shuffle seed if available
+				if (partyData.shuffleSeed && flashCardsRef) {
+					console.log('Applying initial shuffle seed:', partyData.shuffleSeed);
+					setTimeout(() => {
+						if (flashCardsRef) {
+							flashCardsRef.setShuffleSeed(partyData.shuffleSeed);
+							flashCardsRef.shuffleCards(partyData.shuffleSeed);
+						}
+					}, 300);
+				}
+
+				// Use a longer timeout since we're just initializing
+				setTimeout(() => {
+					if (flashCardsRef && partyData.cards) {
+						partyData.cards.forEach((cardIndex, arrayIndex) => {
+							console.log('Initial sync - setting card revealed:', cardIndex, arrayIndex);
+							flashCardsRef.setRevealed(cardIndex, true, arrayIndex);
+						});
+					}
+				}, 500);
+			}
 		} catch (error) {
 			console.error('Error fetching party data:', error);
 			addToast({
@@ -269,6 +445,8 @@
 			// Rejoin the new room if socket is connected
 			if (socketInstance) {
 				socketInstance.emit('join-room', { code: party_id });
+				// Request current game state in case we're joining a game in progress
+				socketInstance.emit('request-game-state', { code: party_id });
 			}
 		}
 	}
@@ -298,7 +476,7 @@
 					{#if collection}
 						<div class="preview">
 							<div class="thumbnail">
-								<img src={collection.thumbnail} alt={collection.category} />
+								<img src={collection.thumbnail_url} alt={collection.category} />
 							</div>
 							<div class="details">
 								<h3>Category: {collection.category}</h3>
@@ -327,7 +505,7 @@
 				{:else if collectionName}
 					<div class="preview">
 						<div class="thumbnail">
-							<img src={collection.thumbnail} alt={collection.category} />
+							<img src={collection.thumbnail_url} alt={collection.category} />
 						</div>
 						<div class="details">
 							<h3>Category: {collection.category}</h3>
