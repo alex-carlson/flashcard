@@ -282,78 +282,118 @@
 	{#if editableItemId === item.id && item.id != null}
 		<div class="editing">
 			{#if item.image != null}
-				<img src={item.image} alt="To crop" class="border" />
+				<div class="image-section">
+					<img src={item.image} alt="To crop" class="border" />
+				</div>
 				{#if !isCropping && !isDrawing}
-					<div class="actions my-3">
+					<div class="actions">
 						{#if isEditable(item.image)}
-							<button class="btn btn-secondary" on:click={() => (isCropping = true)}>Crop</button>
+							<button class="btn btn-secondary me-2" on:click={() => (isCropping = true)}
+								>Crop</button
+							>
 							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Edit</button>
 						{/if}
 					</div>
 				{:else if isCropping}
-					<Cropper src={item.image} on:cropped={onCropped} on:cancel={onCancel} />
+					<div class="cropper-section mb-3">
+						<Cropper src={item.image} on:cropped={onCropped} on:cancel={onCancel} />
+					</div>
 				{:else if isDrawing}
-					<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
+					<div class="drawing-section mb-3">
+						<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
+					</div>
 				{/if}
 			{/if}
 			{#if item.questionType == QuestionType.TEXT}
-				<input
-					id="editedQuestion"
-					type="text"
-					bind:value={item.question}
-					placeholder="Enter a question"
-				/>
+				<div class="form-group mb-3">
+					<input
+						id="editedQuestion"
+						type="text"
+						bind:value={item.question}
+						placeholder="Enter a question"
+						class="form-control"
+					/>
+				</div>
 			{:else if item.audio != null}
-				<input
-					id="editedAudio"
-					type="text"
-					bind:value={item.audio}
-					placeholder="Enter an audio URL"
-				/>
+				<div class="form-group mb-3">
+					<input
+						id="editedAudio"
+						type="text"
+						bind:value={item.audio}
+						placeholder="Enter an audio URL"
+						class="form-control"
+					/>
+				</div>
 			{/if}
-			<textarea bind:value={item.supplemental} placeholder="Supplemental Question Text"></textarea>
-			<AnswerInput {item} idPrefix="edit-{item.id}" label="Answer:" />
-			<input id="editedExtra" type="text" bind:value={item.extra} placeholder="Enter extra info" />
-			<div class="vertical">
-				<button class="success" on:click={saveEditHandler}><Fa icon={faFloppyDisk} /></button>
-				<button class="danger" on:click={(editableItemId = null)}><Fa icon={faBan} /></button>
+			<div class="form-group mb-3">
+				<textarea
+					bind:value={item.supplemental}
+					placeholder="Before answer is revealed"
+					class="form-control"
+				></textarea>
+			</div>
+			<div class="form-group mb-3">
+				<AnswerInput {item} idPrefix="edit-{item.id}" label="Answer:" />
+			</div>
+			<div class="form-group mb-4">
+				<input
+					id="editedExtra"
+					type="text"
+					bind:value={item.extra}
+					placeholder="After answer is revealed"
+					class="form-control"
+				/>
+			</div>
+			<div class="edit-actions d-flex gap-2">
+				<button class="btn btn-success" on:click={saveEditHandler}
+					><Fa icon={faFloppyDisk} /></button
+				>
+				<button class="btn btn-outline-secondary" on:click={(editableItemId = null)}
+					><Fa icon={faBan} /></button
+				>
 			</div>
 		</div>
 	{:else}
-		<div class="vertical flex-half d-flex flex-column h-100">
-			{#if item.file || item.image || item.questionType == QuestionType.IMAGE}
-				<img class="preview" src={item.file || item.image} alt="Preview" />
-			{:else if item.audio != null}
-				<div class="audio">
-					{#if item.thumbnail}
-						<img src={item.thumbnail} alt={item.answer} />
-						<p>{item.title || item.answer}</p>
+		<div class="item-display d-flex gap-3 h-100">
+			<div class="content-section flex-half d-flex flex-column">
+				<div class="media-content">
+					{#if item.file || item.image || item.questionType == QuestionType.IMAGE}
+						<img class="preview" src={item.file || item.image} alt="Preview" />
+					{:else if item.audio != null}
+						<div class="audio">
+							{#if item.thumbnail}
+								<img src={item.thumbnail} alt={item.answer} />
+								<p>{item.title || item.answer}</p>
+							{:else}
+								<button on:click={() => addItemMetaData(item.audio)}>
+									<Fa icon={faPenToSquare} />Update Data</button
+								>
+							{/if}
+						</div>
 					{:else}
-						<button on:click={() => addItemMetaData(item.audio)}>
-							<Fa icon={faPenToSquare} />Update Data</button
-						>
+						<span class="question">{item.question}</span>
 					{/if}
 				</div>
-			{:else}
-				<span class="question">{item.question}</span>
-			{/if}
-			<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
-		</div>
-		<div class="answer-field vertical flex-half d-flex flex-column">
-			<div class="answer-display">
-				{#if item.answerType === AnswerType.SINGLE || !isValidAnswerType(item.answerType)}
-					<span>{item.answer}</span>
-				{:else if item.answerType === AnswerType.MULTIPLE_CHOICE}
-					<small class="text-muted">Multiple Choice:</small>
-					{#each item.answers || [] as answer, index}
-						<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
-							{index + 1}. {answer}
-							{#if item.correctAnswerIndex === index}✓{/if}
-						</span>
-					{/each}
-				{:else}
-					<div class="answer-display">
-						<small class="text-muted"
+				{#if item.supplemental}
+					<div class="supplemental-content">
+						<span>{@html (item.supplemental || '').replace(/\n/g, '<br>')}</span>
+					</div>
+				{/if}
+			</div>
+			<div class="answer-section flex-half d-flex flex-column">
+				<div class="answer-display">
+					{#if item.answerType === AnswerType.SINGLE || !isValidAnswerType(item.answerType)}
+						<span class="answer-text">{item.answer}</span>
+					{:else if item.answerType === AnswerType.MULTIPLE_CHOICE}
+						<small class="text-muted mb-2">Multiple Choice:</small>
+						{#each item.answers || [] as answer, index}
+							<span class="answer-option" class:correct={item.correctAnswerIndex === index}>
+								{index + 1}. {answer}
+								{#if item.correctAnswerIndex === index}✓{/if}
+							</span>
+						{/each}
+					{:else}
+						<small class="text-muted mb-2"
 							>Multi-Answer (Required: {item.numRequired ||
 								(item.answers && item.answers.length) ||
 								0}):</small
@@ -361,48 +401,216 @@
 						{#each item.answers || [] as answer, index}
 							<span class="answer-option">{index + 1}. {answer}</span>
 						{/each}
+					{/if}
+				</div>
+				{#if item.extra}
+					<div class="extra-content">
+						<span class="extra-text">{item.extra}</span>
 					</div>
 				{/if}
 			</div>
-			<span>{item.extra}</span>
+			{#if isReordering}
+				<div class="action-buttons reorder-actions">
+					<button
+						class="btn btn-outline-primary btn-sm"
+						on:click={() => reorderItemHandler(index, index - 1)}
+					>
+						<Fa icon={faChevronUp} />
+					</button>
+					<button
+						class="btn btn-outline-primary btn-sm"
+						on:click={() => reorderItemHandler(index, index + 1)}
+					>
+						<Fa icon={faChevronDown} />
+					</button>
+				</div>
+			{:else}
+				<div class="action-buttons edit-actions">
+					<button
+						class="btn btn-outline-secondary btn-sm"
+						on:click={() => (editableItemId = item.id)}
+					>
+						<Fa icon={faPenToSquare} />
+					</button>
+					<button class="btn btn-outline-danger btn-sm" on:click={() => removeItemHandler(item.id)}>
+						<Fa icon={faTrashCan} />
+					</button>
+				</div>
+			{/if}
 		</div>
-		{#if isReordering}
-			<div class="reorder">
-				<button on:click={() => reorderItemHandler(index, index - 1)}>
-					<Fa icon={faChevronUp} />
-				</button>
-				<button on:click={() => reorderItemHandler(index, index + 1)}>
-					<Fa icon={faChevronDown} />
-				</button>
-			</div>
-		{:else}
-			<div class="vertical">
-				<button class="edit secondary" on:click={() => (editableItemId = item.id)}>
-					<Fa icon={faPenToSquare} />
-				</button>
-				<button class="remove danger" on:click={() => removeItemHandler(item.id)}>
-					<Fa icon={faTrashCan} />
-				</button>
-			</div>
-		{/if}
 	{/if}
 </li>
 
 <style>
+	.item {
+		padding: 0.25rem;
+		margin-bottom: 1rem;
+	}
+
+	.editing {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 1rem;
+		margin-bottom: 2rem;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.image-section img {
+		max-width: 100%;
+		height: auto;
+		border-radius: 0.375rem;
+	}
+
+	.actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.form-control {
+		padding: 0.5rem;
+		border: 1px solid #ced4da;
+		border-radius: 0.375rem;
+		font-size: 0.9rem;
+	}
+
+	.form-control:focus {
+		border-color: #007bff;
+		box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+		outline: none;
+	}
+
+	.edit-actions {
+		justify-content: flex-end;
+	}
+
+	.item-display {
+		width: 100%;
+		align-items: stretch;
+	}
+
+	.content-section {
+		min-height: 0;
+	}
+
+	.media-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.preview {
+		max-width: 100%;
+		max-height: 200px;
+		height: auto;
+		border-radius: 0.375rem;
+		body-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.question {
+		font-weight: 600;
+		font-size: 1.1rem;
+		color: #495057;
+	}
+
+	.supplemental-content {
+		padding: 0.75rem;
+		background: #f8f9fa;
+		border-radius: 0.375rem;
+		font-style: italic;
+		color: #6c757d;
+	}
+
+	.answer-section {
+		min-height: 0;
+	}
+
 	.answer-display {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.5rem;
 	}
+
+	.answer-text {
+		font-weight: 600;
+		font-size: 1rem;
+		color: #28a745;
+		padding: 0.5rem;
+		background: #d4edda;
+		border-radius: 0.375rem;
+	}
+
 	.answer-option {
-		padding: 0.25rem 0.5rem;
+		padding: 0.5rem 0.75rem;
 		background: #f8f9fa;
-		border-radius: 0.25rem;
+		border-radius: 0.375rem;
 		font-size: 0.9rem;
+		border: 1px solid #e9ecef;
 	}
+
 	.answer-option.correct {
 		background: #d4edda;
 		color: #155724;
 		font-weight: 600;
+		border-color: #c3e6cb;
+	}
+
+	.extra-content {
+		padding: 0.75rem;
+		background: #e7f3ff;
+		border-radius: 0.375rem;
+		border-left: 4px solid #007bff;
+	}
+
+	.extra-text {
+		font-style: italic;
+		color: #495057;
+	}
+
+	.action-buttons {
+		flex-shrink: 0;
+		align-self: flex-start;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-left: auto;
+	}
+
+	.btn {
+		padding: 0.375rem 0.75rem;
+		border-radius: 0.375rem;
+		font-size: 0.875rem;
+		transition: all 0.15s ease-in-out;
+	}
+
+	.btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	@media (max-width: 768px) {
+		.item-display {
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.action-buttons {
+			flex-direction: row;
+			justify-content: center;
+			align-self: center;
+			margin-left: 0;
+			gap: 1rem;
+		}
+
+		.content-section,
+		.answer-section {
+			flex: none;
+		}
 	}
 </style>

@@ -59,7 +59,7 @@
 
 <div class="container mt-5">
 	<h2>Try something different</h2>
-	<Collections sortmode="random" limit={8} showAuthor={true} />
+	<Collections sortmode="random" limit={6} showAuthor={true} />
 </div>
 
 <div class="container">

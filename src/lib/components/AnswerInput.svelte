@@ -65,6 +65,17 @@
 			} else if (answerMode === 'multiple-choice' && item.correctAnswerIndex > index) {
 				item.correctAnswerIndex--;
 			}
+
+			// If only one answer remains, convert back to single answer mode
+			if (item.answers.length === 1) {
+				item.answer = item.answers[0];
+				delete item.answers;
+				delete item.isMultipleChoice;
+				delete item.numRequired;
+				delete item.correctAnswerIndex;
+				item.answerType = AnswerType.SINGLE;
+				answerMode = 'single';
+			}
 		}
 	}
 
@@ -140,7 +151,7 @@
 					{/if}
 				</div>
 			{/each}
-			<button type="button" class="btn btn-outline-primary btn-sm" on:click={addAnswer}>
+			<button type="button" class="btn btn-primary btn-sm add-button" on:click={addAnswer}>
 				Add Option
 			</button>
 		</div>
@@ -174,9 +185,6 @@
 				</div>
 			{/each}
 			<div class="multi-answer-controls d-flex gap-2 align-items-center">
-				<button type="button" class="btn btn-outline-primary btn-sm" on:click={addAnswer}>
-					Add Answer
-				</button>
 				{#if item.answers.length > 1}
 					<div class="d-flex align-items-center gap-2">
 						<label for="numRequired-{idPrefix}" class="form-label mb-0">Required:</label>
@@ -193,6 +201,9 @@
 					</div>
 				{/if}
 			</div>
+			<button type="button" class="btn btn-primary btn-sm add-button mt-3" on:click={addAnswer}>
+				Add Answer
+			</button>
 		</div>
 	{/if}
 </div>
@@ -241,5 +252,51 @@
 	.text-muted {
 		font-size: 0.875rem;
 		color: #6c757d;
+	}
+
+	.input-group {
+		display: flex;
+		width: 100%;
+		flex-wrap: nowrap;
+		align-items: stretch;
+	}
+
+	.input-group .form-control {
+		flex: 1 1 auto;
+		width: auto;
+		min-width: 0;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.input-group .btn {
+		flex: 0 0 auto;
+		width: auto;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		border-left: 0;
+		z-index: 1;
+	}
+
+	.input-group .btn:hover {
+		border-left: 1px solid #dc3545;
+	}
+
+	.add-button {
+		background: linear-gradient(135deg, #0066cc, #004499) !important;
+		border-color: #004499 !important;
+		color: white !important;
+		font-weight: 600;
+		padding: 0.5rem 1rem;
+		border-radius: 6px;
+		transition: all 0.2s ease-in-out;
+		box-shadow: 0 2px 4px rgba(0, 100, 200, 0.2);
+	}
+
+	.add-button:hover {
+		background: linear-gradient(135deg, #0052a3, #003366) !important;
+		border-color: #003366 !important;
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(0, 100, 200, 0.3);
 	}
 </style>

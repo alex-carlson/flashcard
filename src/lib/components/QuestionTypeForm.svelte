@@ -7,6 +7,8 @@
 	import { addToast } from '../../stores/toast';
 	import { uploadData, uploadQuestion, uploadAudio } from '../Upload/uploader';
 	import { QuestionType, AnswerType } from '$lib/types/enums';
+	import { Fa } from 'svelte-fa';
+	import { faUpload, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 	const dispatch = createEventDispatcher();
 
@@ -14,10 +16,10 @@
 	export const collection = {};
 	export let item;
 	export let questionType = 'Image';
+	let imageSubTab = 'upload'; // 'upload' or 'search'
 
 	let imageSuggestions = [];
 	let searchTerm = '';
-	let showSuggestions = false;
 
 	// Reactive statement to update searchTerm when answer input changes
 	$: {
@@ -192,6 +194,26 @@
 	<!-- Tab Content -->
 	<div class="tab-content">
 		{#if questionType === 'Image'}
+			<!-- Image Sub-tabs -->
+			<div class="sub-tabs mb-3">
+				<button
+					class="sub-tab-btn {imageSubTab === 'upload' ? 'active' : ''}"
+					on:click={() => (imageSubTab = 'upload')}
+				>
+					<Fa icon={faUpload} class="me-2" />Upload
+				</button>
+				<button
+					class="sub-tab-btn {imageSubTab === 'search' ? 'active' : ''}"
+					on:click={() => (imageSubTab = 'search')}
+				>
+					<Fa icon={faSearch} class="me-2" />Search
+				</button>
+			</div>
+
+			<div class="form-group mt-3">
+				<AnswerInput bind:item idPrefix="answer-image" />
+			</div>
+
 			<form on:submit|preventDefault={handleImageUpload}>
 				<div class="row">
 					{#if item.src}
@@ -199,32 +221,18 @@
 							<img src={item.src} alt="Preview" class="img-fluid" />
 						</div>
 					{/if}
-					<div class="mt-3">
-						<FileUpload
-							on:uploadImage={(event) => {
-								item.file = event.detail;
-								clearImage();
-							}}
-						/>
-					</div>
-					<div class="form-group mt-3">
-						<AnswerInput bind:item idPrefix="answer-image" />
-					</div>
-					<div class="mt-3">
-						<button
-							type="button"
-							class="btn btn-outline-secondary mb-2"
-							on:click={() => {
-								if (!showSuggestions) {
-									// Set searchTerm to the current answer input value
-									searchTerm = item.answer ?? '';
-								}
-								showSuggestions = !showSuggestions;
-							}}
-						>
-							{showSuggestions ? 'Hide' : 'Show'} Image Suggestions
-						</button>
-						{#if showSuggestions}
+
+					{#if imageSubTab === 'upload'}
+						<div class="mt-3">
+							<FileUpload
+								on:uploadImage={(event) => {
+									item.file = event.detail;
+									clearImage();
+								}}
+							/>
+						</div>
+					{:else if imageSubTab === 'search'}
+						<div class="mt-3">
 							<ImageSuggestions
 								bind:searchTerm
 								bind:suggestions={imageSuggestions}
@@ -233,8 +241,8 @@
 									if (e.detail.src) item.src = e.detail.src;
 								}}
 							/>
-						{/if}
-					</div>
+						</div>
+					{/if}
 				</div>
 				{#if item.file}
 					<button type="submit" class="btn btn-success mt-2">Add Image</button>
@@ -278,8 +286,11 @@
 
 <style>
 	.nav-tabs {
-		border-bottom: 1px solid #dee2e6;
+		border-bottom: 1px solid #e9ecef;
 		margin-bottom: 20px;
+		background: #f8f9fa;
+		border-radius: 8px 8px 0 0;
+		padding: 4px;
 	}
 
 	.nav-tabs .nav-link {
@@ -288,19 +299,83 @@
 		padding: 12px 24px;
 		color: #6c757d;
 		cursor: pointer;
-		border-bottom: 2px solid transparent;
+		border-radius: 6px;
 		transition: all 0.2s ease;
+		font-weight: 500;
+		position: relative;
+		margin: 0 2px;
 	}
 
 	.nav-link:hover {
 		color: #495057;
-		border-bottom-color: #dee2e6;
+		background: rgba(13, 110, 253, 0.05);
 	}
 
 	.nav-tabs .nav-link.active {
-		color: #007bff;
-		border-bottom-color: #007bff;
+		color: #ffffff;
+		background: linear-gradient(135deg, #0d6efd, #0b5ed7);
 		font-weight: 600;
+		box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+		transform: translateY(-1px);
+	}
+
+	.nav-tabs .nav-link.active:hover {
+		background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+	}
+
+	.tab-content {
+		background: #ffffff;
+		border: 1px solid #e9ecef;
+		border-top: none;
+		border-radius: 0 0 8px 8px;
+		padding: 24px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	}
+
+	.question-type-form {
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.sub-tabs {
+		display: flex;
+		gap: 8px;
+		padding: 12px;
+		background: #f8f9fa;
+		border-radius: 6px;
+		border: 1px solid #e9ecef;
+	}
+
+	.sub-tab-btn {
+		background: #ffffff;
+		border: 1px solid #e9ecef;
+		padding: 8px 16px;
+		border-radius: 4px;
+		color: #6c757d;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		font-size: 0.875rem;
+		font-weight: 500;
+		display: flex;
+		align-items: center;
+	}
+
+	.sub-tab-btn:hover {
+		color: #495057;
+		background: #e9ecef;
+		border-color: #adb5bd;
+	}
+
+	.sub-tab-btn.active {
+		background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+		color: #ffffff;
+		border-color: #0d6efd;
+		box-shadow: 0 2px 4px rgba(13, 110, 253, 0.25);
+	}
+
+	.sub-tab-btn.active:hover {
+		background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+		border-color: #0b5ed7;
 	}
 
 	.form-group {

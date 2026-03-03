@@ -222,14 +222,22 @@
 						Loading...
 					</h2>
 					<div class="mobile-meta d-flex justify-content-center gap-2 small text-muted">
-						<span class="bg-secondary shimmer text-transparent">--</span>
-						<span class="bg-secondary shimmer text-transparent">--/--</span>
+						<span class="d-flex align-items-center gap-1 bg-secondary shimmer text-transparent"
+							>--</span
+						>
+						<span class="d-flex align-items-center gap-1 bg-secondary shimmer text-transparent"
+							>--/--</span
+						>
+						<span class="d-flex align-items-center gap-1 bg-secondary shimmer text-transparent"
+							>--</span
+						>
+						<span class="d-flex align-items-center bg-secondary shimmer text-transparent">-</span>
 					</div>
 				</div>
 			</div>
 
 			<!-- Desktop vertical placeholder -->
-			<div class="d-none d-sm-flex flex-column h-100">
+			<div class="d-none d-sm-flex flex-column h-100 w-100">
 				<div class="card-image-container position-relative overflow-hidden">
 					<img
 						src="../loading-spinner.png"
@@ -237,17 +245,44 @@
 						class="img-fluid w-100 h-100 shimmer"
 					/>
 				</div>
-				<div class="card-body p-2 p-md-3 d-flex flex-column">
+				<div class="card-body p-2 d-flex flex-column">
 					<div
 						class="fit-text-container flex-grow-1 d-flex align-items-center justify-content-center"
 					>
-						<h2 class="text-center mb-0 h6 h5-md">Loading...</h2>
+						<h2 class="text-center mb-0 h6 h5-md bg-secondary shimmer text-transparent">
+							Loading...
+						</h2>
 					</div>
+
 					<div
-						class="card-meta mt-2 d-flex flex-wrap justify-content-center gap-1 gap-md-2 small text-muted"
+						class="card-meta d-flex flex-wrap justify-content-center gap-1 gap-md-2 small text-muted"
 					>
-						<span class="card-questions">--</span>
-						<span class="card-date">--/--</span>
+						<span class="card-meta-item d-none d-sm-inline bg-secondary shimmer text-transparent"
+							>-- tags</span
+						>
+						<span
+							class="card-questions d-flex align-items-center gap-1 bg-secondary shimmer text-transparent"
+						>
+							<span class="d-none d-sm-inline">--</span>
+							<span class="d-sm-none">--</span>
+						</span>
+						<span
+							class="card-date d-flex align-items-center gap-1 bg-secondary shimmer text-transparent"
+						>
+							<span class="d-none d-md-inline">--/--/----</span>
+							<span class="d-md-none">--/--</span>
+						</span>
+						<span
+							class="card-visibility d-flex align-items-center bg-secondary shimmer text-transparent"
+							>-</span
+						>
+						<span class="d-flex align-items-center gap-1 bg-secondary shimmer text-transparent">
+							<span class="d-none d-sm-inline">----</span>
+							<span class="d-sm-none">--</span>
+						</span>
+						<span class="card-author d-none d-xl-block small bg-secondary shimmer text-transparent">
+							by ----------
+						</span>
 					</div>
 				</div>
 			</div>

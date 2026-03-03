@@ -2,6 +2,9 @@
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { faShuffle } from '@fortawesome/free-solid-svg-icons';
+	import { Fa } from 'svelte-fa';
+
 	import CollectionCard from './components/CollectionCard.svelte';
 	import {
 		fetchLatestCollections,
@@ -221,6 +224,18 @@
 				{/each}
 			</ul>
 		{/if}
+		{#if sortmode === 'random' && (!condensed || !isCollapsed)}
+			<div class="shuffle-container">
+				<button
+					class="shuffle-button"
+					on:click={loadCollections}
+					disabled={isLoading}
+					aria-label="Shuffle collections"
+				>
+					<Fa icon={faShuffle} />
+				</button>
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -308,6 +323,36 @@
 
 	.retry-button:hover {
 		background: #0056b3;
+	}
+
+	.shuffle-container {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 1rem;
+	}
+
+	.shuffle-button {
+		background: #28a745;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		font-size: 0.9rem;
+		transition: background-color 0.2s ease;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.shuffle-button:hover {
+		background: #218838;
+	}
+
+	.shuffle-button:disabled {
+		background: #6c757d;
+		cursor: not-allowed;
+		opacity: 0.6;
 	}
 
 	/* Responsive adjustments */

@@ -1,12 +1,11 @@
 <script>
 	import { user } from '$stores/user';
 	import Collections from '$lib/Collections.svelte';
-	import FileUpload from '$lib/Upload/FileUpload.svelte';
 	import CollectionItem from '$lib/Upload/CollectionItem.svelte';
+	import CollectionInfo from '$lib/Upload/CollectionInfo.svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { fetchUserCollections, fetchCollectionById } from '$lib/api/collections';
 	import {
-		uploadThumbnail,
-		uploadData,
 		removeItem,
 		createCollection,
 		confirmDelete,
@@ -15,8 +14,9 @@
 	} from '$lib/Upload/uploader';
 	import { apiFetch } from '$lib/api/fetchdata';
 	import { addToast } from '../../stores/toast';
-	import Cropper from '$lib/Upload/Cropper.svelte';
 	import QuestionTypeForm from '$lib/components/QuestionTypeForm.svelte';
+	import { Fa } from 'svelte-fa';
+	import { faSort, faCheck, faDownload, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 	let collection = null;
 	let questionType = 'Image';
 	let isPublic = false;
@@ -29,15 +29,23 @@
 	let tempDescription = '';
 	let tempTags = '';
 	let isShuffle = false;
-	let answerInput; // Reference to the answer input field
-	let questionInput; // Reference to the question input field
-	let thumbnailUploader; // Reference to the thumbnail FileUpload
 	let suggestedTags = [];
 
 	let tagDebounceTimeout;
+	const dispatch = createEventDispatcher();
 
-	$: if ($user?.public_id) {
-		console.log('User public_id:', $user.public_id);
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		if ($user?.public_id) {
+			loadCollections();
+		}
+	});
+
+	let lastUserId;
+
+	$: if ($user?.public_id && $user.public_id !== lastUserId) {
+		lastUserId = $user.public_id;
 		loadCollections();
 	}
 
@@ -54,18 +62,24 @@
 		}
 	}
 
-	function focusAnswerInput() {
-		if (answerInput) {
-			answerInput.focus();
-			answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	// Handle events from CollectionInfo component
+	function handleCollectionUpdated() {
+		loadCollections();
+	}
+
+	function handleThumbnailUpdated() {
+		// Refresh collection data to get updated thumbnail
+		if (collection?.id) {
+			setCollection(collection.id);
 		}
 	}
 
-	function focusQuestionInput() {
-		if (questionInput) {
-			questionInput.focus();
-			questionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		}
+	function handleToggleCropper() {
+		showCropper = !showCropper;
+	}
+
+	function handleCropperToggled(event) {
+		showCropper = event.detail;
 	}
 	async function setCollection(collectionId) {
 		try {
@@ -128,110 +142,6 @@
 		});
 	}
 
-	function toggleCropper() {
-		showCropper = !showCropper;
-	}
-
-	async function uploadChangedImage(file, fileName = null) {
-		try {
-			// Set the originalname property on the file
-			if (file && typeof file === 'object') {
-				const defaultFileName = fileName || file.name || 'modified-image.jpg';
-				file.originalname = defaultFileName;
-			}
-
-			// Create a temporary item object with the new file
-			const tempItem = {
-				...item,
-				file: file,
-				// Keep the existing answer
-				answer: item.answer,
-				// Add category from collection
-				category: collection?.category || item.category
-			};
-
-			console.log('Temporary item for upload:', tempItem);
-
-			// Upload the new image
-			const result = await uploadData(tempItem, item.id, false); // false indicates this is an update
-
-			if (result && Array.isArray(result) && result.length > 0 && result[0]?.items) {
-				// Update the item with the new image URL
-				const updatedItem = result[0].items.find((i) => i.id === item.id);
-				if (updatedItem) {
-					item.image = updatedItem.image;
-
-					addToast({
-						type: 'success',
-						message: 'Image updated successfully!'
-					});
-
-					// Dispatch event to parent to update the collection
-					dispatch('updateItem', { id: item.id, image: item.image });
-				}
-			} else {
-				console.warn('Upload result structure unexpected:', result);
-				addToast({
-					type: 'warning',
-					message: 'Image uploaded but response format unexpected. Please refresh.'
-				});
-			}
-		} catch (error) {
-			console.error('Error updating image:', error);
-			addToast({
-				type: 'error',
-				message: 'Failed to update image. Please try again.'
-			});
-		}
-	}
-
-	async function setVisible(event) {
-		const data = {
-			category: collection.category,
-			author_public_id: $user.public_id,
-			visible: event.target.checked
-		};
-
-		console.log('Setting visibility:', data);
-
-		try {
-			await apiFetch('/collections/setVisible', 'POST', data);
-		} catch (error) {
-			console.error('Error setting visibility:', error);
-			addToast({
-				type: 'error',
-				message: 'Failed to update visibility. Please try again.'
-			});
-		}
-	}
-
-	async function updateCollection() {
-		const data = {
-			private: !isPublic, // isPublic is true for public, so private is the inverse
-			tags: tempTags || '',
-			category: tempCategory || collection.category || '',
-			description: tempDescription || collection.description || '',
-			shuffle: isShuffle
-		};
-
-		try {
-			const result = await apiFetch(`/collections/update/${collection.id}`, 'POST', data, false);
-			if (result) {
-				addToast({
-					type: 'success',
-					message: 'Collection updated successfully!'
-				});
-				loadCollections();
-			}
-		} catch (error) {
-			console.error('Error updating collection:', error);
-			addToast({
-				type: 'error',
-				message: 'Failed to update collection. Please try again.'
-			});
-		}
-	}
-
 	async function fetchRecommendedTags(data) {
 		try {
 			const response = await apiFetch('/collections/tags/recommended', 'POST', { query: data });
@@ -244,17 +154,6 @@
 			console.error('Error fetching recommended tags:', error);
 			return [];
 		}
-	}
-
-	async function onCropped(event) {
-		console.log('Cropped event received:', event);
-		const croppedFile = event.detail;
-
-		//get extension from type
-		const fileExtension = croppedFile.type.split('/')[1] || 'png';
-
-		await uploadChangedImage(croppedFile, 'cropped-image.' + fileExtension);
-		showCropper = false;
 	}
 
 	$: if (tempCategory || tempDescription) {
@@ -285,12 +184,16 @@
 	<title>Manage Collections</title>
 </svelte:head>
 
-<div class="form white uploader pb-3 col-12 col-md-10 col-lg-8 mx-auto">
-	{#if !user}
-		<p><a href="/login">Log in</a> to manage your collections.</p>
+<div class="form white uploader py-4 col-12 col-md-10 col-lg-8 mx-auto">
+	{#if !$user}
+		<div class="text-center py-5">
+			<p class="mb-3">
+				<a href="/login" class="btn btn-primary">Log in</a> to manage your collections.
+			</p>
+		</div>
 	{:else}
-		<div class="select-quiz mt-4 p-2">
-			<h2>Select a Quiz</h2>
+		<div class="select-quiz mb-5">
+			<h2 class="mb-4">Select a Quiz</h2>
 			<Collections
 				{collections}
 				condensed
@@ -302,312 +205,300 @@
 				}}
 			/>
 		</div>
+
 		{#if collection === null}
-			<div class="create mt-4 p-2">
-				<h2>Create a new Quiz</h2>
-				<input
-					type="text"
-					class="form-control mb-4"
-					bind:value={tempCategory}
-					placeholder="Category Name"
-				/>
-				<button
-					class="btn btn-primary"
-					on:click={async () => {
-						const result = await createCollection(tempCategory);
-						if (result) {
-							await loadCollections();
-							// Handle both array and single object responses
-							const newCol = Array.isArray(result) ? result[0] : result;
-							if (newCol && newCol.id) {
-								// Find the collection in the loaded collections or use the returned data
-								collection = collections.find((c) => c.id === newCol.id) || newCol;
-								setCollection(newCol.id);
-							} else {
-								console.error('Invalid collection response:', result);
-								addToast({
-									type: 'error',
-									message: 'Collection created but failed to load. Please refresh the page.'
-								});
+			<div class="create-section mb-5">
+				<div class="card p-4">
+					<h2 class="mb-4">Create a new Quiz</h2>
+					<div class="mb-3">
+						<input
+							type="text"
+							class="form-control"
+							bind:value={tempCategory}
+							placeholder="Category Name"
+						/>
+					</div>
+					<button
+						class="btn btn-primary"
+						on:click={async () => {
+							const result = await createCollection(tempCategory);
+							if (result) {
+								await loadCollections();
+								// Handle both array and single object responses
+								const newCol = Array.isArray(result) ? result[0] : result;
+								if (newCol && newCol.id) {
+									// Find the collection in the loaded collections or use the returned data
+									collection = collections.find((c) => c.id === newCol.id) || newCol;
+									setCollection(newCol.id);
+								} else {
+									console.error('Invalid collection response:', result);
+									addToast({
+										type: 'error',
+										message: 'Collection created but failed to load. Please refresh the page.'
+									});
+								}
 							}
-						}
-					}}
-				>
-					Create
-				</button>
+						}}
+					>
+						Create
+					</button>
+				</div>
 			</div>
 		{:else}
-			<div class="collection card mb-4 p-2">
-				<div class="collection-info row g-3 align-items-center">
-					<div
-						class="thumbnail_container d-flex flex-row align-items-center justify-content-center gap-3"
-						style="min-height: 180px; width: 100%; flex-wrap: wrap;"
-					>
-						{#if collection.thumbnail_url}
-							<div class="preview">
-								<img
-									src={collection.thumbnail_url}
-									alt="Collection Thumbnail"
-									class="img-fluid"
-									style="width: 100%; max-width: 180px; max-height: 180px; object-fit: contain; flex: 1 1 120px; min-width: 80px;"
-								/>
-								<!-- add button to toggle cropper -->
-								<button class="btn btn-secondary" on:click={() => toggleCropper(collection.id)}>
-									Edit Thumbnail
-								</button>
-								{#if showCropper}
-									<Cropper
-										src={collection.thumbnail_url}
-										on:cropped={onCropped}
-										on:cancel={toggleCropper}
-									/>
-								{/if}
-							</div>
-						{/if}
-						<div
-							class="thumbnail-uploader d-flex flex-column align-items-center justify-content-center"
-						>
-							<FileUpload
-								bind:this={thumbnailUploader}
-								on:uploadImage={async (event) => {
-									console.log('Thumbnail upload event:', event.detail);
-									try {
-										const result = await uploadThumbnail(event.detail, collection.category);
-										if (result) {
-											console.log('Thumbnail upload successful:', result);
-											// Clear the image after successful upload
-											if (thumbnailUploader && typeof thumbnailUploader.clearImage === 'function') {
-												thumbnailUploader.clearImage();
-											}
-										}
-									} catch (error) {
-										console.error('Error uploading thumbnail:', error);
-										addToast({
-											type: 'error',
-											message: 'Failed to upload thumbnail. Please try again.'
-										});
-									}
-								}}
-							/>
-						</div>
+			<CollectionInfo
+				{collection}
+				bind:tempCategory
+				bind:tempDescription
+				bind:tempTags
+				bind:isPublic
+				bind:isShuffle
+				bind:showCropper
+				{suggestedTags}
+				on:collectionUpdated={handleCollectionUpdated}
+				on:thumbnailUpdated={handleThumbnailUpdated}
+				on:toggleCropper={handleToggleCropper}
+				on:cropperToggled={handleCropperToggled}
+			/>
+			<div class="questions-section mb-5">
+				<div class="card">
+					<div class="card-header">
+						<h5 class="mb-0">
+							Questions ({collection.items
+								? collection.items.length
+									? collection.items.length
+									: 0
+								: 0})
+						</h5>
 					</div>
-					<div class="col-12 col-md">
-						<input
-							type="text"
-							class="form-control mb-2"
-							bind:value={tempCategory}
-							placeholder={collection.category}
+					<div class="card-body p-0">
+						<ul class="items-list list-group list-group-flush">
+							{#if collection.items && collection.items.length > 0}
+								{#each collection.items as item, index (item.id)}
+									<CollectionItem
+										{item}
+										{index}
+										{collection}
+										bind:editableItemId
+										on:removeItem={async () => {
+											const updatedItems = await removeItem(item.id, collection.category);
+											if (updatedItems) {
+												console.log('updatedItems:', updatedItems);
+												collection.items = updatedItems.items;
+												collection.itemsLength = updatedItems.items.length;
+											}
+										}}
+										on:saveEdit={async (e) => {
+											console.log('Save edit event:', e.detail);
+											const d = {
+												collection: collection.category,
+												author_id: $user.public_id,
+												...e.detail
+											};
+											console.log('Data to save:', d);
+											const result = await saveEdit(d);
+											if (result) {
+												collections = result;
+												editableItemId = null;
+											}
+										}}
+										on:updateItem={(e) => {
+											const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
+											if (itemIndex !== -1) {
+												const updatedItem = {
+													...collection.items[itemIndex],
+													...e.detail
+												};
+
+												// If the image was updated, append a cache-busting param
+												if (updatedItem.image) {
+													const timestamp = Date.now();
+													const url = new URL(updatedItem.image, window.location.origin);
+													url.searchParams.set('v', timestamp);
+													updatedItem.image = url.toString();
+												}
+
+												collection.items[itemIndex] = updatedItem;
+												collection.items = [...collection.items]; // Trigger reactivity
+											}
+										}}
+										on:reorderItem={async (e) => {
+											const result = await reorderItems(
+												e.detail.prevIndex,
+												e.detail.newIndex,
+												collection
+											);
+											if (result) {
+												console.log('Reordered items:', result);
+												collection.items = result[0].items;
+												collection.itemsLength = result[0].items.length;
+											}
+										}}
+										{isReordering}
+									/>
+								{/each}
+							{:else}
+								<li class="list-group-item text-muted text-center py-4">
+									No questions yet. Add some below!
+								</li>
+							{/if}
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<div class="add-question-section mb-5">
+				<div class="card">
+					<div class="card-header">
+						<h5 class="mb-0">Add New Question</h5>
+					</div>
+					<div class="card-body">
+						<QuestionTypeForm
+							bind:item
+							{collection}
+							{questionType}
+							on:itemAdded={(e) => {
+								console.log('Item added event received:', e.detail);
+								// Update the collection with new items
+								collection.items = e.detail.items;
+								collection.itemsLength = e.detail.itemsLength;
+								// Trigger reactivity by reassigning the collection
+								collection = { ...collection };
+							}}
 						/>
-						<textarea
-							class="form-control mb-2"
-							bind:value={tempDescription}
-							placeholder="Category Description (Optional)"
-						></textarea>
-						<input
-							type="text"
-							class="form-control mb-2"
-							placeholder="Add tags (comma-separated)"
-							bind:value={tempTags}
-						/>
-						{#if suggestedTags.length > 0}
-							<div class="suggested-tags mb-2">
-								<span class="me-2 text-muted">Suggestions:</span>
-								{#each suggestedTags as tag}
+					</div>
+				</div>
+			</div>
+
+			<div class="actions-section">
+				<div class="card">
+					<div class="card-body">
+						<div class="d-flex gap-2 justify-content-start align-items-center">
+							<div class="action-buttons d-flex gap-2">
+								{#if collection.itemsLength && collection.itemsLength > 1}
+									{#if !isReordering}
+										<button
+											class="btn btn-secondary"
+											on:click={() => (isReordering = true)}
+											title="Reorder Questions"
+										>
+											<Fa icon={faSort} />
+										</button>
+									{:else}
+										<button
+											class="btn btn-success"
+											on:click={() => (isReordering = false)}
+											title="Done Reordering"
+										>
+											<Fa icon={faCheck} />
+										</button>
+									{/if}
 									<button
-										type="button"
-										class="btn btn-sm btn-outline-secondary me-1 mb-1"
+										class="btn btn-primary"
+										title="Download JSON"
 										on:click={() => {
-											const tagsArr = tempTags
-												.split(',')
-												.map((t) => t.trim())
-												.filter(Boolean);
-											if (!tagsArr.includes(tag)) {
-												tempTags = tagsArr.concat(tag).join(', ');
+											try {
+												const blob = new Blob([JSON.stringify(collection)], {
+													type: 'application/json'
+												});
+												const url = URL.createObjectURL(blob);
+												const a = document.createElement('a');
+												a.href = url;
+												a.download = `${collection.category}.json`;
+												document.body.appendChild(a);
+												a.click();
+												document.body.removeChild(a);
+												URL.revokeObjectURL(url);
+											} catch (error) {
+												console.error('Error downloading collection:', error);
+												addToast({
+													type: 'error',
+													message: 'Failed to download collection. Please try again.'
+												});
 											}
 										}}
 									>
-										{tag}
+										<Fa icon={faDownload} />
 									</button>
-								{/each}
+								{/if}
+								<button
+									class="btn btn-danger"
+									title="Delete Collection"
+									on:click={() => confirmDelete(collection.id, handleCollectionDeleted)}
+								>
+									<Fa icon={faTrashCan} />
+								</button>
 							</div>
-						{/if}
-						<form
-							class="privacy-form form-check form-switch d-flex align-items-center gap-3 mb-2"
-							on:submit|preventDefault
-						>
-							<label for="privacy-toggle" class="form-label me-5 mb-0">Privacy</label>
-							<input
-								id="privacy-toggle"
-								type="checkbox"
-								class="form-check-input"
-								bind:checked={isPublic}
-								aria-label="Privacy"
-							/> <span>{isPublic ? 'Public' : 'Private'}</span>
-						</form>
-						<form class="shuffle-form form-check form-switch d-flex align-items-center gap-3 mb-2">
-							<label for="shuffle-toggle" class="form-label me-5 mb-0">Shuffle Questions</label>
-							<input
-								id="shuffle-toggle"
-								type="checkbox"
-								class="form-check-input"
-								bind:checked={isShuffle}
-								aria-label="Shuffle Questions"
-							/>
-						</form>
-						<button type="button" class="btn btn-primary mt-2" on:click={updateCollection}>
-							Save Changes
-						</button>
+						</div>
 					</div>
 				</div>
 			</div>
 		{/if}
-		{#if collection}
-			<div class="uploads py-2">
-				<details open>
-					<summary
-						>Questions ({collection.items
-							? collection.items.length
-								? collection.items.length
-								: 0
-							: 0})</summary
-					>
-					<ul class="items-list list-group mb-4">
-						{#if collection.items && collection.items.length > 0}
-							{#each collection.items as item, index (item.id)}
-								<CollectionItem
-									{item}
-									{index}
-									{collection}
-									bind:editableItemId
-									on:removeItem={async () => {
-										const updatedItems = await removeItem(item.id, collection.category);
-										if (updatedItems) {
-											console.log('updatedItems:', updatedItems);
-											collection.items = updatedItems.items;
-											collection.itemsLength = updatedItems.items.length;
-										}
-									}}
-									on:saveEdit={async (e) => {
-										console.log('Save edit event:', e.detail);
-										const d = {
-											collection: collection.category,
-											author_id: $user.public_id,
-											...e.detail
-										};
-										console.log('Data to save:', d);
-										const result = await saveEdit(d);
-										if (result) {
-											collections = result;
-											editableItemId = null;
-										}
-									}}
-									on:updateItem={(e) => {
-										const itemIndex = collection.items.findIndex((i) => i.id === e.detail.id);
-										if (itemIndex !== -1) {
-											const updatedItem = {
-												...collection.items[itemIndex],
-												...e.detail
-											};
-
-											// If the image was updated, append a cache-busting param
-											if (updatedItem.image) {
-												const timestamp = Date.now();
-												const url = new URL(updatedItem.image, window.location.origin);
-												url.searchParams.set('v', timestamp);
-												updatedItem.image = url.toString();
-											}
-
-											collection.items[itemIndex] = updatedItem;
-											collection.items = [...collection.items]; // Trigger reactivity
-										}
-									}}
-									on:reorderItem={async (e) => {
-										const result = await reorderItems(
-											e.detail.prevIndex,
-											e.detail.newIndex,
-											collection
-										);
-										if (result) {
-											console.log('Reordered items:', result);
-											collection.items = result[0].items;
-											collection.itemsLength = result[0].items.length;
-										}
-									}}
-									{isReordering}
-								/>
-							{/each}
-						{:else}
-							<li class="list-group-item text-muted">No questions yet. Add some below!</li>
-						{/if}
-					</ul>
-				</details>
-			</div>
-
-			<div class="uploader card mb-4">
-				<h4 class="mb-3">Add New Question</h4>
-				<QuestionTypeForm
-					bind:item
-					{collection}
-					{questionType}
-					on:itemAdded={(e) => {
-						console.log('Item added event received:', e.detail);
-						// Update the collection with new items
-						collection.items = e.detail.items;
-						collection.itemsLength = e.detail.itemsLength;
-						// Trigger reactivity by reassigning the collection
-						collection = { ...collection };
-					}}
-				/>
-			</div>
-			<div class="button-group mt-3 d-flex gap-2 p-2">
-				{#if collection.itemsLength && collection.itemsLength > 1}
-					{#if !isReordering}
-						<button class="btn btn-outline-secondary" on:click={() => (isReordering = true)}
-							>Reorder</button
-						>
-					{:else}
-						<button class="btn btn-outline-secondary" on:click={() => (isReordering = false)}
-							>Done</button
-						>
-					{/if}
-					<button
-						class="btn btn-outline-secondary"
-						on:click={() => {
-							try {
-								const blob = new Blob([JSON.stringify(collection)], { type: 'application/json' });
-								const url = URL.createObjectURL(blob);
-								const a = document.createElement('a');
-								a.href = url;
-								a.download = `${collection.category}.json`;
-								document.body.appendChild(a);
-								a.click();
-								document.body.removeChild(a);
-								URL.revokeObjectURL(url);
-							} catch (error) {
-								console.error('Error downloading collection:', error);
-								addToast({
-									type: 'error',
-									message: 'Failed to download collection. Please try again.'
-								});
-							}
-						}}
-					>
-						Download JSON
-					</button>
-				{/if}
-				<button
-					class="btn btn-danger"
-					on:click={() => confirmDelete(collection.id, handleCollectionDeleted)}
-					>Delete Collection</button
-				>
-			</div>
-		{/if}
 	{/if}
-	<div class="container" style="display: none;">
-		<form action="" on:submit|preventDefault>
-			<input type="file" name="file" id="file" />
-			<input type="text" name="answer" id="answer" />
-			<button type="submit">Upload</button>
-		</form>
-	</div>
 </div>
+<div class="container" style="display: none;">
+	<form action="" on:submit|preventDefault>
+		<input type="file" name="file" id="file" />
+		<input type="text" name="answer" id="answer" />
+		<button type="submit">Upload</button>
+	</form>
+</div>
+
+<style>
+	.action-buttons {
+		flex-grow: 1;
+	}
+
+	.card {
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+		border: 1px solid #e9ecef;
+	}
+
+	.card-body {
+		padding: 2rem;
+	}
+
+	.btn {
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.375rem;
+		transition: all 0.2s ease;
+	}
+
+	.btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.list-group-item {
+		border-left: none;
+		border-right: none;
+		padding: 1rem 1.5rem;
+	}
+
+	.list-group-item:first-child {
+		border-top: none;
+	}
+
+	.list-group-item:last-child {
+		border-bottom: none;
+	}
+
+	@media (max-width: 768px) {
+		.uploader {
+			padding: 1rem 0.5rem;
+		}
+
+		.card-body {
+			padding: 1rem;
+		}
+
+		.d-flex.justify-content-between {
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.action-buttons {
+			order: 2;
+		}
+	}
+</style>
