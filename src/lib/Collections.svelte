@@ -225,7 +225,7 @@
 			</ul>
 		{/if}
 		{#if sortmode === 'random' && (!condensed || !isCollapsed)}
-			<div class="shuffle-container">
+			<div class="shuffle-container mt-2">
 				<button
 					class="shuffle-button"
 					on:click={loadCollections}
