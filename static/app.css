@@ -12449,6 +12449,9 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 .flashcards {
   border-radius: 0;
+  contain: layout style;
+  will-change: auto;
+  transform: translateZ(0);
 }
 
 .flashcards.grid {
@@ -12457,6 +12460,8 @@ header .navContainer ul li.user-tab a .profile-picture img {
   background-color: white;
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
+  contain: layout;
+  content-visibility: auto;
 }
 
 .flashcards.grid .card {
@@ -12879,6 +12884,38 @@ header .navContainer ul li.user-tab a .profile-picture img {
   color: #666;
 }
 
+/* Performance optimizations for low-end devices */
+@media (max-width: 768px) {
+  .flashcards.grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+  }
+  .flashcards.grid img {
+    height: 80px;
+  }
+}
+/* Very low-end device optimizations */
+@media (max-width: 480px), (max-device-memory: 2gb) {
+  .flashcards.grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    transition: none;
+  }
+  .flashcards.grid img {
+    height: 60px;
+    image-rendering: optimizeSpeed;
+  }
+}
+/* Reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .flashcards.grid img,
+  .card.revealed img {
+    animation: none;
+    transition: none;
+  }
+}
 .uploader {
   display: flex;
 }

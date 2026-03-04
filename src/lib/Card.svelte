@@ -41,6 +41,8 @@
 	let isLockedIn = false;
 	let multipleChoiceSelected = false; // Track if user has made a selection
 	let validationTimeout; // For debouncing validation
+	let cachedValidationResult = null; // Cache validation results
+	let lastValidationInput = ''; // Track input changes
 
 	function handleInput(idx, e) {
 		if (isLockedIn) return; // Prevent editing when locked in
@@ -61,11 +63,13 @@
 			});
 		} else {
 			userAnswers[idx] = e.target.value;
+			// Clear cached result when input changes
+			cachedValidationResult = null;
 			// Debounce validation to prevent excessive calls
 			if (validationTimeout) clearTimeout(validationTimeout);
 			validationTimeout = setTimeout(() => {
 				validateAnswer();
-			}, 100); // 100ms debounce
+			}, 150); // Increased debounce for low-end devices
 		}
 
 		// Lock in if all required answers are correct for multi-answer questions
@@ -89,58 +93,126 @@
 			const correctAnswer = item.answers[item.correctAnswerIndex || 0];
 			return areStringsClose(userAnswers[0], correctAnswer);
 		} else if (item.answerType === AnswerType.MULTI_ANSWER) {
-			// For multi-answer, check how many correct answers the user provided
+			// Optimized multi-answer checking
 			const req = item.numRequired ?? (item.answers ? item.answers.length : 1);
 			const correctAnswers = item.answers || [item.answer];
 			const filledUserAnswers = userAnswers.filter((ans) => ans && ans.trim());
 
-			// Count how many of the user's answers match correct answers
+			if (filledUserAnswers.length < req) return false;
+
+			// Use Set for better performance
 			const matchedCorrectAnswers = new Set();
-			filledUserAnswers.forEach((userAns) => {
-				correctAnswers.forEach((correctAns) => {
+
+			// Optimized: break early when possible
+			for (const userAns of filledUserAnswers) {
+				for (const correctAns of correctAnswers) {
 					if (areStringsClose(userAns, correctAns)) {
 						matchedCorrectAnswers.add(correctAns);
+						break; // Found match, move to next user answer
 					}
-				});
-			});
+				}
+				// Early exit if we already have enough matches
+				if (matchedCorrectAnswers.size >= req) {
+					return true;
+				}
+			}
 
 			return matchedCorrectAnswers.size >= req;
 		} else {
 			// Check both userAnswers[0] and item.userAnswer for single answer type
 			const userInput = userAnswers[0] || item.userAnswer || '';
+			if (!userInput.trim()) return false;
+
 			if (Array.isArray(item.answer)) {
-				return item.answer.some((ans) => areStringsClose(userInput, ans));
+				// Early exit optimization
+				for (const ans of item.answer) {
+					if (areStringsClose(userInput, ans)) {
+						return true;
+					}
+				}
+				return false;
 			}
 			return areStringsClose(userInput, item.answer);
 		}
 	}
 
 	function validateAnswer() {
+		// Performance optimization: Check if we already have a cached result
+		const currentInput = JSON.stringify(userAnswers);
+		if (lastValidationInput === currentInput && cachedValidationResult !== null) {
+			isValidated = cachedValidationResult;
+			return;
+		}
+		lastValidationInput = currentInput;
+
 		if (item.answerType === AnswerType.MULTIPLE_CHOICE) {
 			// For multiple choice, just validate if an option is selected
 			// Event dispatching is handled in handleInput
-			isValidated = userAnswers[0]?.trim() && isCorrect();
+			const result = userAnswers[0]?.trim() && isCorrect();
+			cachedValidationResult = result;
+			isValidated = result;
 		} else if (item.answerType === AnswerType.MULTI_ANSWER) {
+			// Performance optimization: Cache expensive operations
 			const correctAnswers = item.answers || [item.answer];
 			const req = item.numRequired ?? correctAnswers.length;
 			const filledAnswers = userAnswers.filter((a) => a && a.trim());
 
-			// Check if all filled answers are correct (green)
-			const correctFilledAnswers = filledAnswers.filter((userAns) =>
-				correctAnswers.some((correctAns) => areStringsClose(userAns, correctAns))
-			);
+			if (filledAnswers.length === 0) {
+				cachedValidationResult = false;
+				isValidated = false;
+				return;
+			}
+
+			// Optimized: Use Set for faster lookups and reduce string comparisons
+			const correctAnswersSet = new Set(correctAnswers.map((ans) => ans.toLowerCase().trim()));
+			let correctCount = 0;
+			let allCorrect = true;
+
+			for (const userAns of filledAnswers) {
+				const userAnsLower = userAns.toLowerCase().trim();
+				let foundMatch = false;
+
+				// Fast exact match first
+				if (correctAnswersSet.has(userAnsLower)) {
+					foundMatch = true;
+					correctCount++;
+				} else {
+					// Slower fuzzy match only if exact match fails
+					for (const correctAns of correctAnswers) {
+						if (areStringsClose(userAns, correctAns)) {
+							foundMatch = true;
+							correctCount++;
+							break;
+						}
+					}
+				}
+
+				if (!foundMatch) {
+					allCorrect = false;
+				}
+			}
 
 			// Validate if we have enough correct answers and all filled answers are correct
-			isValidated =
-				filledAnswers.length >= req &&
-				correctFilledAnswers.length === filledAnswers.length &&
-				correctFilledAnswers.length >= req;
+			const result = filledAnswers.length >= req && allCorrect && correctCount >= req;
+			cachedValidationResult = result;
+			isValidated = result;
 		} else {
 			// Check both userAnswers[0] and item.userAnswer for validation
 			const userInput = userAnswers[0] || item.userAnswer || '';
-			isValidated = userInput.trim() && isCorrect();
+			const inputTrimmed = userInput.trim();
+
+			if (!inputTrimmed) {
+				cachedValidationResult = false;
+				isValidated = false;
+				return;
+			}
+
+			const result = isCorrect();
+			cachedValidationResult = result;
+			isValidated = result;
+
 			// if is valid, lock in the answer
-			if (isValidated) {
+			if (result) {
 				isLockedIn = true;
 				item.revealed = true; // Mark as completed
 
@@ -151,25 +223,64 @@
 					userAnswer: userInput,
 					isCorrect: true
 				});
-				// Use requestAnimationFrame for better performance and avoid blocking
-				requestAnimationFrame(() => {
-					try {
-						// Only query inputs within the quiz container to limit scope
-						const container = document.querySelector('.flash-cards, main') || document;
-						const inputs = Array.from(
-							container.querySelectorAll('input[type="text"]:not([disabled])')
-						);
-						const currentInput = inputs.find((input) => input.value === userInput);
 
-						if (currentInput && inputs.length > 1) {
-							const currentIndex = inputs.indexOf(currentInput);
-							if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
-								inputs[currentIndex + 1].focus();
+				// Enhanced focus management with better timing
+				requestAnimationFrame(() => {
+					setTimeout(() => {
+						try {
+							// Find all text inputs in the flashcards container
+							const container = document.querySelector('.flashcards') || document;
+							const inputs = Array.from(
+								container.querySelectorAll('input[type="text"]:not([disabled])')
+							);
+
+							if (inputs.length <= 1) return;
+
+							// Find current input by matching value or by being the active element
+							let currentInputIndex = -1;
+
+							// First try to find by matching the user input
+							for (let j = 0; j < inputs.length; j++) {
+								if (inputs[j].value === userInput || inputs[j] === document.activeElement) {
+									currentInputIndex = j;
+									break;
+								}
 							}
+
+							// Find next available input with looping behavior
+							if (currentInputIndex >= 0) {
+								let nextInput = null;
+
+								// First, look for next available input after current one
+								for (let j = currentInputIndex + 1; j < inputs.length; j++) {
+									const input = inputs[j];
+									if (!input.disabled && input.value.trim() === '') {
+										nextInput = input;
+										break;
+									}
+								}
+
+								// If no next input found, loop back to beginning
+								if (!nextInput) {
+									for (let j = 0; j <= currentInputIndex; j++) {
+										const input = inputs[j];
+										if (!input.disabled && input.value.trim() === '' && j !== currentInputIndex) {
+											nextInput = input;
+											break;
+										}
+									}
+								}
+
+								// Focus the next available input
+								if (nextInput) {
+									nextInput.focus();
+									nextInput.select(); // Also select the text for better UX
+								}
+							}
+						} catch (error) {
+							console.warn('Error focusing next input:', error);
 						}
-					} catch (error) {
-						console.warn('Error focusing next input:', error);
-					}
+					}, 50); // Small delay to ensure DOM is updated
 				});
 			}
 		}
@@ -212,12 +323,15 @@
 		return `answer ${isCorrect() ? 'correct' : 'incorrect'}`;
 	}
 
-	// Cleanup validation timeout on destroy
+	// Cleanup validation timeout and cache on destroy
 	onDestroy(() => {
 		if (validationTimeout) {
 			clearTimeout(validationTimeout);
 			validationTimeout = null;
 		}
+		// Clear cache to prevent memory leaks
+		cachedValidationResult = null;
+		lastValidationInput = '';
 	});
 </script>
 

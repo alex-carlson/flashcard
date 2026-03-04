@@ -4,6 +4,7 @@
 	import { youtubePlayerService } from './api/youtubePlayer.js';
 	import { getRandomPhraseForScore, toLetterGrade } from './api/quizScore';
 	import { createQuizStore } from '../stores/quiz';
+	import { imagePreloader } from './imagePreloader.js';
 
 	// Components
 	import Modal from './Modal.svelte';
@@ -222,10 +223,35 @@
 		if (collectionId && !$quizStore.hasInitialized) {
 			quizStore.loadCollection(collectionId);
 		}
+
+		// Setup image preloading
+		if ($quizStore.cards.length > 0) {
+			// Start preloading first few images
+			imagePreloader.preloadImagesForRange($quizStore.cards, 0, 'forward');
+
+			// Setup intersection observer for adaptive preloading
+			const observer = imagePreloader.setupIntersectionObserver((cardIndex) => {
+				const index = parseInt(cardIndex);
+				if (index >= 0) {
+					imagePreloader.preloadImagesForRange($quizStore.cards, index + 1, 'forward');
+				}
+			});
+
+			// Observe all card elements
+			setTimeout(() => {
+				document.querySelectorAll('[data-card-index]').forEach((el) => {
+					observer.observe(el);
+				});
+			}, 100);
+		}
 	});
 
 	export function onQuizStart() {
 		quizStore.setIsPractice(practiceMode);
+		// Trigger initial preloading when quiz starts
+		if ($quizStore.cards.length > 0) {
+			imagePreloader.preloadImagesForRange($quizStore.cards, 0, 'forward');
+		}
 	}
 
 	onDestroy(() => {
@@ -241,6 +267,9 @@
 		// Reset processing flags
 		isProcessingAnswer = false;
 		isCompletingQuiz = false;
+
+		// Clean up image preloader
+		imagePreloader.destroy();
 	});
 
 	export function getStats() {
@@ -281,23 +310,25 @@
 		<div class={'flashcards ' + ($quizStore.isGrid ? 'grid' : 'vertical')}>
 			{#if $quizStore.hasInitialized}
 				{#each $quizStore.cards as item, i (item.id || i)}
-					<Card
-						{item}
-						{i}
-						cards={$quizStore.cards}
-						currentMode={$quizStore.currentMode}
-						shuffleTrigger={$quizStore.shuffleTrigger}
-						{onCardLoad}
-						{toggleReveal}
-						{isPartyMode}
-						isPractice={practiceMode}
-						updateCards={() => {}}
-						on:correctAnswer={onCorrectAnswer}
-						on:giveUp={(e) => {
-							console.log('Give up on card', i);
-							setRevealed(e.detail.index, true);
-						}}
-					/>
+					<div data-card-index={i}>
+						<Card
+							{item}
+							{i}
+							cards={$quizStore.cards}
+							currentMode={$quizStore.currentMode}
+							shuffleTrigger={$quizStore.shuffleTrigger}
+							{onCardLoad}
+							{toggleReveal}
+							{isPartyMode}
+							isPractice={practiceMode}
+							updateCards={() => {}}
+							on:correctAnswer={onCorrectAnswer}
+							on:giveUp={(e) => {
+								console.log('Give up on card', i);
+								setRevealed(e.detail.index, true);
+							}}
+						/>
+					</div>
 				{/each}
 			{/if}
 		</div>

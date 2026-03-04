@@ -1,6 +1,10 @@
-// Flashcards - Flattened for better performance
+// Flashcards - Optimized for performance on low-end devices
 .flashcards {
     border-radius: 0;
+    // Performance optimizations
+    contain: layout style;
+    will-change: auto; // Only when needed
+    transform: translateZ(0); // Force GPU acceleration when beneficial
 }
 
 .flashcards.grid {
@@ -9,6 +13,10 @@
     background-color: white;
     grid-template-columns: repeat(4, 1fr);
     gap: 4px;
+
+    // Performance optimizations for grid
+    contain: layout;
+    content-visibility: auto; // Modern browsers only render visible items
 }
 
 .flashcards.grid .card {
@@ -451,4 +459,44 @@
     text-align: center;
     padding: 3rem;
     color: #666;
+}
+
+/* Performance optimizations for low-end devices */
+@media (max-width: 768px) {
+    .flashcards.grid {
+        grid-template-columns: repeat(2, 1fr); // Reduce columns on mobile
+        gap: 2px; // Smaller gaps
+    }
+
+    .flashcards.grid img {
+        height: 80px; // Smaller images on mobile
+    }
+}
+
+/* Very low-end device optimizations */
+@media (max-width: 480px),
+(max-device-memory: 2gb) {
+    .flashcards.grid {
+        grid-template-columns: 1fr; // Single column for very small screens
+    }
+
+    .card {
+        transition: none; // Disable transitions for performance
+    }
+
+    .flashcards.grid img {
+        height: 60px; // Even smaller images
+        image-rendering: optimizeSpeed; // Faster image rendering
+    }
+}
+
+/* Reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+
+    .card,
+    .flashcards.grid img,
+    .card.revealed img {
+        animation: none;
+        transition: none;
+    }
 }

@@ -78,7 +78,7 @@
 	});
 </script>
 
-<li class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-3 mb-md-4 w-100">
+<li class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-md-4 w-100">
 	{#if collection}
 		<a
 			class="collection-card-link card border-0 shadow-sm w-100"
