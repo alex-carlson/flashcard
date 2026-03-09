@@ -178,16 +178,13 @@
 			// Auto-play next audio question when a correct answer is given (debounced)
 			setTimeout(() => {
 				const nextCardIndex = $quizStore.cards.findIndex((card, i) => i > index && !card.revealed);
-				console.log('Looking for next card after index', index, 'found:', nextCardIndex);
 
 				if (nextCardIndex !== -1) {
 					const nextCard = $quizStore.cards[nextCardIndex];
-					console.log('Next card:', nextCard);
 
 					// Check if the next card has audio content
 					if (nextCard.audio) {
 						try {
-							console.log('Auto-playing next audio question:', nextCard.audio);
 							youtubePlayerService.loadVideoOnly(nextCard.audio);
 						} catch (error) {
 							console.error('Failed to auto-play next audio question:', error);

@@ -36,6 +36,27 @@
 		dispatch('giveUp', { index: i });
 	}
 
+	// Handle focus events for tab navigation with proper scroll behavior
+	function handleInputFocus(event) {
+		// Find the card containing this input
+		const cardElement = event.target.closest('.card');
+		if (!cardElement) return;
+
+		// Check if the card is already reasonably visible
+		const rect = cardElement.getBoundingClientRect();
+		const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+		// Only scroll if the card isn't fully visible
+		if (!isVisible) {
+			// Use immediate execution to override browser default scroll
+			cardElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center', // Center the card in viewport
+				inline: 'nearest'
+			});
+		}
+	}
+
 	let userAnswers = [];
 	let isValidated = false;
 	let isLockedIn = false;
@@ -271,10 +292,21 @@
 									}
 								}
 
-								// Focus the next available input
+								// Focus the next available input with better scroll behavior
 								if (nextInput) {
-									nextInput.focus();
+									// Prevent default scroll behavior when focusing
+									nextInput.focus({ preventScroll: true });
 									nextInput.select(); // Also select the text for better UX
+
+									// Find the card containing this input and scroll it into view properly
+									const cardElement = nextInput.closest('.card');
+									if (cardElement) {
+										cardElement.scrollIntoView({
+											behavior: 'smooth',
+											block: 'center', // Center the card in viewport
+											inline: 'nearest'
+										});
+									}
 								}
 							}
 						} catch (error) {
@@ -463,6 +495,7 @@
 											handleInput(0, { target: { value: choice } });
 										}
 									}}
+									on:focus={handleInputFocus}
 									disabled={isLockedIn}
 								>
 									<span class="choice-text">{choice}</span>
@@ -480,6 +513,7 @@
 										placeholder={`Answer ${idx + 1}`}
 										value={userAnswers[idx] || ''}
 										on:input={(e) => handleInput(idx, e)}
+										on:focus={handleInputFocus}
 										disabled={isLockedIn}
 									/>
 								</div>
@@ -493,6 +527,7 @@
 							placeholder="Enter your answer"
 							bind:value={userAnswers[0]}
 							on:input={(e) => handleInput(0, e)}
+							on:focus={handleInputFocus}
 						/>
 						{#if isPractice && !isPartyMode && !item.revealed}
 							<Hint
