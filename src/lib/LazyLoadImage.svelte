@@ -50,11 +50,29 @@
 
 	function handleVideoLoadStart() {
 		// Much shorter timeout on mobile for fast fallback
-		const timeout = isMobile ? 1000 : 2000; // 1s on mobile, 2s on desktop
+		const timeout = isMobile ? 800 : 2000; // Very short on mobile
 		videoLoadTimeout = setTimeout(() => {
 			console.warn(`Video load timeout (${timeout}ms), falling back to GIF`);
 			handleVideoError();
 		}, timeout);
+
+		// Additional mobile check for video visibility
+		if (isMobile) {
+			setTimeout(() => {
+				checkVideoPlayback();
+			}, 1200); // Check after 1.2s if video is actually playing
+		}
+	}
+
+	function checkVideoPlayback() {
+		if (imgElement && imgElement.tagName === 'VIDEO') {
+			const video = imgElement;
+			// Check if video is actually playing and visible
+			if (video.paused || video.readyState < 2 || video.videoWidth === 0) {
+				console.warn('Video not playing properly on mobile, falling back to GIF');
+				handleVideoError();
+			}
+		}
 	}
 
 	function handleSourceError(event) {
@@ -150,6 +168,7 @@
 	{#if finalUrl}
 		{#if imageUrl.endsWith('.gif') && !useVideoFallback}
 			<video
+				bind:this={imgElement}
 				autoplay
 				loop
 				muted
@@ -163,6 +182,8 @@
 				on:error={handleVideoError}
 				on:canplay={handleVideoLoad}
 				on:emptied={handleVideoError}
+				on:suspend={isMobile ? handleVideoError : null}
+				on:waiting={isMobile ? handleVideoError : null}
 			>
 				<!-- Source with its own error handler for 404s -->
 				<source
