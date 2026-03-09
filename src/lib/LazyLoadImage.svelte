@@ -7,6 +7,8 @@
 	let loaded = false;
 	let finalUrl = '';
 	let imgElement;
+	let useVideoFallback = false;
+	let fallbackUrl = '';
 
 	function handleLoad() {
 		loaded = true;
@@ -18,6 +20,20 @@
 			type: 'error',
 			message: 'Failed to load image. Please try again later.'
 		});
+	}
+
+	function handleVideoError() {
+		if (!useVideoFallback) {
+			// First fallback: try WebP
+			useVideoFallback = true;
+			fallbackUrl = addImageOptimizations(imageUrl.replace('.gif', '.webp'));
+		} else if (fallbackUrl.includes('.webp')) {
+			// Second fallback: try original GIF
+			fallbackUrl = addImageOptimizations(imageUrl);
+		} else {
+			// Final fallback failed
+			handleError();
+		}
 	}
 
 	// Check if image is already loaded in cache
@@ -34,14 +50,27 @@
 		return false;
 	}
 
+	// Add image optimization parameters to URL
+	function addImageOptimizations(url) {
+		if (!url) return url;
+
+		const separator = url.includes('?') ? '&' : '?';
+		return `${url}${separator}quality=75&format=auto&width=800&fit=cover`;
+	}
+
 	// Reactively update finalUrl when imageUrl changes
 	$: if (imageUrl) {
-		finalUrl = imageUrl;
+		finalUrl = addImageOptimizations(imageUrl);
+		// Reset video fallback state when imageUrl changes
+		useVideoFallback = false;
+		fallbackUrl = '';
 		// Check if image is already in cache
-		loaded = checkIfImageLoaded(imageUrl);
+		loaded = checkIfImageLoaded(finalUrl);
 	} else {
 		finalUrl = '';
 		loaded = false;
+		useVideoFallback = false;
+		fallbackUrl = '';
 	}
 </script>
 
@@ -52,16 +81,41 @@
 	{/if}
 
 	{#if finalUrl}
-		<img
-			bind:this={imgElement}
-			src={finalUrl}
-			alt="Placeholder"
-			loading="lazy"
-			class:loaded
-			on:load={handleLoad}
-			on:error={handleError}
-			style={loaded ? '' : tempSize ? `width: ${tempSize}; height: ${tempSize};` : ''}
-		/>
+		{#if imageUrl.endsWith('.gif') && !useVideoFallback}
+			<video
+				autoplay
+				loop
+				muted
+				playsinline
+				class:loaded
+				on:loadeddata={handleLoad}
+				on:error={handleVideoError}
+			>
+				<source src={`${imageUrl.replace('.gif', '.mp4')}`} type="video/mp4" />
+				<source src={`${imageUrl.replace('.gif', '.webp')}`} type="image/webp" />
+				<img src={finalUrl} />
+			</video>
+		{:else if useVideoFallback && fallbackUrl}
+			<img
+				bind:this={imgElement}
+				src={fallbackUrl}
+				alt="Placeholder"
+				loading="lazy"
+				class:loaded
+				on:load={handleLoad}
+				on:error={handleVideoError}
+			/>
+		{:else}
+			<img
+				bind:this={imgElement}
+				src={finalUrl}
+				alt="Placeholder"
+				loading="lazy"
+				class:loaded
+				on:load={handleLoad}
+				on:error={handleError}
+			/>
+		{/if}
 	{/if}
 </div>
 
