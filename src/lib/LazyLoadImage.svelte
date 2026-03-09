@@ -11,6 +11,14 @@
 	let fallbackUrl = '';
 	let placeholderUrl = '';
 	let videoLoadTimeout;
+	let isMobile = false;
+
+	// Detect mobile device
+	function detectMobile() {
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+			 window.innerWidth <= 768 || 
+			 'ontouchstart' in window;
+	}
 
 	function handleLoad() {
 		loaded = true;
@@ -51,6 +59,15 @@
 		handleVideoError();
 	}
 
+	// Simplified mobile fallback
+	function handleMobileGifError() {
+		console.error('Mobile GIF failed to load, trying optimized version');
+		// Try the original URL without optimizations
+		if (fallbackUrl !== imageUrl) {
+			fallbackUrl = imageUrl;
+		}
+	}
+
 	function handleVideoLoad() {
 		// Clear timeout on successful load
 		if (videoLoadTimeout) {
@@ -89,26 +106,37 @@
 	}
 
 	// Reactively update finalUrl when imageUrl changes
-	$: if (imageUrl) {
-		finalUrl = addImageOptimizations(imageUrl);
-		placeholderUrl = createPlaceholderUrl(imageUrl);
-		// Reset video fallback state when imageUrl changes
-		useVideoFallback = false;
-		fallbackUrl = '';
-		// Clear any existing timeout
-		if (videoLoadTimeout) {
-			clearTimeout(videoLoadTimeout);
-		}
-		// Check if image is already in cache
-		loaded = checkIfImageLoaded(finalUrl);
-	} else {
-		finalUrl = '';
-		placeholderUrl = '';
-		loaded = false;
-		useVideoFallback = false;
-		fallbackUrl = '';
-		if (videoLoadTimeout) {
-			clearTimeout(videoLoadTimeout);
+	$: {
+		isMobile = detectMobile();
+		
+		if (imageUrl) {
+			finalUrl = addImageOptimizations(imageUrl);
+			placeholderUrl = createPlaceholderUrl(imageUrl);
+			// Reset video fallback state when imageUrl changes
+			useVideoFallback = false;
+			fallbackUrl = '';
+			// Clear any existing timeout
+			if (videoLoadTimeout) {
+				clearTimeout(videoLoadTimeout);
+			}
+			
+			// On mobile, skip video entirely for GIFs to avoid compatibility issues
+			if (isMobile && imageUrl.endsWith('.gif')) {
+				useVideoFallback = true;
+				fallbackUrl = imageUrl; // Use original GIF directly
+			}
+			
+			// Check if image is already in cache
+			loaded = checkIfImageLoaded(finalUrl);
+		} else {
+			finalUrl = '';
+			placeholderUrl = '';
+			loaded = false;
+			useVideoFallback = false;
+			fallbackUrl = '';
+			if (videoLoadTimeout) {
+				clearTimeout(videoLoadTimeout);
+			}
 		}
 	}
 </script>
@@ -135,18 +163,23 @@
 				on:emptied={handleVideoError}
 			>
 				<!-- Source with its own error handler for 404s -->
-				<source src={`${imageUrl.replace('.gif', '.mp4')}`} type="video/mp4" on:error={handleSourceError} />
+				<source
+					src={`${imageUrl.replace('.gif', '.mp4')}`}
+					type="video/mp4"
+					on:error={handleSourceError}
+				/>
 			</video>
 		{:else if useVideoFallback && fallbackUrl}
-			<!-- Show original GIF when video fails -->
+			<!-- Show original GIF when video fails OR on mobile -->
 			<img
 				bind:this={imgElement}
 				src={fallbackUrl}
 				alt="Image"
-				loading="lazy"
+				loading={isMobile ? 'eager' : 'lazy'}
+				decoding="async"
 				class:loaded
 				on:load={handleLoad}
-				on:error={handleError}
+				on:error={handleMobileGifError}
 			/>
 		{:else}
 			<img
