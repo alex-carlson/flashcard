@@ -15,9 +15,11 @@
 
 	// Detect mobile device
 	function detectMobile() {
-		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-			 window.innerWidth <= 768 || 
-			 'ontouchstart' in window;
+		return (
+			/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+			window.innerWidth <= 768 ||
+			'ontouchstart' in window
+		);
 	}
 
 	function handleLoad() {
@@ -47,11 +49,12 @@
 	}
 
 	function handleVideoLoadStart() {
-		// Short timeout for fast fallback on failed videos
+		// Much shorter timeout on mobile for fast fallback
+		const timeout = isMobile ? 1000 : 2000; // 1s on mobile, 2s on desktop
 		videoLoadTimeout = setTimeout(() => {
-			console.warn('Video load timeout (2s), falling back to GIF');
+			console.warn(`Video load timeout (${timeout}ms), falling back to GIF`);
 			handleVideoError();
-		}, 2000); // 2 second timeout for fast loading
+		}, timeout);
 	}
 
 	function handleSourceError(event) {
@@ -108,7 +111,7 @@
 	// Reactively update finalUrl when imageUrl changes
 	$: {
 		isMobile = detectMobile();
-		
+
 		if (imageUrl) {
 			finalUrl = addImageOptimizations(imageUrl);
 			placeholderUrl = createPlaceholderUrl(imageUrl);
@@ -119,13 +122,10 @@
 			if (videoLoadTimeout) {
 				clearTimeout(videoLoadTimeout);
 			}
-			
-			// On mobile, skip video entirely for GIFs to avoid compatibility issues
-			if (isMobile && imageUrl.endsWith('.gif')) {
-				useVideoFallback = true;
-				fallbackUrl = imageUrl; // Use original GIF directly
-			}
-			
+
+			// Don't skip video on mobile, but use more aggressive fallback
+			// (removed the mobile video skip logic)
+
 			// Check if image is already in cache
 			loaded = checkIfImageLoaded(finalUrl);
 		} else {
@@ -155,6 +155,8 @@
 				muted
 				playsinline
 				preload="none"
+				webkit-playsinline
+				disablepictureinpicture
 				class:loaded
 				on:loadeddata={handleVideoLoad}
 				on:loadstart={handleVideoLoadStart}
@@ -170,7 +172,7 @@
 				/>
 			</video>
 		{:else if useVideoFallback && fallbackUrl}
-			<!-- Show original GIF when video fails OR on mobile -->
+			<!-- Show original GIF when video fails -->
 			<img
 				bind:this={imgElement}
 				src={fallbackUrl}
