@@ -9,6 +9,8 @@
 	let imgElement;
 	let useVideoFallback = false;
 	let fallbackUrl = '';
+	let placeholderUrl = '';
+	let videoLoadTimeout;
 
 	function handleLoad() {
 		loaded = true;
@@ -23,17 +25,38 @@
 	}
 
 	function handleVideoError() {
-		if (!useVideoFallback) {
-			// First fallback: try WebP
-			useVideoFallback = true;
-			fallbackUrl = addImageOptimizations(imageUrl.replace('.gif', '.webp'));
-		} else if (fallbackUrl.includes('.webp')) {
-			// Second fallback: try original GIF
-			fallbackUrl = addImageOptimizations(imageUrl);
-		} else {
-			// Final fallback failed
-			handleError();
+		console.error(
+			'Video failed to load, falling back to GIF:',
+			`${imageUrl.replace('.gif', '.mp4')}`
+		);
+		// Clear any existing timeout
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
 		}
+		// Video failed to load, fallback directly to original GIF
+		useVideoFallback = true;
+		fallbackUrl = imageUrl; // Use original GIF without optimization
+	}
+
+	function handleVideoLoadStart() {
+		// Short timeout for fast fallback on failed videos
+		videoLoadTimeout = setTimeout(() => {
+			console.warn('Video load timeout (2s), falling back to GIF');
+			handleVideoError();
+		}, 2000); // 2 second timeout for fast loading
+	}
+
+	function handleSourceError(event) {
+		console.error('Source failed to load (likely 404):', event.target.src);
+		handleVideoError();
+	}
+
+	function handleVideoLoad() {
+		// Clear timeout on successful load
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
+		}
+		handleLoad();
 	}
 
 	// Check if image is already loaded in cache
@@ -58,26 +81,42 @@
 		return `${url}${separator}quality=75&format=auto&width=800&fit=cover`;
 	}
 
+	// Create low-res placeholder URL
+	function createPlaceholderUrl(url) {
+		if (!url) return '';
+		const separator = url.includes('?') ? '&' : '?';
+		return `${url}${separator}quality=20&format=auto&width=20&fit=cover`;
+	}
+
 	// Reactively update finalUrl when imageUrl changes
 	$: if (imageUrl) {
 		finalUrl = addImageOptimizations(imageUrl);
+		placeholderUrl = createPlaceholderUrl(imageUrl);
 		// Reset video fallback state when imageUrl changes
 		useVideoFallback = false;
 		fallbackUrl = '';
+		// Clear any existing timeout
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
+		}
 		// Check if image is already in cache
 		loaded = checkIfImageLoaded(finalUrl);
 	} else {
 		finalUrl = '';
+		placeholderUrl = '';
 		loaded = false;
 		useVideoFallback = false;
 		fallbackUrl = '';
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
+		}
 	}
 </script>
 
 <div class="lazy-load" style={tempSize ? `width: ${tempSize}; height: ${tempSize};` : ''}>
-	{#if !loaded}
-		<!-- Shimmer placeholder -->
-		<div class="shimmer"></div>
+	{#if !loaded && placeholderUrl}
+		<!-- Blurred low-res placeholder -->
+		<img src={placeholderUrl} alt="Loading..." class="placeholder-blur" decoding="async" />
 	{/if}
 
 	{#if finalUrl}
@@ -87,23 +126,27 @@
 				loop
 				muted
 				playsinline
+				preload="none"
 				class:loaded
-				on:loadeddata={handleLoad}
+				on:loadeddata={handleVideoLoad}
+				on:loadstart={handleVideoLoadStart}
 				on:error={handleVideoError}
+				on:canplay={handleVideoLoad}
+				on:emptied={handleVideoError}
 			>
-				<source src={`${imageUrl.replace('.gif', '.mp4')}`} type="video/mp4" />
-				<source src={`${imageUrl.replace('.gif', '.webp')}`} type="image/webp" />
-				<img src={finalUrl} />
+				<!-- Source with its own error handler for 404s -->
+				<source src={`${imageUrl.replace('.gif', '.mp4')}`} type="video/mp4" on:error={handleSourceError} />
 			</video>
 		{:else if useVideoFallback && fallbackUrl}
+			<!-- Show original GIF when video fails -->
 			<img
 				bind:this={imgElement}
 				src={fallbackUrl}
-				alt="Placeholder"
+				alt="Image"
 				loading="lazy"
 				class:loaded
 				on:load={handleLoad}
-				on:error={handleVideoError}
+				on:error={handleError}
 			/>
 		{:else}
 			<img
@@ -141,26 +184,17 @@
 		opacity: 1;
 	}
 
-	/* Shimmer placeholder */
-	.shimmer {
+	/* Blurred low-res placeholder */
+	.placeholder-blur {
 		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(to right, #f0f0f0 0%, #e0e0e0 20%, #f0f0f0 40%, #f0f0f0 100%);
-		background-size: 200% 100%;
-		animation: shimmer 1.2s infinite;
+		object-fit: cover;
+		filter: blur(8px);
+		transform: scale(1.05);
 		z-index: 1;
-		border-radius: 2px;
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: -200% 0;
-		}
-		100% {
-			background-position: 200% 0;
-		}
+		opacity: 0.8;
 	}
 </style>
