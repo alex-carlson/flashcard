@@ -11,16 +11,6 @@
 	let fallbackUrl = '';
 	let placeholderUrl = '';
 	let videoLoadTimeout;
-	let isMobile = false;
-
-	// Detect mobile device
-	function detectMobile() {
-		return (
-			/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-			window.innerWidth <= 768 ||
-			'ontouchstart' in window
-		);
-	}
 
 	function handleLoad() {
 		loaded = true;
@@ -49,44 +39,15 @@
 	}
 
 	function handleVideoLoadStart() {
-		// Much shorter timeout on mobile for fast fallback
-		const timeout = isMobile ? 800 : 2000; // Very short on mobile
 		videoLoadTimeout = setTimeout(() => {
-			console.warn(`Video load timeout (${timeout}ms), falling back to GIF`);
+			console.warn('Video load timeout (2s), falling back to GIF');
 			handleVideoError();
-		}, timeout);
-
-		// Additional mobile check for video visibility
-		if (isMobile) {
-			setTimeout(() => {
-				checkVideoPlayback();
-			}, 1200); // Check after 1.2s if video is actually playing
-		}
-	}
-
-	function checkVideoPlayback() {
-		if (imgElement && imgElement.tagName === 'VIDEO') {
-			const video = imgElement;
-			// Check if video is actually playing and visible
-			if (video.paused || video.readyState < 2 || video.videoWidth === 0) {
-				console.warn('Video not playing properly on mobile, falling back to GIF');
-				handleVideoError();
-			}
-		}
+		}, 2000);
 	}
 
 	function handleSourceError(event) {
 		console.error('Source failed to load (likely 404):', event.target.src);
 		handleVideoError();
-	}
-
-	// Simplified mobile fallback
-	function handleMobileGifError() {
-		console.error('Mobile GIF failed to load, trying optimized version');
-		// Try the original URL without optimizations
-		if (fallbackUrl !== imageUrl) {
-			fallbackUrl = imageUrl;
-		}
 	}
 
 	function handleVideoLoad() {
@@ -127,34 +88,26 @@
 	}
 
 	// Reactively update finalUrl when imageUrl changes
-	$: {
-		isMobile = detectMobile();
-
-		if (imageUrl) {
-			finalUrl = addImageOptimizations(imageUrl);
-			placeholderUrl = createPlaceholderUrl(imageUrl);
-			// Reset video fallback state when imageUrl changes
-			useVideoFallback = false;
-			fallbackUrl = '';
-			// Clear any existing timeout
-			if (videoLoadTimeout) {
-				clearTimeout(videoLoadTimeout);
-			}
-
-			// Don't skip video on mobile, but use more aggressive fallback
-			// (removed the mobile video skip logic)
-
-			// Check if image is already in cache
-			loaded = checkIfImageLoaded(finalUrl);
-		} else {
-			finalUrl = '';
-			placeholderUrl = '';
-			loaded = false;
-			useVideoFallback = false;
-			fallbackUrl = '';
-			if (videoLoadTimeout) {
-				clearTimeout(videoLoadTimeout);
-			}
+	$: if (imageUrl) {
+		finalUrl = addImageOptimizations(imageUrl);
+		placeholderUrl = createPlaceholderUrl(imageUrl);
+		// Reset video fallback state when imageUrl changes
+		useVideoFallback = false;
+		fallbackUrl = '';
+		// Clear any existing timeout
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
+		}
+		// Check if image is already in cache
+		loaded = checkIfImageLoaded(finalUrl);
+	} else {
+		finalUrl = '';
+		placeholderUrl = '';
+		loaded = false;
+		useVideoFallback = false;
+		fallbackUrl = '';
+		if (videoLoadTimeout) {
+			clearTimeout(videoLoadTimeout);
 		}
 	}
 </script>
@@ -174,16 +127,12 @@
 				muted
 				playsinline
 				preload="none"
-				webkit-playsinline
-				disablepictureinpicture
 				class:loaded
 				on:loadeddata={handleVideoLoad}
 				on:loadstart={handleVideoLoadStart}
 				on:error={handleVideoError}
 				on:canplay={handleVideoLoad}
 				on:emptied={handleVideoError}
-				on:suspend={isMobile ? handleVideoError : null}
-				on:waiting={isMobile ? handleVideoError : null}
 			>
 				<!-- Source with its own error handler for 404s -->
 				<source
@@ -198,11 +147,11 @@
 				bind:this={imgElement}
 				src={fallbackUrl}
 				alt="Image"
-				loading={isMobile ? 'eager' : 'lazy'}
+				loading="lazy"
 				decoding="async"
 				class:loaded
 				on:load={handleLoad}
-				on:error={handleMobileGifError}
+				on:error={handleError}
 			/>
 		{:else}
 			<img
