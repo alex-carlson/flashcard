@@ -51,7 +51,7 @@
 			// Use immediate execution to override browser default scroll
 			cardElement.scrollIntoView({
 				behavior: 'smooth',
-				block: 'center', // Center the card in viewport
+				block: 'start',
 				inline: 'nearest'
 			});
 		}
@@ -303,7 +303,7 @@
 									if (cardElement) {
 										cardElement.scrollIntoView({
 											behavior: 'smooth',
-											block: 'center', // Center the card in viewport
+											block: 'start',
 											inline: 'nearest'
 										});
 									}
