@@ -135,8 +135,8 @@
 			/>
 		</div>
 		<div class="cropper-actions">
-			<button class="btn btn-primary" on:click={getCroppedImage}>Crop & Save</button>
-			<button class="btn btn-secondary" on:click={() => dispatch('cancel')}>Cancel</button>
+			<button class="btn btn-success" on:click={getCroppedImage}>Crop & Save</button>
+			<button class="btn btn-danger" on:click={() => dispatch('cancel')}>Cancel</button>
 		</div>
 	</div>
 </div>
@@ -198,5 +198,62 @@
 		background: #fff;
 		box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
 		padding-bottom: 1rem;
+	}
+
+	.btn-gray-action {
+		background-color: #6c757d;
+		color: white;
+		border: 1px solid #5a6268;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.375rem;
+		margin: 0 0.25rem;
+		transition: all 0.15s ease-in-out;
+	}
+
+	.btn-gray-action:hover {
+		background-color: #5a6268;
+		border-color: #4e555b;
+		color: white;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.btn-success {
+		background-color: #28a745;
+		color: white;
+		border: 1px solid #28a745;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.375rem;
+		margin: 0 0.25rem;
+		transition: all 0.15s ease-in-out;
+	}
+
+	.btn-success:hover {
+		background-color: #218838;
+		border-color: #1e7e34;
+		color: white;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.btn-danger {
+		background-color: #dc3545;
+		color: white;
+		border: 1px solid #dc3545;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.375rem;
+		margin: 0 0.25rem;
+		transition: all 0.15s ease-in-out;
+	}
+
+	.btn-danger:hover {
+		background-color: #c82333;
+		border-color: #bd2130;
+		color: white;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 </style>

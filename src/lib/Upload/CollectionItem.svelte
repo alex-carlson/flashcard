@@ -25,6 +25,7 @@
 	export let collection; // Add collection prop to get category
 	let isCropping = false; // Track if cropping is active
 	let isDrawing = false; // Track if drawing is active
+	let isDragging = false; // Track drag state
 	const dispatch = createEventDispatcher();
 
 	function removeItemHandler() {
@@ -33,6 +34,37 @@
 
 	function reorderItemHandler(prevIndex, newIndex) {
 		dispatch('reorderItem', { prevIndex, newIndex });
+	}
+
+	// Drag and drop handlers
+	function handleDragStart(e) {
+		if (!isReordering) return;
+		isDragging = true;
+		e.dataTransfer.effectAllowed = 'move';
+		e.dataTransfer.setData('text/plain', index.toString());
+		e.target.style.opacity = '0.5';
+	}
+
+	function handleDragEnd(e) {
+		isDragging = false;
+		e.target.style.opacity = '1';
+	}
+
+	function handleDragOver(e) {
+		if (!isReordering) return;
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+	}
+
+	function handleDrop(e) {
+		if (!isReordering) return;
+		e.preventDefault();
+		const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+		const dropIndex = index;
+
+		if (draggedIndex !== dropIndex) {
+			reorderItemHandler(draggedIndex, dropIndex);
+		}
 	}
 	async function saveEditHandler() {
 		try {
@@ -248,6 +280,8 @@
 	function isEditable(image) {
 		if (!image || typeof image !== 'string') return false;
 
+		console.log('Checking if ' + image + ' is editable');
+
 		// Still raster image extensions (case insensitive)
 		// Exclude known animated formats like gif
 		const stillRasterExtensions = /\.(bmp|png|jpe?g|webp|latest)$/i;
@@ -255,43 +289,69 @@
 
 		try {
 			const url = new URL(image);
+			console.log('URL pathname:', url.pathname);
 			const segments = url.pathname.split('/').reverse();
+			console.log('Path segments:', segments);
 
 			for (const segment of segments) {
+				console.log('Checking segment:', segment);
 				// If it matches an animated extension, return false immediately
-				if (animatedExtensions.test(segment)) return false;
+				if (animatedExtensions.test(segment)) {
+					console.log('Matched animated extension, returning false');
+					return false;
+				}
 
-				if (stillRasterExtensions.test(segment)) return true;
+				if (stillRasterExtensions.test(segment)) {
+					console.log('Matched raster extension, returning true');
+					return true;
+				}
 			}
-		} catch {
+		} catch (error) {
+			console.log('URL parsing failed, using fallback:', error);
 			// Fallback for non-URL strings
 			const segments = image.split('?')[0].split('#')[0].split('/').reverse();
+			console.log('Fallback segments:', segments);
 
 			for (const segment of segments) {
-				if (animatedExtensions.test(segment)) return false;
+				console.log('Checking fallback segment:', segment);
+				if (animatedExtensions.test(segment)) {
+					console.log('Fallback matched animated extension, returning false');
+					return false;
+				}
 
-				if (stillRasterExtensions.test(segment)) return true;
+				if (stillRasterExtensions.test(segment)) {
+					console.log('Fallback matched raster extension, returning true');
+					return true;
+				}
 			}
 		}
 
-		return false;
+		// If no file extension found, assume it's editable (for blob URLs, cloud storage URLs, etc.)
+		// This is safer than blocking all images without clear extensions
+		console.log('No extension found, defaulting to true');
+		return true;
 	}
 </script>
 
-<li class="d-flex {isReordering ? 'item reorder' : 'item'}" draggable={isReordering}>
+<li
+	class="d-flex {isReordering ? 'item reorder' : 'item'} {isDragging ? 'dragging' : ''}"
+	draggable={isReordering}
+	on:dragstart={handleDragStart}
+	on:dragend={handleDragEnd}
+	on:dragover={handleDragOver}
+	on:drop={handleDrop}
+>
 	{#if editableItemId === item.id && item.id != null}
 		<div class="editing">
 			{#if item.image != null}
-				<div class="image-section">
-					<img src={item.image} alt="To crop" class="border" />
-				</div>
 				{#if !isCropping && !isDrawing}
+					<img src={item.image} alt="To crop" class="border" />
 					<div class="actions">
 						{#if isEditable(item.image)}
-							<button class="btn btn-secondary me-2" on:click={() => (isCropping = true)}
+							<button class="btn btn-image-action me-2" on:click={() => (isCropping = true)}
 								>Crop</button
 							>
-							<button class="btn btn-secondary" on:click={() => (isDrawing = true)}>Edit</button>
+							<button class="btn btn-image-action" on:click={() => (isDrawing = true)}>Edit</button>
 						{/if}
 					</div>
 				{:else if isCropping}
@@ -348,7 +408,7 @@
 				<button class="btn btn-success" on:click={saveEditHandler}
 					><Fa icon={faFloppyDisk} /></button
 				>
-				<button class="btn btn-outline-secondary" on:click={(editableItemId = null)}
+				<button class="btn btn-danger" on:click={(editableItemId = null)}
 					><Fa icon={faBan} /></button
 				>
 			</div>
@@ -594,6 +654,45 @@
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 
+	.btn-image-action {
+		background-color: #6c757d;
+		color: white;
+		border: 1px solid #5a6268;
+		font-weight: 500;
+	}
+
+	.btn-image-action:hover {
+		background-color: #5a6268;
+		border-color: #4e555b;
+		color: white;
+	}
+
+	.btn-success {
+		background-color: #28a745;
+		color: white;
+		border: 1px solid #28a745;
+		font-weight: 500;
+	}
+
+	.btn-success:hover {
+		background-color: #218838;
+		border-color: #1e7e34;
+		color: white;
+	}
+
+	.btn-danger {
+		background-color: #dc3545;
+		color: white;
+		border: 1px solid #dc3545;
+		font-weight: 500;
+	}
+
+	.btn-danger:hover {
+		background-color: #c82333;
+		border-color: #bd2130;
+		color: white;
+	}
+
 	@media (max-width: 768px) {
 		.item-display {
 			flex-direction: column;
@@ -612,5 +711,81 @@
 		.answer-section {
 			flex: none;
 		}
+	}
+
+	.reorder {
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+		transform: translateY(-2px);
+		transition: all 0.3s ease;
+		cursor: grab;
+		border-radius: 0.5rem;
+		background: #ffffff;
+		z-index: 10;
+		position: relative;
+	}
+
+	.reorder:hover {
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3) !important;
+		transform: translateY(-4px);
+	}
+
+	.reorder:active {
+		cursor: grabbing;
+		transform: scale(1.02) translateY(-6px);
+		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35) !important;
+	}
+
+	/* Shrink content when reordering */
+	.reorder .item-display {
+		padding: 0.5rem;
+		font-size: 0.85rem;
+	}
+
+	.reorder .preview {
+		max-height: 100px;
+		max-width: 120px;
+	}
+
+	.reorder .question {
+		font-size: 0.9rem;
+		line-height: 1.3;
+	}
+
+	.reorder .answer-text {
+		font-size: 0.8rem;
+		padding: 0.25rem 0.5rem;
+	}
+
+	.reorder .answer-option {
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+	}
+
+	.reorder .supplemental-content {
+		padding: 0.5rem;
+		font-size: 0.75rem;
+	}
+
+	.reorder .extra-content {
+		padding: 0.5rem;
+		font-size: 0.75rem;
+	}
+
+	.reorder .action-buttons {
+		gap: 0.25rem;
+	}
+
+	.reorder .btn {
+		padding: 0.25rem 0.5rem;
+		font-size: 0.75rem;
+	}
+
+	.dragging {
+		opacity: 0.5 !important;
+		transform: rotate(2deg) !important;
+	}
+
+	.reorder:hover {
+		background: #f8f9fa;
 	}
 </style>

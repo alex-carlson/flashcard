@@ -378,7 +378,17 @@
 									{#if !isReordering}
 										<button
 											class="btn btn-secondary"
-											on:click={() => (isReordering = true)}
+											on:click={() => {
+												isReordering = true;
+												// Scroll to the last list item
+												setTimeout(() => {
+													const itemsList = document.querySelector('.items-list');
+													const lastItem = itemsList?.lastElementChild;
+													if (lastItem) {
+														lastItem.scrollIntoView({ behavior: 'smooth', block: 'end' });
+													}
+												}, 100);
+											}}
 											title="Reorder Questions"
 										>
 											<Fa icon={faSort} />

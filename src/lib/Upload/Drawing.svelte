@@ -348,13 +348,13 @@
 		<!-- Action Buttons -->
 		<div class="row">
 			<div class="col-12 d-flex gap-2 flex-wrap">
-				<button type="button" class="btn btn-warning" on:click={undo}
+				<button type="button" class="btn btn-gray-action" on:click={undo}
 					><Fa icon={faUndo} />Undo</button
 				>
 				<button type="button" class="btn btn-success" on:click={saveDrawing}
 					><Fa icon={faFloppyDisk} />Save</button
 				>
-				<button type="button" class="btn btn-secondary" on:click={cancelDrawing}
+				<button type="button" class="btn btn-danger" on:click={cancelDrawing}
 					><Fa icon={faCancel} />Cancel</button
 				>
 			</div>
@@ -383,7 +383,7 @@
 	}
 
 	.drawing-container {
-		background-color: #badbdb;
+		background-color: #dadada;
 	}
 
 	.drawing-controls {
@@ -399,8 +399,50 @@
 		font-size: 14px;
 	}
 
+	.btn-gray-action {
+		background-color: #6c757d;
+		color: white;
+		border: 1px solid #5a6268;
+		font-weight: 500;
+		transition: all 0.15s ease-in-out;
+	}
+
+	.btn-gray-action:hover {
+		background-color: #5a6268;
+		border-color: #4e555b;
+		color: white;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
 	.drawing-controls button.active {
 		background-color: #007bff;
+		color: white;
+	}
+
+	.btn-success {
+		background-color: #28a745;
+		color: white;
+		border: 1px solid #28a745;
+		font-weight: 500;
+	}
+
+	.btn-success:hover {
+		background-color: #218838;
+		border-color: #1e7e34;
+		color: white;
+	}
+
+	.btn-danger {
+		background-color: #dc3545;
+		color: white;
+		border: 1px solid #dc3545;
+		font-weight: 500;
+	}
+
+	.btn-danger:hover {
+		background-color: #c82333;
+		border-color: #bd2130;
 		color: white;
 	}
 </style>
