@@ -10,6 +10,8 @@
 	let placeholderUrl = '';
 	let hasMP4 = false;
 	let mp4Url = '';
+	let videoFailed = false;
+	let useVideo = false;
 
 	function handleLoad() {
 		loaded = true;
@@ -23,13 +25,53 @@
 		});
 	}
 
+	function handleVideoError() {
+		console.warn('Video failed to load, falling back to GIF');
+		videoFailed = true;
+		useVideo = false;
+		// Reset loaded state to allow image fallback
+		loaded = false;
+	}
+
+	function handleVideoLoad() {
+		loaded = true;
+	}
+
+	// Check if device likely supports autoplay (desktop vs mobile heuristic)
+	function deviceSupportsAutoplay() {
+		// Simple heuristic: check if it's likely a mobile device
+		const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+			navigator.userAgent
+		);
+		return !isMobile;
+	}
+
+	// Handle video play promise rejection (common on mobile)
+	function handleVideoPlayback(videoElement) {
+		if (!videoElement) return;
+
+		const playPromise = videoElement.play();
+		if (playPromise !== undefined) {
+			playPromise.catch((error) => {
+				console.warn('Video autoplay failed, falling back to GIF:', error);
+				videoFailed = true;
+				useVideo = false;
+				loaded = false;
+			});
+		}
+	}
+
 	// Check if MP4 version exists for GIF files
 	async function checkMP4Exists(gifUrl) {
 		const mp4Path = gifUrl.replace('.gif', '.mp4');
 		try {
-			const response = await fetch(mp4Path, { method: 'HEAD' });
-			return response.ok;
-		} catch {
+			const response = await fetch(mp4Path, {
+				method: 'HEAD',
+				timeout: 5000 // 5 second timeout
+			});
+			return response.ok && response.status === 200;
+		} catch (error) {
+			console.warn('MP4 check failed:', error);
 			return false;
 		}
 	}
@@ -67,16 +109,19 @@
 	$: if (imageUrl) {
 		finalUrl = addImageOptimizations(imageUrl);
 		placeholderUrl = createPlaceholderUrl(imageUrl);
+		videoFailed = false; // Reset video failure state
 
 		// Check if it's a GIF and if MP4 version exists
 		if (imageUrl.endsWith('.gif')) {
 			mp4Url = imageUrl.replace('.gif', '.mp4');
 			checkMP4Exists(imageUrl).then((exists) => {
 				hasMP4 = exists;
+				useVideo = exists && !videoFailed;
 			});
 		} else {
 			hasMP4 = false;
 			mp4Url = '';
+			useVideo = false;
 		}
 
 		// Check if image is already in cache
@@ -87,6 +132,14 @@
 		loaded = false;
 		hasMP4 = false;
 		mp4Url = '';
+		videoFailed = false;
+		useVideo = false;
+	}
+
+	// Reactive statement to handle video failure fallback
+	$: if (videoFailed && imageUrl.endsWith('.gif')) {
+		useVideo = false;
+		loaded = false; // Force re-render of image
 	}
 </script>
 
@@ -97,22 +150,30 @@
 	{/if}
 
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif') && hasMP4}
+		{#if imageUrl.endsWith('.gif') && hasMP4 && useVideo && !videoFailed}
 			<!-- Show MP4 video for GIFs that have MP4 versions -->
 			<video
 				bind:this={imgElement}
-				autoplay
+				autoplay={deviceSupportsAutoplay()}
 				loop
 				muted
 				playsinline
+				preload="auto"
 				class:loaded
-				on:loadeddata={handleLoad}
-				on:error={handleError}
+				on:loadeddata={handleVideoLoad}
+				on:error={handleVideoError}
+				on:canplaythrough={handleVideoLoad}
+				on:loadstart={() => {
+					// Try to play the video, handle mobile autoplay restrictions
+					setTimeout(() => handleVideoPlayback(imgElement), 100);
+				}}
 			>
 				<source src={mp4Url} type="video/mp4" />
+				<!-- Fallback message for browsers that don't support video -->
+				Your browser does not support the video tag.
 			</video>
 		{:else}
-			<!-- Show image (either non-GIF or GIF without MP4) -->
+			<!-- Show image (either non-GIF, GIF without MP4, or video fallback) -->
 			<img
 				bind:this={imgElement}
 				src={finalUrl}
@@ -135,16 +196,20 @@
 		height: var(--temp-size, auto);
 	}
 
-	.lazy-load img {
+	.lazy-load img,
+	.lazy-load video {
 		display: block;
 		transition: opacity 0.3s ease-in-out;
 		opacity: 0;
 		object-fit: cover;
 		position: relative;
 		z-index: 2;
+		width: 100%;
+		height: 100%;
 	}
 
-	.lazy-load img.loaded {
+	.lazy-load img.loaded,
+	.lazy-load video.loaded {
 		opacity: 1;
 	}
 
