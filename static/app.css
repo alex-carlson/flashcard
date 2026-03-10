@@ -12456,10 +12456,11 @@ header .navContainer ul li.user-tab a .profile-picture img {
 
 .flashcards.grid {
   padding: 4px;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   background-color: white;
-  grid-template-columns: repeat(4, 1fr);
   gap: 4px;
+  justify-content: center;
   contain: layout;
   content-visibility: auto;
 }
@@ -12468,6 +12469,9 @@ header .navContainer ul li.user-tab a .profile-picture img {
   padding: 0;
   height: 100%;
   display: inline-table;
+  max-width: 170px;
+  min-width: 140px;
+  flex: 1 1 140px;
 }
 
 .flashcards.grid .answer {
@@ -12483,6 +12487,17 @@ header .navContainer ul li.user-tab a .profile-picture img {
   aspect-ratio: 1/1;
   display: block;
   padding: 0px;
+}
+
+.flashcards.grid video,
+.flashcards.grid iframe,
+.flashcards.grid .youtube-wrapper,
+.flashcards.grid .video-player {
+  width: 100% !important;
+  height: 100px !important;
+  max-width: 100% !important;
+  max-height: 100px !important;
+  object-fit: contain;
 }
 
 .flashcards.grid .card .answer {
@@ -12574,6 +12589,18 @@ header .navContainer ul li.user-tab a .profile-picture img {
   max-height: 60vh;
   width: auto;
   height: auto;
+  box-sizing: border-box;
+  object-fit: contain;
+}
+
+.flashcards.vertical video,
+.flashcards.vertical iframe,
+.flashcards.vertical .youtube-wrapper,
+.flashcards.vertical .video-player {
+  max-width: 100% !important;
+  max-height: 60vh !important;
+  width: auto !important;
+  height: auto !important;
   box-sizing: border-box;
   object-fit: contain;
 }
