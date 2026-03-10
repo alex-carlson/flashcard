@@ -19,6 +19,10 @@
 
 	function handleError() {
 		console.error('Error loading image');
+		// If this is the final fallback (image), we need to ensure something shows
+		if (videoFailed || !imageUrl.endsWith('.gif')) {
+			loaded = true; // Force show even if broken to prevent layout issues
+		}
 		addToast({
 			type: 'error',
 			message: 'Failed to load image. Please try again later.'
@@ -29,8 +33,10 @@
 		console.warn('Video failed to load, falling back to GIF');
 		videoFailed = true;
 		useVideo = false;
-		// Reset loaded state to allow image fallback
-		loaded = false;
+		// Force image to show immediately to prevent layout gaps
+		setTimeout(() => {
+			loaded = true;
+		}, 100);
 	}
 
 	function handleVideoLoad() {
@@ -213,7 +219,9 @@
 		transition: opacity 0.3s ease-in-out;
 		opacity: 0;
 		object-fit: cover;
-		position: relative;
+		position: absolute;
+		top: 0;
+		left: 0;
 		z-index: 2;
 		width: 100%;
 		height: 100%;
@@ -221,6 +229,19 @@
 
 	.lazy-load img.loaded,
 	.lazy-load video.loaded {
+		opacity: 1;
+	}
+
+	/* Hide unloaded elements completely */
+	.lazy-load img:not(.loaded),
+	.lazy-load video:not(.loaded) {
+		display: none;
+	}
+
+	/* Show loaded elements */
+	.lazy-load img.loaded,
+	.lazy-load video.loaded {
+		display: block;
 		opacity: 1;
 	}
 
