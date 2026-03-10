@@ -5,7 +5,6 @@
 
 	let loaded = false;
 	let finalUrl = '';
-	let hasMP4 = false;
 	let mp4Url = '';
 
 	function handleLoad() {
@@ -36,20 +35,18 @@
 		if (imageUrl.endsWith('.gif')) {
 			mp4Url = imageUrl.replace('.gif', '.mp4');
 		} else {
-			hasMP4 = false;
 			mp4Url = '';
 		}
 	} else {
 		finalUrl = '';
 		loaded = false;
-		hasMP4 = false;
 		mp4Url = '';
 	}
 </script>
 
 <div>
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif') && hasMP4}
+		{#if imageUrl.endsWith('.gif')}
 			<!-- Show MP4 video with GIF fallback -->
 			<video
 				autoplay
@@ -70,7 +67,7 @@
 			<img
 				bind:this={imgElement}
 				src={finalUrl}
-				alt="gif"
+				alt="Still"
 				loading="lazy"
 				class:loaded
 				on:load={handleLoad}
