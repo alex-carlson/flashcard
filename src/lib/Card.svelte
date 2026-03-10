@@ -92,20 +92,6 @@
 				validateAnswer();
 			}, 150); // Increased debounce for low-end devices
 		}
-
-		// Lock in if all required answers are correct for multi-answer questions
-		if (item.answerType === AnswerType.MULTI_ANSWER && isValidated) {
-			isLockedIn = true;
-			item.revealed = true; // Mark as completed
-
-			// Dispatch correctAnswer event to notify parent
-			dispatch('correctAnswer', {
-				index: i,
-				answer: item.answers || [item.answer],
-				userAnswer: userAnswers.filter((a) => a && a.trim()),
-				isCorrect: isCorrect()
-			});
-		}
 	}
 
 	function isCorrect() {
@@ -217,6 +203,20 @@
 			const result = filledAnswers.length >= req && allCorrect && correctCount >= req;
 			cachedValidationResult = result;
 			isValidated = result;
+
+			// Lock in immediately when multi-answer validation succeeds
+			if (result && !isLockedIn) {
+				isLockedIn = true;
+				item.revealed = true; // Mark as completed
+
+				// Dispatch correctAnswer event to notify parent
+				dispatch('correctAnswer', {
+					index: i,
+					answer: item.answers || [item.answer],
+					userAnswer: userAnswers.filter((a) => a && a.trim()),
+					isCorrect: true
+				});
+			}
 		} else {
 			// Check both userAnswers[0] and item.userAnswer for validation
 			const userInput = userAnswers[0] || item.userAnswer || '';
@@ -240,7 +240,8 @@
 				// Dispatch correctAnswer event to notify parent
 				dispatch('correctAnswer', {
 					index: i,
-					answer: Array.isArray(item.answer) ? item.answer[0] : item.answer,
+					answer:
+						getUserValidAnswer() || (Array.isArray(item.answer) ? item.answer[0] : item.answer),
 					userAnswer: userInput,
 					isCorrect: true
 				});
@@ -347,6 +348,20 @@
 		}
 
 		return baseClass;
+	}
+
+	// Get the user's valid answer when they entered a correct answer from an array
+	function getUserValidAnswer() {
+		const userInput = userAnswers[0] || item.userAnswer || '';
+		if (!userInput.trim() || !Array.isArray(item.answer)) return null;
+
+		// Check if user's input matches any of the valid answers
+		for (const ans of item.answer) {
+			if (areStringsClose(userInput, ans)) {
+				return ans; // Return the matched answer from the array
+			}
+		}
+		return null;
 	}
 
 	// Get class for revealed answer based on correctness
@@ -545,7 +560,9 @@
 					class={`answer black ${item.revealed ? 'revealed' : 'hidden'}`}
 					style="transform: scale(1);"
 				>
-					{Array.isArray(item.answer) ? item.answer[0] : item.answer || 'Loading'}
+					{getUserValidAnswer() ||
+						(Array.isArray(item.answer) ? item.answer[0] : item.answer) ||
+						'Loading'}
 				</span>
 			{/if}
 		</div>
