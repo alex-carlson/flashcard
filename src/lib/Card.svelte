@@ -41,9 +41,17 @@
 		// Find the card containing this input and scroll it to the top with offset
 		const cardElement = event.target.closest('.card');
 		if (cardElement) {
-			const cardRect = cardElement.getBoundingClientRect();
-			const offsetTop = cardRect.top + window.pageYOffset - 80;
-			window.scrollTo({ top: offsetTop, behavior: 'instant' });
+			const scrollToCard = () => {
+				const cardRect = cardElement.getBoundingClientRect();
+				const offsetTop = cardRect.top + window.pageYOffset - 80;
+				window.scrollTo({ top: offsetTop, behavior: 'instant' });
+			};
+
+			// Initial scroll
+			scrollToCard();
+
+			// Re-scroll after mobile keyboard animation (if any)
+			setTimeout(scrollToCard, 300);
 		}
 	}
 
@@ -286,7 +294,7 @@
 								// Focus the next available input with default scroll behavior
 								if (nextInput) {
 									nextInput.focus();
-									nextInput.select(); // Also select the text for better UX
+									// nextInput.select(); // Also select the text for better UX
 								}
 							}
 						} catch (error) {
