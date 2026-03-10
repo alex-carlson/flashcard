@@ -10,8 +10,6 @@
 	let placeholderUrl = '';
 	let hasMP4 = false;
 	let mp4Url = '';
-	let videoFailed = false;
-	let useVideo = false;
 
 	function handleLoad() {
 		loaded = true;
@@ -19,52 +17,10 @@
 
 	function handleError() {
 		console.error('Error loading image');
-		// If this is the final fallback (image), we need to ensure something shows
-		if (videoFailed || !imageUrl.endsWith('.gif')) {
-			loaded = true; // Force show even if broken to prevent layout issues
-		}
 		addToast({
 			type: 'error',
 			message: 'Failed to load image. Please try again later.'
 		});
-	}
-
-	function handleVideoError() {
-		console.warn('Video failed to load, falling back to GIF');
-		videoFailed = true;
-		useVideo = false;
-		// Force image to show immediately to prevent layout gaps
-		setTimeout(() => {
-			loaded = true;
-		}, 100);
-	}
-
-	function handleVideoLoad() {
-		loaded = true;
-	}
-
-	// Check if device likely supports autoplay (desktop vs mobile heuristic)
-	function deviceSupportsAutoplay() {
-		// Simple heuristic: check if it's likely a mobile device
-		const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-			navigator.userAgent
-		);
-		return !isMobile;
-	}
-
-	// Handle video play promise rejection (common on mobile)
-	function handleVideoPlayback(videoElement) {
-		if (!videoElement) return;
-
-		const playPromise = videoElement.play();
-		if (playPromise !== undefined) {
-			playPromise.catch((error) => {
-				console.warn('Video autoplay failed, falling back to GIF:', error);
-				videoFailed = true;
-				useVideo = false;
-				loaded = false;
-			});
-		}
 	}
 
 	// Check if MP4 version exists for GIF files
@@ -73,7 +29,7 @@
 		try {
 			const response = await fetch(mp4Path, {
 				method: 'HEAD',
-				timeout: 5000 // 5 second timeout
+				timeout: 5000
 			});
 			return response.ok && response.status === 200;
 		} catch (error) {
@@ -115,19 +71,16 @@
 	$: if (imageUrl) {
 		finalUrl = addImageOptimizations(imageUrl);
 		placeholderUrl = createPlaceholderUrl(imageUrl);
-		videoFailed = false; // Reset video failure state
 
 		// Check if it's a GIF and if MP4 version exists
 		if (imageUrl.endsWith('.gif')) {
 			mp4Url = imageUrl.replace('.gif', '.mp4');
 			checkMP4Exists(imageUrl).then((exists) => {
 				hasMP4 = exists;
-				useVideo = exists && !videoFailed;
 			});
 		} else {
 			hasMP4 = false;
 			mp4Url = '';
-			useVideo = false;
 		}
 
 		// Check if image is already in cache
@@ -138,24 +91,6 @@
 		loaded = false;
 		hasMP4 = false;
 		mp4Url = '';
-		videoFailed = false;
-		useVideo = false;
-	}
-
-	// Reactive statement to handle video failure fallback
-	$: if (videoFailed && imageUrl.endsWith('.gif')) {
-		useVideo = false;
-		// Don't reset loaded to false - let the image show immediately if it's already loaded
-		// Check if fallback image is already cached and loaded
-		setTimeout(() => {
-			if (finalUrl && checkIfImageLoaded(finalUrl)) {
-				loaded = true;
-			}
-		}, 10);
-		// Immediately hide any video elements
-		if (imgElement && imgElement.tagName === 'VIDEO') {
-			imgElement.style.display = 'none';
-		}
 	}
 </script>
 
@@ -166,31 +101,25 @@
 	{/if}
 
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif') && hasMP4 && useVideo && !videoFailed}
-			<!-- Show MP4 video for GIFs that have MP4 versions -->
+		{#if imageUrl.endsWith('.gif') && hasMP4}
+			<!-- Show MP4 video with GIF fallback -->
 			<video
 				bind:this={imgElement}
-				autoplay={deviceSupportsAutoplay()}
+				autoplay
 				loop
 				muted
 				playsinline
 				preload="auto"
 				class:loaded
-				class:video-failed={videoFailed}
-				on:loadeddata={handleVideoLoad}
-				on:error={handleVideoError}
-				on:canplaythrough={handleVideoLoad}
-				on:loadstart={() => {
-					// Try to play the video, handle mobile autoplay restrictions
-					setTimeout(() => handleVideoPlayback(imgElement), 100);
-				}}
+				on:loadeddata={handleLoad}
+				on:canplaythrough={handleLoad}
 			>
 				<source src={mp4Url} type="video/mp4" />
-				<!-- Fallback message for browsers that don't support video -->
-				Your browser does not support the video tag.
+				<!-- Fallback to GIF if video fails -->
+				<img src={finalUrl} alt="Image" />
 			</video>
 		{:else}
-			<!-- Show image (either non-GIF, GIF without MP4, or video fallback) -->
+			<!-- Show image -->
 			<img
 				bind:this={imgElement}
 				src={finalUrl}
@@ -205,53 +134,6 @@
 </div>
 
 <style>
-	.lazy-load {
-		overflow: hidden;
-		position: relative;
-		display: inline-block;
-		width: var(--temp-size, auto);
-		height: var(--temp-size, auto);
-	}
-
-	.lazy-load img,
-	.lazy-load video {
-		display: block;
-		transition: opacity 0.3s ease-in-out;
-		opacity: 0;
-		object-fit: cover;
-		position: absolute;
-		top: 0;
-		left: 0;
-		z-index: 2;
-		width: 100%;
-		height: 100%;
-	}
-
-	.lazy-load img.loaded,
-	.lazy-load video.loaded {
-		opacity: 1;
-	}
-
-	/* Hide unloaded elements completely */
-	.lazy-load img:not(.loaded),
-	.lazy-load video:not(.loaded) {
-		display: none;
-	}
-
-	/* Show loaded elements */
-	.lazy-load img.loaded,
-	.lazy-load video.loaded {
-		display: block;
-		opacity: 1;
-	}
-
-	/* Hide failed video elements completely */
-	.lazy-load video.video-failed {
-		display: none !important;
-		visibility: hidden !important;
-		opacity: 0 !important;
-	}
-
 	/* Blurred low-res placeholder */
 	.placeholder-blur {
 		position: absolute;
