@@ -301,21 +301,30 @@
 									}
 								}
 
-								// Focus the next available input with better scroll behavior
+								// Focus the next available input with bottom positioning
 								if (nextInput) {
 									// Prevent default scroll behavior when focusing
 									nextInput.focus({ preventScroll: true });
 									nextInput.select(); // Also select the text for better UX
 
-									// Find the card containing this input and scroll it into view properly
-									const cardElement = nextInput.closest('.card');
-									if (cardElement) {
-										cardElement.scrollIntoView({
-											behavior: 'smooth',
-											block: 'start',
-											inline: 'nearest'
-										});
-									}
+									// Position the input at the bottom of the window using same logic as handleInputFocus
+									setTimeout(() => {
+										const inputRect = nextInput.getBoundingClientRect();
+										const viewportHeight = window.innerHeight;
+
+										// Position input near bottom (90% down the viewport)
+										const targetPosition = viewportHeight * 0.9;
+										const currentInputPosition = inputRect.top;
+										const scrollOffset = currentInputPosition - targetPosition;
+
+										// Only scroll if we need to move the input
+										if (Math.abs(scrollOffset) > 10) {
+											window.scrollBy({
+												top: scrollOffset,
+												behavior: 'smooth'
+											});
+										}
+									}, 50); // Small delay to ensure focus is processed
 								}
 							}
 						} catch (error) {
