@@ -38,9 +38,13 @@
 
 	// Handle focus events - use default browser scroll behavior
 	function handleInputFocus(event) {
-		console.log('Event: ', event);
-		// Let the browser handle the default scroll behavior
-		event.target.scrollIntoView({ behavior: 'instant', block: 'end' });
+		// Find the card containing this input and scroll it to the top with offset
+		const cardElement = event.target.closest('.card');
+		if (cardElement) {
+			const cardRect = cardElement.getBoundingClientRect();
+			const offsetTop = cardRect.top + window.pageYOffset - 80;
+			window.scrollTo({ top: offsetTop, behavior: 'instant' });
+		}
 	}
 
 	let userAnswers = [];
