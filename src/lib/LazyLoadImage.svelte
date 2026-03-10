@@ -31,6 +31,8 @@
 		useVideo = false;
 		// Reset loaded state to allow image fallback
 		loaded = false;
+		// Clear the video element reference to help with cleanup
+		imgElement = null;
 	}
 
 	function handleVideoLoad() {
@@ -57,6 +59,8 @@
 				videoFailed = true;
 				useVideo = false;
 				loaded = false;
+				// Clear the video element reference
+				imgElement = null;
 			});
 		}
 	}
@@ -140,6 +144,12 @@
 	$: if (videoFailed && imageUrl.endsWith('.gif')) {
 		useVideo = false;
 		loaded = false; // Force re-render of image
+		// Force re-check of image loading state after a small delay
+		setTimeout(() => {
+			if (!loaded && finalUrl) {
+				loaded = checkIfImageLoaded(finalUrl);
+			}
+		}, 50);
 	}
 </script>
 
@@ -172,7 +182,9 @@
 				<!-- Fallback message for browsers that don't support video -->
 				Your browser does not support the video tag.
 			</video>
-		{:else}
+		{/if}
+		
+		{#if !imageUrl.endsWith('.gif') || !hasMP4 || !useVideo || videoFailed}
 			<!-- Show image (either non-GIF, GIF without MP4, or video fallback) -->
 			<img
 				bind:this={imgElement}
@@ -202,7 +214,9 @@
 		transition: opacity 0.3s ease-in-out;
 		opacity: 0;
 		object-fit: cover;
-		position: relative;
+		position: absolute;
+		top: 0;
+		left: 0;
 		z-index: 2;
 		width: 100%;
 		height: 100%;
