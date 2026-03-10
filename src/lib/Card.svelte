@@ -36,33 +36,11 @@
 		dispatch('giveUp', { index: i });
 	}
 
-	// Handle focus events - scroll input to bottom of window
+	// Handle focus events - use default browser scroll behavior
 	function handleInputFocus(event) {
-		// Get the input element that was focused
-		const inputElement = event.target;
-		if (!inputElement) return;
-
-		// Use setTimeout to ensure the focus event is fully processed first
-		setTimeout(() => {
-			// Get input position and viewport dimensions
-			const inputRect = inputElement.getBoundingClientRect();
-			const viewportHeight = window.innerHeight;
-
-			// Calculate how much we need to scroll to position input at bottom
-			// We want the input to be near the bottom but with some padding (20% from bottom)
-			const targetPosition = viewportHeight * 0.9; // 80% down the viewport
-			const currentInputPosition = inputRect.top;
-			const scrollOffset = currentInputPosition - targetPosition;
-
-			// Only scroll if we need to move the input
-			if (Math.abs(scrollOffset) > 10) {
-				// 10px threshold to avoid micro-adjustments
-				window.scrollBy({
-					top: scrollOffset,
-					behavior: 'smooth'
-				});
-			}
-		}, 100); // Small delay to ensure any virtual keyboard animations are processed
+		console.log('Event: ', event);
+		// Let the browser handle the default scroll behavior
+		event.target.scrollIntoView({ behavior: 'instant', block: 'end' });
 	}
 
 	let userAnswers = [];
@@ -301,30 +279,10 @@
 									}
 								}
 
-								// Focus the next available input with bottom positioning
+								// Focus the next available input with default scroll behavior
 								if (nextInput) {
-									// Prevent default scroll behavior when focusing
-									nextInput.focus({ preventScroll: true });
+									nextInput.focus();
 									nextInput.select(); // Also select the text for better UX
-
-									// Position the input at the bottom of the window using same logic as handleInputFocus
-									setTimeout(() => {
-										const inputRect = nextInput.getBoundingClientRect();
-										const viewportHeight = window.innerHeight;
-
-										// Position input near bottom (90% down the viewport)
-										const targetPosition = viewportHeight * 0.9;
-										const currentInputPosition = inputRect.top;
-										const scrollOffset = currentInputPosition - targetPosition;
-
-										// Only scroll if we need to move the input
-										if (Math.abs(scrollOffset) > 10) {
-											window.scrollBy({
-												top: scrollOffset,
-												behavior: 'smooth'
-											});
-										}
-									}, 50); // Small delay to ensure focus is processed
 								}
 							}
 						} catch (error) {
