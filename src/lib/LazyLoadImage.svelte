@@ -31,8 +31,6 @@
 		useVideo = false;
 		// Reset loaded state to allow image fallback
 		loaded = false;
-		// Clear the video element reference to help with cleanup
-		imgElement = null;
 	}
 
 	function handleVideoLoad() {
@@ -59,8 +57,6 @@
 				videoFailed = true;
 				useVideo = false;
 				loaded = false;
-				// Clear the video element reference
-				imgElement = null;
 			});
 		}
 	}
@@ -144,12 +140,10 @@
 	$: if (videoFailed && imageUrl.endsWith('.gif')) {
 		useVideo = false;
 		loaded = false; // Force re-render of image
-		// Force re-check of image loading state after a small delay
-		setTimeout(() => {
-			if (!loaded && finalUrl) {
-				loaded = checkIfImageLoaded(finalUrl);
-			}
-		}, 50);
+		// Immediately hide any video elements
+		if (imgElement && imgElement.tagName === 'VIDEO') {
+			imgElement.style.display = 'none';
+		}
 	}
 </script>
 
@@ -170,6 +164,7 @@
 				playsinline
 				preload="auto"
 				class:loaded
+				class:video-failed={videoFailed}
 				on:loadeddata={handleVideoLoad}
 				on:error={handleVideoError}
 				on:canplaythrough={handleVideoLoad}
@@ -182,9 +177,7 @@
 				<!-- Fallback message for browsers that don't support video -->
 				Your browser does not support the video tag.
 			</video>
-		{/if}
-		
-		{#if !imageUrl.endsWith('.gif') || !hasMP4 || !useVideo || videoFailed}
+		{:else}
 			<!-- Show image (either non-GIF, GIF without MP4, or video fallback) -->
 			<img
 				bind:this={imgElement}
@@ -214,9 +207,7 @@
 		transition: opacity 0.3s ease-in-out;
 		opacity: 0;
 		object-fit: cover;
-		position: absolute;
-		top: 0;
-		left: 0;
+		position: relative;
 		z-index: 2;
 		width: 100%;
 		height: 100%;
@@ -225,6 +216,13 @@
 	.lazy-load img.loaded,
 	.lazy-load video.loaded {
 		opacity: 1;
+	}
+
+	/* Hide failed video elements completely */
+	.lazy-load video.video-failed {
+		display: none !important;
+		visibility: hidden !important;
+		opacity: 0 !important;
 	}
 
 	/* Blurred low-res placeholder */
