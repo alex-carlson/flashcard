@@ -24,6 +24,14 @@
 		});
 	}
 
+	// Detect mobile devices
+	function isMobileDevice() {
+		return (
+			/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
+			window.innerWidth < 768
+		);
+	}
+
 	// Play video safely with promise handling
 	function playVideo() {
 		if (!videoElement || videoError) return;
@@ -130,8 +138,8 @@
 
 <div bind:this={videoContainer}>
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif')}
-			<!-- Show MP4 video with GIF fallback -->
+		{#if imageUrl.endsWith('.gif') && !isMobileDevice()}
+			<!-- Show MP4 video with GIF fallback (desktop only) -->
 			<video
 				bind:this={videoElement}
 				loop
@@ -173,11 +181,11 @@
 				/>
 			{/if}
 		{:else}
-			<!-- Show image -->
+			<!-- Show image (non-GIF or mobile device) -->
 			<img
 				bind:this={imgElement}
 				src={finalUrl}
-				alt="Still"
+				alt={imageUrl.endsWith('.gif') ? 'gif' : 'image'}
 				loading="lazy"
 				class:loaded
 				on:load={handleLoad}
