@@ -139,7 +139,13 @@
 	// Reactive statement to handle video failure fallback
 	$: if (videoFailed && imageUrl.endsWith('.gif')) {
 		useVideo = false;
-		loaded = false; // Force re-render of image
+		// Don't reset loaded to false - let the image show immediately if it's already loaded
+		// Check if fallback image is already cached and loaded
+		setTimeout(() => {
+			if (finalUrl && checkIfImageLoaded(finalUrl)) {
+				loaded = true;
+			}
+		}, 10);
 		// Immediately hide any video elements
 		if (imgElement && imgElement.tagName === 'VIDEO') {
 			imgElement.style.display = 'none';
