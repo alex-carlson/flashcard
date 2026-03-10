@@ -36,25 +36,33 @@
 		dispatch('giveUp', { index: i });
 	}
 
-	// Handle focus events for tab navigation with proper scroll behavior
+	// Handle focus events - scroll input to bottom of window
 	function handleInputFocus(event) {
-		// Find the card containing this input
-		const cardElement = event.target.closest('.card');
-		if (!cardElement) return;
+		// Get the input element that was focused
+		const inputElement = event.target;
+		if (!inputElement) return;
 
-		// Check if the card is already reasonably visible
-		const rect = cardElement.getBoundingClientRect();
-		const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+		// Use setTimeout to ensure the focus event is fully processed first
+		setTimeout(() => {
+			// Get input position and viewport dimensions
+			const inputRect = inputElement.getBoundingClientRect();
+			const viewportHeight = window.innerHeight;
 
-		// Only scroll if the card isn't fully visible
-		if (!isVisible) {
-			// Use immediate execution to override browser default scroll
-			cardElement.scrollIntoView({
-				behavior: 'smooth',
-				block: 'start',
-				inline: 'nearest'
-			});
-		}
+			// Calculate how much we need to scroll to position input at bottom
+			// We want the input to be near the bottom but with some padding (20% from bottom)
+			const targetPosition = viewportHeight * 0.9; // 80% down the viewport
+			const currentInputPosition = inputRect.top;
+			const scrollOffset = currentInputPosition - targetPosition;
+
+			// Only scroll if we need to move the input
+			if (Math.abs(scrollOffset) > 10) {
+				// 10px threshold to avoid micro-adjustments
+				window.scrollBy({
+					top: scrollOffset,
+					behavior: 'smooth'
+				});
+			}
+		}, 100); // Small delay to ensure any virtual keyboard animations are processed
 	}
 
 	let userAnswers = [];
