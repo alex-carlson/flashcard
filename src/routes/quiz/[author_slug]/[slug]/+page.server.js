@@ -30,6 +30,12 @@ export const load = async ({ params, url }) => {
     }
 
     try {
+        console.log('Server: Environment check:', {
+            VITE_API_URL: import.meta.env.VITE_API_URL,
+            NODE_ENV: process.env.NODE_ENV,
+            VERCEL: process.env.VERCEL
+        });
+
         console.log('Server: Fetching user with slug:', author_slug);
         const author = await fetchUserBySlug(author_slug);
         console.log('Server: Author fetch result:', author ? { username: author.username, public_id: author.public_id } : 'NOT FOUND');

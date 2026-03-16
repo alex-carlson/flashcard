@@ -1,31 +1,60 @@
 export async function fetchUser(author_id) {
-    const url = `${import.meta.env.VITE_API_URL}/users/${author_id}`;
-    return fetch(url)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Failed to fetch user");
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            console.error("Error fetching user:", error);
-            return null;  // optionally return null on error
-        });
+    const baseUrl = import.meta.env.VITE_API_URL;
+    const url = `${baseUrl}/users/${author_id}`;
+
+    console.log('fetchUser Debug:', {
+        author_id,
+        baseUrl,
+        fullUrl: url
+    });
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+    }
 }
 
 export async function fetchUserBySlug(slug) {
-    const url = `${import.meta.env.VITE_API_URL}/users/username/${slug}`;
-    return fetch(url)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Failed to fetch user by username");
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            console.error("Error fetching user by username:", error);
-            return null;  // optionally return null on error
+    const baseUrl = import.meta.env.VITE_API_URL;
+    const url = `${baseUrl}/users/username/${slug}`;
+
+    console.log('fetchUserBySlug Debug:', {
+        slug,
+        baseUrl,
+        fullUrl: url,
+        envMode: import.meta.env.MODE
+    });
+
+    try {
+        const response = await fetch(url);
+        console.log('fetchUserBySlug Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
         });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user by username: ${response.status} ${response.statusText} - URL: ${url}`);
+        }
+
+        const data = await response.json();
+        console.log('fetchUserBySlug Success:', { username: data?.username, public_id: data?.public_id });
+        return data;
+    } catch (error) {
+        console.error("Error fetching user by username:", {
+            error: error.message,
+            slug,
+            url,
+            baseUrl
+        });
+        return null;
+    }
 }
 
 export async function fetchUserCollections(author_id) {
