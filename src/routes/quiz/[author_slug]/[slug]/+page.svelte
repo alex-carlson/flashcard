@@ -194,17 +194,18 @@
 			category,
 			author,
 			thumbnail,
+			status: data?.status,
+			error: data?.error,
 			fullData: data,
 			env: {
 				VITE_API_URL: import.meta.env.VITE_API_URL,
 				MODE: import.meta.env.MODE
 			}
 		});
-
-		if (collectionId) {
-			console.log('Attempting to load collection:', collectionId);
-			quiz.loadCollection(collectionId);
-		} else {
+		
+		if (data?.status === 404 || data?.status === 500) {
+			console.error('Server returned error:', data.error || 'Unknown error');
+		}
 			console.error('No collectionId provided to quiz page. Data was:', data);
 		}
 
@@ -288,23 +289,21 @@
 			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
 			{#if !$quiz.hasInitialized}
 				<h2 class="mb-3">Loading quiz data...</h2>
-				{#if $quiz.isLoading}
-					<p class="text-muted">Fetching collection data...</p>
-				{/if}
-				{#if $quiz.loadingError}
-					<div class="alert alert-danger">
-						<strong>Loading Error:</strong>
-						{$quiz.loadingError}
-						<br /><small>Collection ID: {collectionId}</small>
+				{#if data?.status === 404}
+					<div class="alert alert-warning">
+						<strong>Not Found:</strong> {data.error || 'Quiz not found'}
 					</div>
-				{/if}
-				{#if $quiz.isLoading}
+				{:else if data?.status === 500}
+					<div class="alert alert-danger">
+						<strong>Server Error:</strong> {data.error || 'Internal server error'}
+					</div>
+				{:else if $quiz.isLoading}
 					<p class="text-muted">Fetching collection data...</p>
 				{/if}
 				{#if $quiz.loadingError}
 					<div class="alert alert-danger">
-						<strong>Loading Error:</strong>
-						{$quiz.loadingError}
+						<strong>Loading Error:</strong> {$quiz.loadingError}
+						<br><small>Collection ID: {collectionId}</small>
 					</div>
 				{/if}
 			{:else if !imagesPreloaded && totalImages > 0}
