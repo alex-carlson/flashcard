@@ -16,7 +16,7 @@
 	export const collection = {};
 	export let item;
 	export let questionType = 'Image';
-	let imageSubTab = 'upload'; // 'upload' or 'search'
+	let imageSubTab = 'search'; // 'upload' or 'search'
 
 	let imageSuggestions = [];
 	let searchTerm = '';
