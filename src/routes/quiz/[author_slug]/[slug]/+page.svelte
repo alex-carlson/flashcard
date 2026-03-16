@@ -4,10 +4,13 @@
 	import { incrementPlayCounter } from '$lib/api/collections.js';
 	import QuizHeader from '$lib/components/quiz/QuizHeader.svelte';
 	import { createQuizStore } from '$lib/../stores/quiz';
+	import { page } from '$app/stores';
 	export let data;
 
-	// Debug the incoming data
+	// Debug the incoming data and route params
 	console.log('Page data received:', data);
+	console.log('Route params from page store:', $page.params);
+	console.log('Current URL:', $page.url.href);
 
 	// Destructure page data with fallbacks
 	const { category, collectionId, author, thumbnail, quizScore, timesPlayed, meta } = data || {};
@@ -195,11 +198,19 @@
 			author,
 			thumbnail,
 			status: data?.status,
-			fullData: data
+			routeParams: $page.params,
+			currentUrl: $page.url.href
 		});
 
+		// Additional validation for route params
+		const { author_slug, slug } = $page.params;
+		if (!author_slug || !slug) {
+			console.error('Missing route parameters:', { author_slug, slug });
+			console.error('This suggests a routing/static generation issue');
+		}
+
 		// Don't attempt to load collection if we have server errors
-		if (data?.status === 404 || data?.status === 500) {
+		if (data?.status === 404 || data?.status === 500 || data?.status === 400) {
 			console.error('Server returned error status:', data.status);
 			return;
 		}
@@ -289,8 +300,14 @@
 				<QuizHeader collectionName={category} {author} authorSlug="" {thumbnail} description="" />
 			{/if}
 			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
-			{#if !$quiz.hasInitialized || data?.status === 404 || data?.status === 500}
-				{#if data?.status === 404}
+			{#if !$quiz.hasInitialized || data?.status === 404 || data?.status === 500 || data?.status === 400}
+				{#if data?.status === 400}
+					<h2 class="mb-3">Invalid URL</h2>
+					<div class="alert alert-warning">
+						The quiz URL is missing required parameters. Please check the link.
+						<br /><small>URL: {$page?.url?.href || 'Unknown'}</small>
+					</div>
+				{:else if data?.status === 404}
 					<h2 class="mb-3">Quiz Not Found</h2>
 					<div class="alert alert-warning">
 						This quiz could not be found. The author or collection may not exist.

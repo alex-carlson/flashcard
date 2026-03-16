@@ -3,9 +3,31 @@ export const prerender = false;
 import { fetchUserBySlug } from '$lib/api/user';
 import { fetchCollectionByAuthorAndSlug, fetchCollectionById } from '$lib/api/collections';
 
-export const load = async ({ params }) => {
+export const load = async ({ params, url }) => {
     const { author_slug, slug } = params;
     console.log('Server: Loading quiz page with params:', { author_slug, slug });
+    console.log('Server: Full URL:', url.href);
+    console.log('Server: Params object:', params);
+
+    // Validate that we actually have the required params
+    if (!author_slug || !slug) {
+        console.error('Server: Missing required params', { author_slug, slug });
+        return {
+            status: 400,
+            author: 'Unknown',
+            category: 'Unknown',
+            thumbnail: null,
+            collectionId: null,
+            timesPlayed: 0,
+            quizScore: null,
+            meta: {
+                title: "Invalid URL | Quizzems",
+                description: "Invalid quiz URL parameters.",
+                image: "/ogimage.jpg",
+                url: url.href,
+            }
+        };
+    }
 
     try {
         const author = await fetchUserBySlug(author_slug);
@@ -53,7 +75,7 @@ export const load = async ({ params }) => {
         console.log('Server: Collection fetch result:', collection ? 'found' : 'not found');
         console.log('Server: Collection data keys:', collection ? Object.keys(collection) : 'null');
 
-        const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
+        const score = getScoreByQuizId(author?.quizzes_completed ?? [], collectionId);
 
         const result = {
             author: author.username,
