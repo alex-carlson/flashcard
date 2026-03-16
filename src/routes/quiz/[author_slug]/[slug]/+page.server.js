@@ -30,8 +30,9 @@ export const load = async ({ params, url }) => {
     }
 
     try {
+        console.log('Server: Fetching user with slug:', author_slug);
         const author = await fetchUserBySlug(author_slug);
-        console.log('Server: Author fetch result:', author ? 'found' : 'not found');
+        console.log('Server: Author fetch result:', author ? { username: author.username, public_id: author.public_id } : 'NOT FOUND');
         if (!author) {
             return {
                 status: 404,
@@ -51,9 +52,11 @@ export const load = async ({ params, url }) => {
         }
 
         // Fetch collection thumbnail from DB or API
+        console.log('Server: Fetching collection with author public_id:', author.public_id, 'and slug:', slug);
         const collectionId = await fetchCollectionByAuthorAndSlug(author.public_id, slug);
         console.log('Server: Collection ID fetch result:', collectionId);
         if (!collectionId) {
+            console.log('Server: Collection not found for author:', author.username, 'slug:', slug);
             return {
                 status: 404,
                 author: author.username,
