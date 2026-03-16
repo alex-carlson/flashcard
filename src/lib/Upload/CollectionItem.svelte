@@ -26,6 +26,8 @@
 	let isCropping = false; // Track if cropping is active
 	let isDrawing = false; // Track if drawing is active
 	let isDragging = false; // Track drag state
+	let cropperComponent; // Reference to Cropper component
+	let drawingComponent; // Reference to Drawing component
 	const dispatch = createEventDispatcher();
 
 	function removeItemHandler() {
@@ -67,6 +69,44 @@
 		}
 	}
 	async function saveEditHandler() {
+		try {
+			// If cropping is active, save the crop first
+			if (isCropping && cropperComponent) {
+				try {
+					// Call the cropper's save method if it exists
+					if (cropperComponent.saveCrop) {
+						await cropperComponent.saveCrop();
+					}
+				} catch (error) {
+					console.warn('Cropper save method not available, continuing with regular save');
+				}
+			}
+
+			// If drawing is active, save the drawing first
+			if (isDrawing && drawingComponent) {
+				try {
+					// Call the drawing's save method if it exists
+					if (drawingComponent.saveDrawing) {
+						drawingComponent.saveDrawing();
+						return; // Drawing save will trigger onSave which will handle the item save
+					}
+				} catch (error) {
+					console.warn('Drawing save method not available, continuing with regular save');
+				}
+			}
+
+			// Proceed with regular item save
+			await performSave();
+		} catch (error) {
+			console.error('Error in saveEditHandler:', error);
+			addToast({
+				type: 'error',
+				message: 'Failed to save changes. Please try again.'
+			});
+		}
+	}
+
+	async function performSave() {
 		try {
 			// Prepare the edit data in the format expected by the server
 			const editData = {
@@ -269,6 +309,9 @@
 
 		await uploadChangedImage(file, 'drawing.png');
 		isDrawing = false; // Reset drawing state
+
+		// After drawing save completes, save the item
+		await performSave();
 	}
 
 	function onCancel() {
@@ -356,11 +399,21 @@
 					</div>
 				{:else if isCropping}
 					<div class="cropper-section mb-3">
-						<Cropper src={item.image} on:cropped={onCropped} on:cancel={onCancel} />
+						<Cropper
+							bind:this={cropperComponent}
+							src={item.image}
+							on:cropped={onCropped}
+							on:cancel={onCancel}
+						/>
 					</div>
 				{:else if isDrawing}
 					<div class="drawing-section mb-3">
-						<Drawing src={item.image} on:save={onSave} on:cancel={onCancel} />
+						<Drawing
+							bind:this={drawingComponent}
+							src={item.image}
+							on:save={onSave}
+							on:cancel={onCancel}
+						/>
 					</div>
 				{/if}
 			{/if}
@@ -404,14 +457,16 @@
 					class="form-control"
 				/>
 			</div>
-			<div class="edit-actions d-flex gap-2">
-				<button class="btn btn-success" on:click={saveEditHandler}
-					><Fa icon={faFloppyDisk} /></button
-				>
-				<button class="btn btn-danger" on:click={(editableItemId = null)}
-					><Fa icon={faBan} /></button
-				>
-			</div>
+			{#if !isCropping && !isDrawing}
+				<div class="edit-actions d-flex gap-2">
+					<button class="btn btn-success" on:click={saveEditHandler}
+						><Fa icon={faFloppyDisk} /></button
+					>
+					<button class="btn btn-danger" on:click={(editableItemId = null)}
+						><Fa icon={faBan} /></button
+					>
+				</div>
+			{/if}
 		</div>
 	{:else}
 		<div class="item-display d-flex gap-3 h-100">

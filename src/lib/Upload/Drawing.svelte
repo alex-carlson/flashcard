@@ -7,7 +7,8 @@
 		faEraser,
 		faEyedropper,
 		faFloppyDisk,
-		faPencil
+		faPencil,
+		faSquare
 	} from '@fortawesome/free-solid-svg-icons';
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
@@ -20,11 +21,21 @@
 	let drawing = false;
 	let eyedropping = false;
 	let erasing = false;
+	let drawingRect = false;
 	let color = '#000000';
 	let width = 10;
 
 	let lastX = 0;
 	let lastY = 0;
+	let rectStartX = 0;
+	let rectStartY = 0;
+	let tempCanvas = null; // For preview while dragging
+
+	// Track previous tool state for eyedropper
+	let previousToolState = {
+		erasing: false,
+		drawingRect: false
+	};
 
 	let removingBackground = false;
 	const undoStack = []; // Stack to keep track of undo actions
@@ -59,6 +70,18 @@
 		saveState(); // Save the current state before starting a new drawing
 		drawing = true;
 		[lastX, lastY] = [x, y];
+
+		if (drawingRect) {
+			[rectStartX, rectStartY] = [x, y];
+			// Create temporary canvas for preview
+			if (!tempCanvas) {
+				tempCanvas = document.createElement('canvas');
+			}
+			tempCanvas.width = canvas.width;
+			tempCanvas.height = canvas.height;
+			const tempCtx = tempCanvas.getContext('2d');
+			tempCtx.drawImage(canvas, 0, 0);
+		}
 	}
 	function draw(x, y) {
 		if (!drawing) return;
@@ -66,6 +89,20 @@
 		const rect = canvas.getBoundingClientRect();
 		const scaleX = canvas.width / rect.width;
 		const scaleY = canvas.height / rect.height;
+
+		if (drawingRect) {
+			// Clear canvas and restore original image
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(tempCanvas, 0, 0);
+
+			// Draw preview rectangle
+			const rectWidth = x - rectStartX;
+			const rectHeight = y - rectStartY;
+
+			ctx.fillStyle = color;
+			ctx.fillRect(rectStartX, rectStartY, rectWidth, rectHeight);
+			return;
+		}
 
 		if (erasing) {
 			// Use destination-out composite operation to erase
@@ -86,13 +123,27 @@
 	}
 
 	function endDrawing() {
+		if (drawingRect && drawing) {
+			// Rectangle is complete, no need to do anything special
+			// The final rectangle is already drawn on the canvas
+			tempCanvas = null;
+		}
 		drawing = false;
 		// Reset composite operation to normal
 		ctx.globalCompositeOperation = 'source-over';
 	}
 	function toggleEyedropper() {
+		if (!eyedropping) {
+			// Save current tool state before activating eyedropper
+			previousToolState = {
+				erasing: erasing,
+				drawingRect: drawingRect
+			};
+		}
+
 		eyedropping = !eyedropping;
-		erasing = false; // Disable erasing when eyedropping
+		erasing = false;
+		drawingRect = false;
 		if (eyedropping) {
 			canvas.style.cursor = 'crosshair';
 		} else {
@@ -102,8 +153,20 @@
 
 	function toggleEraser() {
 		erasing = !erasing;
-		eyedropping = false; // Disable eyedropping when erasing
+		eyedropping = false;
+		drawingRect = false;
 		if (erasing) {
+			canvas.style.cursor = 'crosshair';
+		} else {
+			canvas.style.cursor = 'default';
+		}
+	}
+
+	function toggleRectangle() {
+		drawingRect = !drawingRect;
+		eyedropping = false;
+		erasing = false;
+		if (drawingRect) {
 			canvas.style.cursor = 'crosshair';
 		} else {
 			canvas.style.cursor = 'default';
@@ -118,11 +181,30 @@
 			const g = pixel[1];
 			const b = pixel[2];
 			color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-			toggleEyedropper(); // Turn off eyedropper after picking
+
+			// Turn off eyedropper and restore previous tool
+			eyedropping = false;
+			erasing = previousToolState.erasing;
+			drawingRect = previousToolState.drawingRect;
+
+			// Update cursor based on restored tool
+			if (drawingRect || erasing) {
+				canvas.style.cursor = 'crosshair';
+			} else {
+				canvas.style.cursor = 'default';
+			}
 		} catch (error) {
 			console.error('Cannot pick color from cross-origin image:', error);
-			// Fallback: just turn off eyedropper without picking color
-			toggleEyedropper();
+			// Fallback: just turn off eyedropper and restore previous tool
+			eyedropping = false;
+			erasing = previousToolState.erasing;
+			drawingRect = previousToolState.drawingRect;
+
+			if (drawingRect || erasing) {
+				canvas.style.cursor = 'crosshair';
+			} else {
+				canvas.style.cursor = 'default';
+			}
 			alert(
 				'Cannot pick color from this image due to security restrictions. Please use the color picker instead.'
 			);
@@ -188,7 +270,7 @@
 		} else if (removingBackground) {
 			floodFillRemove(x, y);
 		} else {
-			// Normal drawing or erasing
+			// Normal drawing, erasing, or rectangle
 			startDrawing(x, y);
 		}
 	}
@@ -224,7 +306,7 @@
 			floodFillRemove(Math.floor(pos.x), Math.floor(pos.y));
 			removingBackground = false;
 		} else {
-			// Normal drawing or erasing
+			// Normal drawing, erasing, or rectangle
 			startDrawing(pos.x, pos.y);
 		}
 	}
@@ -277,11 +359,23 @@
 					on:click={() => {
 						eyedropping = false;
 						erasing = false;
+						drawingRect = false;
+						// Clear previous tool state when explicitly selecting draw
+						previousToolState = { erasing: false, drawingRect: false };
 						canvas && (canvas.style.cursor = 'default');
 					}}
-					class:active={!eyedropping && !erasing}
+					class:active={!eyedropping && !erasing && !drawingRect}
 				>
 					<Fa icon={faPencil} /> Draw
+				</button>
+
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					on:click={toggleRectangle}
+					class:active={drawingRect}
+				>
+					<Fa icon={faSquare} /> Rectangle
 				</button>
 
 				<button
@@ -351,12 +445,6 @@
 				<button type="button" class="btn btn-gray-action" on:click={undo}
 					><Fa icon={faUndo} />Undo</button
 				>
-				<button type="button" class="btn btn-success" on:click={saveDrawing}
-					><Fa icon={faFloppyDisk} />Save</button
-				>
-				<button type="button" class="btn btn-danger" on:click={cancelDrawing}
-					><Fa icon={faCancel} />Cancel</button
-				>
 			</div>
 		</div>
 	</div>
@@ -372,6 +460,16 @@
 		on:touchmove={handleTouchMove}
 		on:touchend={handleTouchEnd}
 	/>
+
+	<!-- Save/Cancel Buttons -->
+	<div class="drawing-actions d-flex gap-2 justify-content-center mt-3">
+		<button type="button" class="btn btn-success" on:click={saveDrawing}
+			><Fa icon={faFloppyDisk} />Save</button
+		>
+		<button type="button" class="btn btn-danger" on:click={cancelDrawing}
+			><Fa icon={faCancel} />Cancel</button
+		>
+	</div>
 </div>
 
 <style>

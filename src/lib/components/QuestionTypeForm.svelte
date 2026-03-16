@@ -20,6 +20,21 @@
 
 	let imageSuggestions = [];
 	let searchTerm = '';
+	let fileUploadComponent; // Reference to FileUpload component
+
+	// Check if Add Image button should be enabled
+	$: isImageUploadDisabled = (() => {
+		// Check if answer is provided
+		const hasAnswer =
+			(item.answer ?? '').trim() !== '' ||
+			(Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) !==
+				'';
+
+		// Check if image is provided
+		const hasImage = !!(item.file || item.src);
+
+		return !hasAnswer || !hasImage;
+	})();
 
 	// Reactive statement to update searchTerm when answer input changes
 	$: {
@@ -44,6 +59,13 @@
 
 	// Upload handlers
 	async function handleImageUpload() {
+		console.log('handleImageUpload called with item:', {
+			file: item.file,
+			src: item.src,
+			answer: item.answer,
+			answers: item.answers
+		});
+
 		if (
 			(item.answer ?? '').trim() === '' &&
 			(Array.isArray(item.answers) ? item.answers.join('').trim() : (item.answers ?? '').trim()) ===
@@ -63,15 +85,36 @@
 			});
 			return;
 		}
-		const newItems = await uploadData(
-			{
-				...item,
-				questionType: QuestionType.IMAGE,
-				answerType: item.answerType || AnswerType.SINGLE
-			},
-			undefined,
-			false
-		);
+
+		// Prepare item for upload
+		const uploadItem = {
+			...item,
+			questionType: QuestionType.IMAGE,
+			answerType: item.answerType || AnswerType.SINGLE
+		};
+
+		// If we only have a URL source, convert it to a file object
+		if (item.src && !item.file) {
+			console.log('Converting URL to file object:', item.src);
+			try {
+				const response = await fetch(item.src);
+				const blob = await response.blob();
+				const filename = item.src.split('/').pop()?.split('?')[0] || 'image';
+				const file = new File([blob], filename, { type: blob.type });
+				uploadItem.file = file;
+				uploadItem.src = ''; // Clear src since we now have a file
+				console.log('URL converted to file:', file);
+			} catch (error) {
+				console.error('Failed to fetch image from URL:', error);
+				addToast({
+					type: 'error',
+					message: 'Failed to load image from URL. Please try again.'
+				});
+				return;
+			}
+		}
+
+		const newItems = await uploadData(uploadItem, undefined, false);
 		if (newItems && Array.isArray(newItems) && newItems.length > 0 && newItems[0]?.items) {
 			// Dispatch event to parent instead of directly modifying collection
 			dispatch('itemAdded', {
@@ -92,6 +135,10 @@
 			item.supplemental_text = '';
 			imageSuggestions = [];
 			searchTerm = '';
+			// Clear the FileUpload component
+			if (fileUploadComponent) {
+				fileUploadComponent.clearImage();
+			}
 			// Focus and scroll to question input for next item
 			setTimeout(focusQuestionInput, 100);
 		}
@@ -216,18 +263,25 @@
 
 			<form on:submit|preventDefault={handleImageUpload}>
 				<div class="row">
-					{#if item.src}
-						<div class="image-preview">
-							<img src={item.src} alt="Preview" class="img-fluid" />
-						</div>
-					{/if}
-
 					{#if imageSubTab === 'upload'}
 						<div class="mt-3">
 							<FileUpload
+								bind:this={fileUploadComponent}
 								on:uploadImage={(event) => {
-									item.file = event.detail;
-									clearImage();
+									console.log('Upload event received:', event.detail, typeof event.detail);
+									// Handle both file uploads and URL uploads
+									if (typeof event.detail === 'string') {
+										// URL upload
+										console.log('Setting URL:', event.detail);
+										item.src = event.detail;
+										item.file = null;
+									} else {
+										// File upload
+										console.log('Setting file:', event.detail);
+										item.file = event.detail;
+										item.src = '';
+									}
+									console.log('Item state after upload:', { file: item.file, src: item.src });
 								}}
 							/>
 						</div>
@@ -244,9 +298,13 @@
 						</div>
 					{/if}
 				</div>
-				{#if item.file}
-					<button type="submit" class="btn btn-success mt-2">Add Image</button>
-				{/if}
+				<button
+					type="submit"
+					class="btn mt-2 {isImageUploadDisabled ? 'btn-secondary' : 'btn-success'}"
+					disabled={isImageUploadDisabled}
+				>
+					Add Image
+				</button>
 			</form>
 		{:else if questionType === 'Audio'}
 			<form on:submit|preventDefault={handleAudioUpload}>
