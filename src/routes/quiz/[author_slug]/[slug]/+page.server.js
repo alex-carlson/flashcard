@@ -5,23 +5,29 @@ import { fetchCollectionByAuthorAndSlug, fetchCollectionById } from '$lib/api/co
 
 export const load = async ({ params }) => {
     const { author_slug, slug } = params;
+    console.log('Server: Loading quiz page with params:', { author_slug, slug });
 
     try {
         const author = await fetchUserBySlug(author_slug);
+        console.log('Server: Author fetch result:', author ? 'found' : 'not found');
         if (!author) return { status: 404 };
 
         // Fetch collection thumbnail from DB or API
         const collectionId = await fetchCollectionByAuthorAndSlug(author.public_id, slug);
+        console.log('Server: Collection ID fetch result:', collectionId);
         if (!collectionId) return { status: 404 };
 
         const collection = await fetchCollectionById(collectionId);
+        console.log('Server: Collection fetch result:', collection ? 'found' : 'not found');
+        console.log('Server: Collection data keys:', collection ? Object.keys(collection) : 'null');
+
         const score = getScoreByQuizId(author?.quizzes_completed, collectionId);
 
-        return {
+        const result = {
             author: author.username,
             category: collection?.category,
             thumbnail: collection?.thumbnail_url || null,
-            collectionId: collection?.id,
+            collectionId: collection?.id || collectionId, // Fallback to the ID we fetched
             timesPlayed: collection?.times_played || 0,
             quizScore: score,
             meta: {
@@ -31,6 +37,15 @@ export const load = async ({ params }) => {
                 url: `https://quizzems.com/quiz/${author_slug}/${slug}`,
             }
         };
+
+        console.log('Server: Final result data:', {
+            collectionId: result.collectionId,
+            category: result.category,
+            author: result.author,
+            thumbnail: result.thumbnail
+        });
+
+        return result;
     } catch (error) {
         console.error('Error loading quiz page:', error);
         return {

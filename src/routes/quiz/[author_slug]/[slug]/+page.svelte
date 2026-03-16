@@ -6,8 +6,20 @@
 	import { createQuizStore } from '$lib/../stores/quiz';
 	export let data;
 
-	// Destructure page data
-	const { category, collectionId, author, thumbnail, quizScore, timesPlayed, meta } = data;
+	// Debug the incoming data
+	console.log('Page data received:', data);
+
+	// Destructure page data with fallbacks
+	const { category, collectionId, author, thumbnail, quizScore, timesPlayed, meta } = data || {};
+
+	console.log('Destructured values:', {
+		category,
+		collectionId,
+		author,
+		thumbnail,
+		quizScore,
+		timesPlayed
+	});
 
 	// Initialize quiz store
 	const quiz = createQuizStore();
@@ -107,11 +119,11 @@
 			loadingError: $quiz.loadingError,
 			collectionIdFromProps: collectionId
 		});
-		
+
 		if ($quiz.hasInitialized && $quiz.collection) {
 			console.log('Collection data received:', $quiz.collection);
 		}
-		
+
 		if ($quiz.loadingError) {
 			console.error('Quiz loading error:', $quiz.loadingError);
 		}
@@ -177,8 +189,23 @@
 
 	// Add event listener on mount and remove on destroy
 	onMount(() => {
+		console.log('Quiz page mounted with data:', {
+			collectionId,
+			category,
+			author,
+			thumbnail,
+			fullData: data,
+			env: {
+				VITE_API_URL: import.meta.env.VITE_API_URL,
+				MODE: import.meta.env.MODE
+			}
+		});
+
 		if (collectionId) {
+			console.log('Attempting to load collection:', collectionId);
 			quiz.loadCollection(collectionId);
+		} else {
+			console.error('No collectionId provided to quiz page. Data was:', data);
 		}
 
 		// Add a history state to catch back button (browser only)
@@ -261,6 +288,16 @@
 			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
 			{#if !$quiz.hasInitialized}
 				<h2 class="mb-3">Loading quiz data...</h2>
+				{#if $quiz.isLoading}
+					<p class="text-muted">Fetching collection data...</p>
+				{/if}
+				{#if $quiz.loadingError}
+					<div class="alert alert-danger">
+						<strong>Loading Error:</strong>
+						{$quiz.loadingError}
+						<br /><small>Collection ID: {collectionId}</small>
+					</div>
+				{/if}
 				{#if $quiz.isLoading}
 					<p class="text-muted">Fetching collection data...</p>
 				{/if}

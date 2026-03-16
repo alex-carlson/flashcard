@@ -20,6 +20,16 @@ export async function apiFetch(endpoint, method = 'GET', body = null, isFormData
     if (!isFormData) headers['Content-Type'] = 'application/json';
 
     const url = import.meta.env.VITE_API_URL + endpoint;
+
+    console.log('API Request:', {
+        endpoint,
+        method,
+        baseUrl: import.meta.env.VITE_API_URL,
+        fullUrl: url,
+        hasAuth: !!authHeaders.Authorization,
+        env: import.meta.env.MODE
+    });
+
     const response = await fetch(url, {
         method,
         headers,
@@ -27,8 +37,16 @@ export async function apiFetch(endpoint, method = 'GET', body = null, isFormData
     });
 
     if (!response.ok) {
+        console.error('API Request failed:', {
+            endpoint,
+            status: response.status,
+            statusText: response.statusText,
+            url
+        });
         throw new Error(`${method} ${endpoint} failed: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('API Response:', { endpoint, success: true, dataKeys: Object.keys(result) });
+    return result;
 }
