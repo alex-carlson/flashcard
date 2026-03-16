@@ -96,6 +96,13 @@
 		}
 	}
 
+	// Log collection data when received
+	$: {
+		if ($quiz.hasInitialized && $quiz.collection) {
+			console.log('Collection data received:', $quiz.collection);
+		}
+	}
+
 	function startQuiz(isPractice = false) {
 		if (!isPractice) {
 			timer = 0;
