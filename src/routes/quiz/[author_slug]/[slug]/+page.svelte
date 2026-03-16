@@ -98,8 +98,22 @@
 
 	// Log collection data when received
 	$: {
+		console.log('Quiz state debug:', {
+			hasInitialized: $quiz.hasInitialized,
+			isLoading: $quiz.isLoading,
+			collectionExists: !!$quiz.collection,
+			collectionName: $quiz.collection?.name,
+			cardsLength: $quiz.cards?.length,
+			loadingError: $quiz.loadingError,
+			collectionIdFromProps: collectionId
+		});
+		
 		if ($quiz.hasInitialized && $quiz.collection) {
 			console.log('Collection data received:', $quiz.collection);
+		}
+		
+		if ($quiz.loadingError) {
+			console.error('Quiz loading error:', $quiz.loadingError);
 		}
 	}
 
@@ -247,6 +261,15 @@
 			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
 			{#if !$quiz.hasInitialized}
 				<h2 class="mb-3">Loading quiz data...</h2>
+				{#if $quiz.isLoading}
+					<p class="text-muted">Fetching collection data...</p>
+				{/if}
+				{#if $quiz.loadingError}
+					<div class="alert alert-danger">
+						<strong>Loading Error:</strong>
+						{$quiz.loadingError}
+					</div>
+				{/if}
 			{:else if !imagesPreloaded && totalImages > 0}
 				<h2 class="mb-3">Preparing images... ({imagePreloadCount}/{totalImages})</h2>
 				<div class="progress mb-3" style="height: 12px;">
