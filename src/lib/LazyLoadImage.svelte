@@ -5,108 +5,19 @@
 
 	let loaded = false;
 	let finalUrl = '';
-	let mp4Url = '';
-	let videoError = null;
-	let imgElement;
 	let videoElement;
-	let videoContainer;
-	let isInView = false;
+	let imgElement;
 
 	function handleLoad() {
 		loaded = true;
 	}
 
 	function handleError() {
-		console.error('Error loading image');
+		console.error('Error loading media');
 		addToast({
 			type: 'error',
-			message: 'Failed to load image. Please try again later.'
+			message: 'Failed to load media. Please try again later.'
 		});
-	}
-
-	// Detect mobile devices
-	function isMobileDevice() {
-		return (
-			/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
-			window.innerWidth < 768
-		);
-	}
-
-	// Play video safely with promise handling
-	function playVideo() {
-		if (!videoElement || videoError) return;
-
-		const playPromise = videoElement.play();
-		if (playPromise !== undefined) {
-			playPromise.catch((error) => {
-				console.warn('Video play failed:', error);
-				// Don't set videoError here as this might just be autoplay restriction
-			});
-		}
-	}
-
-	// Setup intersection observer for video
-	function setupVideoObserver(node) {
-		if (!('IntersectionObserver' in window)) {
-			// Fallback for older browsers - just play immediately
-			setTimeout(playVideo, 100);
-			return { destroy: () => {} };
-		}
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					isInView = entry.isIntersecting;
-					if (entry.isIntersecting && videoElement) {
-						playVideo();
-					} else if (!entry.isIntersecting && videoElement) {
-						videoElement.pause();
-					}
-				});
-			},
-			{
-				threshold: 0.5, // Trigger when 50% visible
-				rootMargin: '0px'
-			}
-		);
-
-		observer.observe(node);
-
-		return {
-			destroy() {
-				observer.disconnect();
-			}
-		};
-	}
-
-	function handleVideoError(event) {
-		console.error('Video error:', event);
-		const video = event.target;
-		const error = video.error;
-
-		if (error) {
-			switch (error.code) {
-				case error.MEDIA_ERR_ABORTED:
-					videoError = 'Video playback was aborted';
-					break;
-				case error.MEDIA_ERR_NETWORK:
-					videoError = 'Network error occurred';
-					break;
-				case error.MEDIA_ERR_DECODE:
-					videoError = 'Video decoding error';
-					break;
-				case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-					videoError = 'Video format not supported';
-					break;
-				default:
-					videoError = 'Unknown video error';
-					break;
-			}
-		} else {
-			videoError = 'Video failed to load';
-		}
-
-		videoError += ` (UA: ${navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Other'})`;
 	}
 
 	// Add image optimization parameters to URL
@@ -119,73 +30,40 @@
 
 	// Reactively update finalUrl when imageUrl changes
 	$: if (imageUrl) {
-		finalUrl = addImageOptimizations(imageUrl);
-		videoError = null; // Reset error on new image
-
-		// Check if it's a GIF and if MP4 version exists
+		// Convert GIF URLs to MP4 URLs and always use MP4
 		if (imageUrl.endsWith('.gif')) {
-			mp4Url = imageUrl.replace('.gif', '.mp4');
+			finalUrl = imageUrl.replace('.gif', '.mp4');
 		} else {
-			mp4Url = '';
+			finalUrl = addImageOptimizations(imageUrl);
 		}
+		loaded = false;
 	} else {
 		finalUrl = '';
 		loaded = false;
-		mp4Url = '';
-		videoError = null;
 	}
 </script>
 
-<div bind:this={videoContainer}>
+<div>
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif') && !isMobileDevice()}
-			<!-- Show MP4 video with GIF fallback (desktop only) -->
+		{#if finalUrl.endsWith('.mp4')}
 			<video
 				bind:this={videoElement}
 				loop
 				muted
+				autoplay
 				playsinline
 				preload="metadata"
 				class:loaded
-				style={videoError ? 'display: none;' : ''}
 				on:loadeddata={handleLoad}
-				on:canplaythrough={() => {
-					handleLoad();
-					if (isInView) playVideo();
-				}}
-				on:error={handleVideoError}
-				use:setupVideoObserver
+				on:error={handleError}
 			>
-				<source src={mp4Url} type="video/mp4" />
-				<!-- Fallback to GIF if video fails -->
-				<img src={finalUrl} alt="gif" />
+				<source src={finalUrl} type="video/mp4" />
 			</video>
-
-			{#if videoError}
-				<!-- Show error message for debugging -->
-				<div
-					style="background: rgba(255,0,0,0.1); padding: 8px; margin: 4px; border-radius: 4px; font-size: 12px; color: #333;"
-				>
-					<span style="font-weight: bold; color: red;">Video Error:</span>
-					<br />{videoError}
-					<br /><small>MP4 URL: {mp4Url}</small>
-				</div>
-
-				<!-- Show fallback image -->
-				<img
-					src={finalUrl}
-					alt="gif fallback"
-					class:loaded
-					on:load={handleLoad}
-					on:error={handleError}
-				/>
-			{/if}
 		{:else}
-			<!-- Show image (non-GIF or mobile device) -->
 			<img
 				bind:this={imgElement}
 				src={finalUrl}
-				alt={imageUrl.endsWith('.gif') ? 'gif' : 'image'}
+				alt="image"
 				loading="lazy"
 				class:loaded
 				on:load={handleLoad}
