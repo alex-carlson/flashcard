@@ -194,12 +194,15 @@
 			category,
 			author,
 			thumbnail,
-			fullData: data,
-			env: {
-				VITE_API_URL: import.meta.env.VITE_API_URL,
-				MODE: import.meta.env.MODE
-			}
+			status: data?.status,
+			fullData: data
 		});
+
+		// Don't attempt to load collection if we have server errors
+		if (data?.status === 404 || data?.status === 500) {
+			console.error('Server returned error status:', data.status);
+			return;
+		}
 
 		if (collectionId) {
 			console.log('Attempting to load collection:', collectionId);
@@ -286,26 +289,29 @@
 				<QuizHeader collectionName={category} {author} authorSlug="" {thumbnail} description="" />
 			{/if}
 			{#if timesPlayed > 0}<h3 class="mb-3">Times Played: {timesPlayed}</h3>{/if}
-			{#if !$quiz.hasInitialized}
-				<h2 class="mb-3">Loading quiz data...</h2>
-				{#if $quiz.isLoading}
-					<p class="text-muted">Fetching collection data...</p>
-				{/if}
-				{#if $quiz.loadingError}
-					<div class="alert alert-danger">
-						<strong>Loading Error:</strong>
-						{$quiz.loadingError}
-						<br /><small>Collection ID: {collectionId}</small>
+			{#if !$quiz.hasInitialized || data?.status === 404 || data?.status === 500}
+				{#if data?.status === 404}
+					<h2 class="mb-3">Quiz Not Found</h2>
+					<div class="alert alert-warning">
+						This quiz could not be found. The author or collection may not exist.
 					</div>
-				{/if}
-				{#if $quiz.isLoading}
-					<p class="text-muted">Fetching collection data...</p>
-				{/if}
-				{#if $quiz.loadingError}
+				{:else if data?.status === 500}
+					<h2 class="mb-3">Server Error</h2>
 					<div class="alert alert-danger">
-						<strong>Loading Error:</strong>
-						{$quiz.loadingError}
+						There was an error loading this quiz. Please try again later.
 					</div>
+				{:else}
+					<h2 class="mb-3">Loading quiz data...</h2>
+					{#if $quiz.isLoading}
+						<p class="text-muted">Fetching collection data...</p>
+					{/if}
+					{#if $quiz.loadingError}
+						<div class="alert alert-danger">
+							<strong>Loading Error:</strong>
+							{$quiz.loadingError}
+							<br /><small>Collection ID: {collectionId}</small>
+						</div>
+					{/if}
 				{/if}
 			{:else if !imagesPreloaded && totalImages > 0}
 				<h2 class="mb-3">Preparing images... ({imagePreloadCount}/{totalImages})</h2>

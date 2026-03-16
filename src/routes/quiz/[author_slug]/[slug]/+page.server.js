@@ -10,12 +10,44 @@ export const load = async ({ params }) => {
     try {
         const author = await fetchUserBySlug(author_slug);
         console.log('Server: Author fetch result:', author ? 'found' : 'not found');
-        if (!author) return { status: 404 };
+        if (!author) {
+            return {
+                status: 404,
+                author: 'Unknown',
+                category: 'Unknown',
+                thumbnail: null,
+                collectionId: null,
+                timesPlayed: 0,
+                quizScore: null,
+                meta: {
+                    title: "Quiz Not Found | Quizzems",
+                    description: "Author not found.",
+                    image: "/ogimage.jpg",
+                    url: `https://quizzems.com/quiz/${author_slug}/${slug}`,
+                }
+            };
+        }
 
         // Fetch collection thumbnail from DB or API
         const collectionId = await fetchCollectionByAuthorAndSlug(author.public_id, slug);
         console.log('Server: Collection ID fetch result:', collectionId);
-        if (!collectionId) return { status: 404 };
+        if (!collectionId) {
+            return {
+                status: 404,
+                author: author.username,
+                category: 'Unknown',
+                thumbnail: null,
+                collectionId: null,
+                timesPlayed: 0,
+                quizScore: null,
+                meta: {
+                    title: `Quiz Not Found by ${author.username} | Quizzems`,
+                    description: "Collection not found.",
+                    image: "/ogimage.jpg",
+                    url: `https://quizzems.com/quiz/${author_slug}/${slug}`,
+                }
+            };
+        }
 
         const collection = await fetchCollectionById(collectionId);
         console.log('Server: Collection fetch result:', collection ? 'found' : 'not found');
@@ -50,7 +82,18 @@ export const load = async ({ params }) => {
         console.error('Error loading quiz page:', error);
         return {
             status: 500,
-            error: 'Failed to load quiz data'
+            author: 'Unknown',
+            category: 'Unknown',
+            thumbnail: null,
+            collectionId: null,
+            timesPlayed: 0,
+            quizScore: null,
+            meta: {
+                title: "Error | Quizzems",
+                description: "An error occurred loading this quiz.",
+                image: "/ogimage.jpg",
+                url: `https://quizzems.com/quiz/${author_slug}/${slug}`,
+            }
         };
     }
 };
