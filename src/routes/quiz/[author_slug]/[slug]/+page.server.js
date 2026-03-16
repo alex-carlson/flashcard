@@ -37,9 +37,34 @@ export const load = async ({ params, url }) => {
         });
 
         console.log('Server: Fetching user with slug:', author_slug);
+        
+        // Add temporary API URL debugging right here
+        console.log('Server: VITE_API_URL check:', import.meta.env.VITE_API_URL);
+        const testUrl = `${import.meta.env.VITE_API_URL}/users/username/${author_slug}`;
+        console.log('Server: Constructed URL:', testUrl);
+        
         const author = await fetchUserBySlug(author_slug);
         console.log('Server: Author fetch result:', author ? { username: author.username, public_id: author.public_id } : 'NOT FOUND');
         if (!author) {
+            console.log('Server: Author not found for slug:', author_slug);
+            const errorResponse = {
+                status: 404,
+                author: 'Unknown',
+                category: 'Unknown', 
+                thumbnail: null,
+                collectionId: null,
+                timesPlayed: 0,
+                quizScore: null,
+                meta: {
+                    title: "Quiz Not Found | Quizzems",
+                    description: "Author not found.",
+                    image: "/ogimage.jpg",
+                    url: url.href,
+                }
+            };
+            console.log('Server: Returning error response:', errorResponse);
+            return errorResponse;
+        }
             return {
                 status: 404,
                 author: 'Unknown',
