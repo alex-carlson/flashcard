@@ -124,7 +124,7 @@
 
 		// Check if it's a GIF and if MP4 version exists
 		if (imageUrl.endsWith('.gif')) {
-			mp4Url = imageUrl.replace('.gif', '.mp4');
+			// mp4Url = imageUrl.replace('.gif', '.mp4');
 		} else {
 			mp4Url = '';
 		}
@@ -138,59 +138,14 @@
 
 <div bind:this={videoContainer}>
 	{#if finalUrl}
-		{#if imageUrl.endsWith('.gif') && !isMobileDevice()}
-			<!-- Show MP4 video with GIF fallback (desktop only) -->
-			<video
-				bind:this={videoElement}
-				loop
-				muted
-				playsinline
-				preload="metadata"
-				class:loaded
-				style={videoError ? 'display: none;' : ''}
-				on:loadeddata={handleLoad}
-				on:canplaythrough={() => {
-					handleLoad();
-					if (isInView) playVideo();
-				}}
-				on:error={handleVideoError}
-				use:setupVideoObserver
-			>
-				<source src={mp4Url} type="video/mp4" />
-				<!-- Fallback to GIF if video fails -->
-				<img src={finalUrl} alt="gif" />
-			</video>
-
-			{#if videoError}
-				<!-- Show error message for debugging -->
-				<div
-					style="background: rgba(255,0,0,0.1); padding: 8px; margin: 4px; border-radius: 4px; font-size: 12px; color: #333;"
-				>
-					<span style="font-weight: bold; color: red;">Video Error:</span>
-					<br />{videoError}
-					<br /><small>MP4 URL: {mp4Url}</small>
-				</div>
-
-				<!-- Show fallback image -->
-				<img
-					src={finalUrl}
-					alt="gif fallback"
-					class:loaded
-					on:load={handleLoad}
-					on:error={handleError}
-				/>
-			{/if}
-		{:else}
-			<!-- Show image (non-GIF or mobile device) -->
-			<img
-				bind:this={imgElement}
-				src={finalUrl}
-				alt={imageUrl.endsWith('.gif') ? 'gif' : 'image'}
-				loading="lazy"
-				class:loaded
-				on:load={handleLoad}
-				on:error={handleError}
-			/>
-		{/if}
+		<img
+			bind:this={imgElement}
+			src={finalUrl}
+			alt={imageUrl.endsWith('.gif') ? 'gif' : 'image'}
+			loading="lazy"
+			class:loaded
+			on:load={handleLoad}
+			on:error={handleError}
+		/>
 	{/if}
 </div>

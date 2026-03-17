@@ -5,7 +5,6 @@ import { supabase } from '$lib/api/supabaseClient';
  * Returns "Anonymous" if ID is "0", or null if not found or on error.
  */
 export async function getUserName(id) {
-    console.log('Fetching username for ID:', id);
     if (id === '0') {
         return 'Anonymous';
     }

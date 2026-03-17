@@ -2,12 +2,6 @@ export async function fetchUser(author_id) {
     const baseUrl = import.meta.env.VITE_API_URL;
     const url = `${baseUrl}/users/${author_id}`;
 
-    console.log('fetchUser Debug:', {
-        author_id,
-        baseUrl,
-        fullUrl: url
-    });
-
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -24,27 +18,14 @@ export async function fetchUserBySlug(slug) {
     const baseUrl = import.meta.env.VITE_API_URL;
     const url = `${baseUrl}/users/username/${slug}`;
 
-    console.log('fetchUserBySlug Debug:', {
-        slug,
-        baseUrl,
-        fullUrl: url,
-        envMode: import.meta.env.MODE
-    });
-
     try {
         const response = await fetch(url);
-        console.log('fetchUserBySlug Response:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok
-        });
 
         if (!response.ok) {
             throw new Error(`Failed to fetch user by username: ${response.status} ${response.statusText} - URL: ${url}`);
         }
 
         const data = await response.json();
-        console.log('fetchUserBySlug Success:', { username: data?.username, public_id: data?.public_id });
         return data;
     } catch (error) {
         console.error("Error fetching user by username:", {
@@ -73,7 +54,6 @@ export async function fetchUserCollections(author_id) {
 
 export async function fetchUsers() {
     const url = `${import.meta.env.VITE_API_URL}/users/all`;
-    console.log("Fetching users from:", url);
     return fetch(url)
         .then((response) => {
             if (!response.ok) {
@@ -90,7 +70,6 @@ export async function fetchUsers() {
 export async function completeQuiz(user_id, quiz_id, percentage, token) {
     // post completed-quiz with user_id and quiz_id, sending auth token
     const url = `${import.meta.env.VITE_API_URL}/users/completed-quiz`;
-    console.log("Completing quiz for user:", user_id, "Quiz ID:", quiz_id);
     return fetch(url, {
         method: "POST",
         headers: {
@@ -100,7 +79,6 @@ export async function completeQuiz(user_id, quiz_id, percentage, token) {
         body: JSON.stringify({ user_id, quiz_id, percentage }),
     })
         .then((response) => {
-            console.log(response);
             if (!response.ok) {
                 throw new Error("Failed to complete quiz");
             }
@@ -114,7 +92,6 @@ export async function completeQuiz(user_id, quiz_id, percentage, token) {
 
 export async function deleteQuizScore(user_id, quiz_id, token) {
     const url = `${import.meta.env.VITE_API_URL}/users/delete-quiz-score`;
-    console.log("Deleting quiz score for user:", user_id, "Quiz ID:", quiz_id);
     return fetch(url, {
         method: "DELETE",
         headers: {
@@ -124,7 +101,6 @@ export async function deleteQuizScore(user_id, quiz_id, token) {
         body: JSON.stringify({ user_id, quiz_id }),
     })
         .then((response) => {
-            console.log(response);
             if (!response.ok) {
                 throw new Error("Failed to delete quiz score");
             }
