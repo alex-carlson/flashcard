@@ -12469,12 +12469,6 @@ header .navContainer ul li.user-tab a .profile-picture img {
   padding: 0;
   height: 100%;
   display: inline-table;
-  max-width: 170px;
-  min-width: 140px;
-  flex: 1 1 140px;
-}
-
-.flashcards.grid .card {
   min-width: 200px;
   max-width: 240px;
   flex: 1 1 200px;

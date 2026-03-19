@@ -5,6 +5,18 @@
 	import Collections from '$lib/Collections.svelte';
 	import Tags from '$lib/components/Tags.svelte';
 
+	let pageWidth = 0;
+
+	onMount(() => {
+		if (browser) {
+			pageWidth = window.innerWidth;
+			window.addEventListener('resize', () => {
+				pageWidth = window.innerWidth;
+			});
+			document.title = 'Quizzems';
+		}
+	});
+
 	function loadSearchedPage(event) {
 		const detail = event.detail;
 		const url = `/quiz/${detail.author_public_id}/${detail.slug}`;
@@ -59,7 +71,9 @@
 
 <div class="container mt-5">
 	<h2>Try something different</h2>
-	<Collections sortmode="random" limit={6} showAuthor={true} />
+	{#if pageWidth > 0}
+		<Collections sortmode="random" limit={pageWidth > 500 ? 8 : 6} showAuthor={true} />
+	{/if}
 </div>
 
 <div class="container">

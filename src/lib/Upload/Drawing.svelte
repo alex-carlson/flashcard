@@ -347,79 +347,80 @@
 	}
 </script>
 
-<div class="drawing-container">
-	<div class="container py-3 drawing-controls">
-		<h4 class="mb-3">Tools</h4>
-		<!-- Tool Buttons -->
-		<div class="row mb-3">
-			<div class="col-12 d-flex gap-2">
-				<button
-					type="button"
-					class="btn btn-outline-secondary"
-					on:click={() => {
-						eyedropping = false;
-						erasing = false;
-						drawingRect = false;
-						// Clear previous tool state when explicitly selecting draw
-						previousToolState = { erasing: false, drawingRect: false };
-						canvas && (canvas.style.cursor = 'default');
-					}}
-					class:active={!eyedropping && !erasing && !drawingRect}
-				>
-					<Fa icon={faPencil} /> Draw
-				</button>
+<div class="drawing-padding-wrapper">
+	<div class="drawing-container">
+		<div class="container py-3 drawing-controls">
+			<h4 class="mb-3">Tools</h4>
+			<!-- Tool Buttons -->
+			<div class="row mb-3">
+				<div class="col-12 drawing-tool-buttons">
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						on:click={() => {
+							eyedropping = false;
+							erasing = false;
+							drawingRect = false;
+							// Clear previous tool state when explicitly selecting draw
+							previousToolState = { erasing: false, drawingRect: false };
+							canvas && (canvas.style.cursor = 'default');
+						}}
+						class:active={!eyedropping && !erasing && !drawingRect}
+					>
+						<Fa icon={faPencil} /> Draw
+					</button>
 
-				<button
-					type="button"
-					class="btn btn-outline-secondary"
-					on:click={toggleRectangle}
-					class:active={drawingRect}
-				>
-					<Fa icon={faSquare} /> Rectangle
-				</button>
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						on:click={toggleRectangle}
+						class:active={drawingRect}
+					>
+						<Fa icon={faSquare} /> Rectangle
+					</button>
 
-				<button
-					type="button"
-					class="btn btn-outline-secondary"
-					on:click={toggleEraser}
-					class:active={erasing}
-				>
-					<Fa icon={faEraser} /> Erase
-				</button>
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						on:click={toggleEraser}
+						class:active={erasing}
+					>
+						<Fa icon={faEraser} /> Erase
+					</button>
 
-				<button
-					type="button"
-					class="btn btn-outline-secondary"
-					on:click={toggleEyedropper}
-					class:active={eyedropping}
-				>
-					<Fa icon={faEyedropper} /> Pick Color
-				</button>
-				<button
-					type="button"
-					class="btn btn-outline-secondary"
-					on:click={() => {
-						removingBackground = !removingBackground;
-					}}
-				>
-					{#if removingBackground}
-						<Fa icon={faCheck} /> Confirm Background
-					{:else}
-						<Fa icon={faEraser} />Remove Background
-					{/if}
-				</button>
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						on:click={toggleEyedropper}
+						class:active={eyedropping}
+					>
+						<Fa icon={faEyedropper} /> Pick Color
+					</button>
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						on:click={() => {
+							removingBackground = !removingBackground;
+						}}
+					>
+						{#if removingBackground}
+							<Fa icon={faCheck} /> Confirm Background
+						{:else}
+							<Fa icon={faEraser} />Remove Background
+						{/if}
+					</button>
+				</div>
 			</div>
-		</div>
 
-		<!-- Color and Brush Size -->
-		<div class="row mb-3" style="height: 50px;">
-			<div class="col-12 d-flex align-items-center gap-3 flex-wrap">
-				<label class="d-flex align-items-center gap-2 m-0">
-					Color:
-					<input
-						type="color"
-						bind:value={color}
-						style="
+			<!-- Color and Brush Size -->
+			<div class="row mb-3" style="height: 50px;">
+				<div class="col-12 d-flex align-items-center gap-3 flex-wrap">
+					<label class="d-flex align-items-center gap-2 m-0">
+						Color:
+						<input
+							type="color"
+							bind:value={color}
+							style="
                             width: 40px;
                             height: 40px;
                             border-radius: 50%;
@@ -428,51 +429,125 @@
                             appearance: none;
                             cursor: pointer;
                         "
-					/>
-				</label>
+						/>
+					</label>
 
-				<label class="d-flex align-items-center gap-2 m-0">
-					Brush Size:
-					<input type="range" min="1" max="200" bind:value={width} />
-					<span>{width}px</span>
-				</label>
+					<label class="d-flex align-items-center gap-2 m-0">
+						Brush Size:
+						<input type="range" min="1" max="200" bind:value={width} />
+						<span>{width}px</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Action Buttons -->
+			<div class="row">
+				<div class="col-12 drawing-action-buttons">
+					<button type="button" class="btn btn-gray-action" on:click={undo}
+						><Fa icon={faUndo} />Undo</button
+					>
+				</div>
 			</div>
 		</div>
 
-		<!-- Action Buttons -->
-		<div class="row">
-			<div class="col-12 d-flex gap-2 flex-wrap">
-				<button type="button" class="btn btn-gray-action" on:click={undo}
-					><Fa icon={faUndo} />Undo</button
-				>
-			</div>
+		<canvas
+			class="my-3"
+			bind:this={canvas}
+			on:mousedown={handleMouseDown}
+			on:mousemove={handleMouseMove}
+			on:mouseup={endDrawing}
+			on:mouseleave={endDrawing}
+			on:touchstart={handleTouchStart}
+			on:touchmove={handleTouchMove}
+			on:touchend={handleTouchEnd}
+		/>
+
+		<!-- Save/Cancel Buttons -->
+		<div class="drawing-actions drawing-action-buttons mt-3">
+			<button type="button" class="btn btn-success" on:click={saveDrawing}
+				><Fa icon={faFloppyDisk} />Save</button
+			>
+			<button type="button" class="btn btn-danger" on:click={cancelDrawing}
+				><Fa icon={faCancel} />Cancel</button
+			>
 		</div>
-	</div>
-
-	<canvas
-		class="my-3"
-		bind:this={canvas}
-		on:mousedown={handleMouseDown}
-		on:mousemove={handleMouseMove}
-		on:mouseup={endDrawing}
-		on:mouseleave={endDrawing}
-		on:touchstart={handleTouchStart}
-		on:touchmove={handleTouchMove}
-		on:touchend={handleTouchEnd}
-	/>
-
-	<!-- Save/Cancel Buttons -->
-	<div class="drawing-actions d-flex gap-2 justify-content-center mt-3">
-		<button type="button" class="btn btn-success" on:click={saveDrawing}
-			><Fa icon={faFloppyDisk} />Save</button
-		>
-		<button type="button" class="btn btn-danger" on:click={cancelDrawing}
-			><Fa icon={faCancel} />Cancel</button
-		>
 	</div>
 </div>
 
 <style>
+	/* Responsive tool buttons */
+	.drawing-tool-buttons {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		flex-direction: row;
+	}
+	.drawing-action-buttons {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		justify-content: center;
+		flex-direction: row;
+	}
+	@media (max-width: 500px) {
+		.drawing-tool-buttons,
+		.drawing-action-buttons {
+			flex-direction: column;
+			gap: 12px;
+			align-items: stretch;
+		}
+		.drawing-tool-buttons button,
+		.drawing-action-buttons button {
+			width: 100%;
+			min-width: 0;
+			font-size: 1rem;
+			padding: 0.75rem 1rem;
+		}
+	}
+	.drawing-padding-wrapper {
+		width: 100vw;
+		max-width: 100vw;
+		display: flex;
+		flex-direction: column;
+		height: 100vh;
+		overflow: auto;
+		position: relative;
+	}
+	.drawing-padding-top,
+	.drawing-padding-bottom {
+		width: 100vw;
+		height: 60px;
+		flex-shrink: 0;
+		background: transparent;
+		z-index: 10;
+		touch-action: pan-y;
+	}
+	.drawing-padding-left,
+	.drawing-padding-right {
+		height: 100%;
+		width: 24px;
+		flex-shrink: 0;
+		background: transparent;
+		z-index: 10;
+		position: absolute;
+		top: 60px;
+		bottom: 60px;
+		touch-action: pan-x;
+	}
+	.drawing-padding-left {
+		left: 0;
+		border-right: 1px solid #eee;
+	}
+	.drawing-padding-right {
+		right: 0;
+		border-left: 1px solid #eee;
+	}
+	.drawing-padding-top {
+		border-bottom: 1px solid #eee;
+	}
+	.drawing-padding-bottom {
+		border-top: 1px solid #eee;
+	}
 	canvas {
 		border: 1px solid #ccc;
 		touch-action: none;

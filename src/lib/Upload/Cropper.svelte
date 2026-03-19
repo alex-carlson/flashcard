@@ -38,7 +38,7 @@
 			toggleDragModeOnDblclick: false,
 			background: false,
 			movable: false,
-			cropBoxMovable: true,
+			cropBoxMovable: false,
 			cropBoxResizable: true,
 			ready() {
 				// Fill both width and height of the cropper container
@@ -160,10 +160,10 @@
 	}
 	.cropper {
 		position: relative;
-		width: 90vw;
-		max-width: 900px;
+		width: 95vw;
+		max-width: 95vw;
 		height: 70vh;
-		background: #fff;
+		background: #dbdbdb;
 		box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
 		display: flex;
 		flex-direction: column;

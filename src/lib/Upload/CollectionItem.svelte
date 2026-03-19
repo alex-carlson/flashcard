@@ -590,7 +590,7 @@
 	.form-control {
 		padding: 0.5rem;
 		border: 1px solid #ced4da;
-		border-radius: 0.375rem;
+		/* border-radius: 0.375rem; */
 		font-size: 0.9rem;
 	}
 

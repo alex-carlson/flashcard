@@ -24,13 +24,6 @@
     padding: 0;
     height: 100%;
     display: inline-table;
-    max-width: 170px;
-    min-width: 140px;
-    flex: 1 1 140px;
-}
-
-// Make grid cells larger for better usability
-.flashcards.grid .card {
     min-width: 200px;
     max-width: 240px;
     flex: 1 1 200px;
@@ -513,12 +506,12 @@
 /* Performance optimizations for low-end devices */
 @media (max-width: 768px) {
     .flashcards.grid {
-        grid-template-columns: repeat(2, 1fr); // Reduce columns on mobile
-        gap: 2px; // Smaller gaps
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2px;
     }
 
     .flashcards.grid img {
-        height: 80px; // Smaller images on mobile
+        height: 80px;
     }
 }
 
@@ -526,16 +519,16 @@
 @media (max-width: 480px),
 (max-device-memory: 2gb) {
     .flashcards.grid {
-        grid-template-columns: 1fr; // Single column for very small screens
+        grid-template-columns: 1fr;
     }
 
     .card {
-        transition: none; // Disable transitions for performance
+        transition: none;
     }
 
     .flashcards.grid img {
-        height: 60px; // Even smaller images
-        image-rendering: optimizeSpeed; // Faster image rendering
+        height: 60px;
+        image-rendering: optimizeSpeed;
     }
 }
 

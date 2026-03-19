@@ -463,10 +463,6 @@
 		border: 1px solid #e9ecef;
 	}
 
-	.card-body {
-		padding: 2rem;
-	}
-
 	.btn {
 		font-weight: 500;
 		padding: 0.5rem 1rem;
@@ -496,10 +492,6 @@
 	@media (max-width: 768px) {
 		.uploader {
 			padding: 1rem 0.5rem;
-		}
-
-		.card-body {
-			padding: 1rem;
 		}
 
 		.d-flex.justify-content-between {

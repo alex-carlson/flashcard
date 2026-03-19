@@ -265,6 +265,7 @@
 		flex: 1 1 auto;
 		width: auto;
 		min-width: 0;
+		border-radius: 0px;
 		border-top-right-radius: 0;
 		border-bottom-right-radius: 0;
 	}
