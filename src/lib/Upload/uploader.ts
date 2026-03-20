@@ -183,7 +183,7 @@ export async function uploadData(item, uuid = uuidv4(), forceJpg = false) {
                 // Add existing item ID for server validation during updates
                 existingItemId: item.existingItemId,
                 // Add update flag to indicate this is an update operation  
-                isUpdate: item.isUpdate
+                isUpdate: item.isUpdate,
             }, usr, item.category);
             return await apiFetch('/items/upload-url', 'POST', data);
         }, 'Error uploading URL data', undefined);

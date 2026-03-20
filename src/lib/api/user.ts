@@ -67,6 +67,22 @@ export async function fetchUsers() {
         });
 }
 
+export async function fetchCollaborators(collection_id) {
+    const url = `${import.meta.env.VITE_API_URL}/users/collaborators/${collection_id}`
+
+    return fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch collaborators");
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            console.error("Error fetching collaborators:", error);
+            return [];
+        })
+}
+
 export async function completeQuiz(user_id, quiz_id, percentage, token) {
     // post completed-quiz with user_id and quiz_id, sending auth token
     const url = `${import.meta.env.VITE_API_URL}/users/completed-quiz`;

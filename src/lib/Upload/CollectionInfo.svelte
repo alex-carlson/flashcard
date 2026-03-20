@@ -5,10 +5,17 @@
 	import { uploadThumbnail } from '$lib/Upload/uploader';
 	import { addToast } from '../../stores/toast';
 	import { apiFetch } from '$lib/api/fetchdata';
+	import { onMount } from 'svelte';
+	import { fetchCollaborators } from '$lib/api/user';
+	import { user } from '$stores/user';
+	import { get } from 'svelte/store';
+
+	$: userId = get(user)?.id ?? null;
 
 	export let collection;
 	export let tempCategory = '';
 	export let tempDescription = '';
+	export let tempCollaborators = [];
 	export let tempTags = '';
 	export let suggestedTags = [];
 	export let isPublic = false;
@@ -114,6 +121,107 @@
 			dispatch('tagsChanged', tempTags);
 		}
 	}
+
+	let collaboratorSearch = '';
+	let collaboratorResults = [];
+	let searchingCollaborators = false;
+
+	async function searchCollaborators() {
+		const query = collaboratorSearch.trim();
+		if (!query) {
+			collaboratorResults = [];
+			searchingCollaborators = false;
+			return;
+		}
+		searchingCollaborators = true;
+		try {
+			const results = await apiFetch(`/users/search/${encodeURIComponent(query)}`, 'GET');
+			collaboratorResults = Array.isArray(results) ? results : [];
+		} catch (error) {
+			collaboratorResults = [];
+			addToast({ type: 'error', message: 'Failed to search users.' });
+		}
+		searchingCollaborators = false;
+	}
+
+	async function addCollaborator(user) {
+		if (!user || !user.id) return;
+		// Ensure tempCollaborators is always an array
+		let collabArr = Array.isArray(tempCollaborators) ? tempCollaborators : [];
+		if (!collabArr.some((u) => u.id === user.id)) {
+			try {
+				const payload = {
+					quiz_id: collection.id,
+					collaborator_id: user.id
+				};
+				const result = await apiFetch('/users/addCollaborator', 'POST', payload);
+				if (result && result.success) {
+					tempCollaborators = [...collabArr, user];
+					addToast({ type: 'success', message: `${user.username} added as collaborator.` });
+				} else {
+					addToast({ type: 'error', message: `Failed to add collaborator.` });
+					if (result) {
+						console.log(result);
+					}
+				}
+			} catch (error) {
+				addToast({ type: 'error', message: `Server error adding collaborator.` });
+			}
+		} else {
+			addToast({ type: 'info', message: `${user.username} is already a collaborator.` });
+		}
+		collaboratorResults = [];
+	}
+
+	async function removeCollaborator(user) {
+		if (!user || !user.id) return;
+
+		// Ensure tempCollaborators is always an array
+		let collabArr = Array.isArray(tempCollaborators) ? tempCollaborators : [];
+
+		// Check if user IS currently a collaborator
+		if (collabArr.some((u) => u.id === user.id)) {
+			try {
+				const payload = {
+					quiz_id: collection.id,
+					collaborator_id: user.id
+				};
+
+				const result = await apiFetch('/users/removeCollaborator', 'DELETE', payload);
+
+				if (result && result.success) {
+					// Remove user locally
+					tempCollaborators = collabArr.filter((u) => u.id !== user.id);
+
+					addToast({ type: 'success', message: `${user.username} removed as collaborator.` });
+				} else {
+					addToast({ type: 'error', message: `Failed to remove collaborator.` });
+					if (result) {
+						console.log(result);
+					}
+				}
+			} catch (error) {
+				addToast({ type: 'error', message: `Server error removing collaborator.` });
+			}
+		} else {
+			addToast({ type: 'info', message: `${user.username} is not a collaborator.` });
+		}
+
+		collaboratorResults = [];
+	}
+
+	onMount(async () => {
+		if (collection && collection.id) {
+			try {
+				const result = await fetchCollaborators(collection.id);
+				tempCollaborators = Array.isArray(result.data) ? result.data : [];
+				console.log('Collaborators: ', tempCollaborators);
+			} catch (error) {
+				tempCollaborators = [];
+				addToast({ type: 'error', message: 'Failed to load collaborators.' });
+			}
+		}
+	});
 
 	// Dispatch changes to parent
 	$: dispatch('categoryChanged', tempCategory);
@@ -270,6 +378,72 @@
 								</button>
 							</div>
 						</div>
+
+						<div class="mb-3">
+							<label for="collaborators" class="form-label">Collaborators</label>
+							<input
+								type="text"
+								placeholder="Search and add collaborators"
+								id="collaborators"
+								class="form-control"
+								bind:value={collaboratorSearch}
+								on:keydown={(e) => {
+									if (e.key === 'Enter') searchCollaborators();
+								}}
+							/>
+							<button
+								type="button"
+								class="btn btn-outline-secondary btn-sm mt-2"
+								on:click={searchCollaborators}
+								disabled={searchingCollaborators}
+							>
+								{searchingCollaborators ? 'Searching...' : 'Search'}
+							</button>
+							{#if searchingCollaborators}
+								<div class="text-muted mt-2">Searching...</div>
+							{:else if collaboratorResults && collaboratorResults.length > 0}
+								{#each collaboratorResults as user}
+									<button
+										type="button"
+										class="btn btn-sm btn-dark ml-2 color-black"
+										on:click={() => addCollaborator(user)}>{user.username}</button
+									>
+								{/each}
+							{:else if collaboratorResults && collaboratorResults.length === 0 && collaboratorSearch.trim() !== ''}
+								<div class="text-muted mt-2">No users found.</div>
+							{:else}
+								<div class="text-muted mt-2">No users found.</div>
+							{/if}
+						</div>
+						{#if tempCollaborators.length > 0}
+							<div class="collaborator-list mt-3">
+								<div class="mb-2">Current Collaborators:</div>
+								{#each tempCollaborators as collab (collab.id)}
+									<span>
+										<a href={`/author/${collab.username_slug}`}>
+											{collab.username}
+										</a>
+										{#if collection.author === $user.username}
+											<button
+												type="button"
+												class="btn btn-sm btn-outline-danger mr-2 mb-2"
+												on:click={() => removeCollaborator(collab)}
+											>
+												remove
+											</button>
+										{:else if collab.username === $user.username}
+											<button
+												type="button"
+												class="btn btn-sm btn-outline-danger mr-2 mb-2"
+												on:click={() => removeCollaborator(collab)}
+											>
+												leave
+											</button>
+										{/if}
+									</span>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				</div>
 			</div>
