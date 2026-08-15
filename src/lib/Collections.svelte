@@ -10,7 +10,6 @@
 		fetchLatestCollections,
 		fetchRandomCollections,
 		fetchPopularCollections,
-		fetchCollections
 	} from './api/collections';
 	import { fetchUser } from './api/user';
 	export let list = true;
@@ -25,7 +24,6 @@
 
 	let fetchedCollections = [];
 	let isLoading = false; // Start as false, will be set to true when actually loading
-	let error = null;
 	let isCollapsed = true;
 	let hasInitialized = false;
 	let windowWidth = 0;
@@ -70,21 +68,7 @@
 			isLoading = false;
 		}
 		hasInitialized = true;
-		if (browser) {
-			updateWidth();
-			window.addEventListener('resize', updateWidth);
-		}
 	});
-
-	onDestroy(() => {
-		if (browser) {
-			window.removeEventListener('resize', updateWidth);
-		}
-	});
-
-	function updateWidth() {
-		windowWidth = window.innerWidth;
-	}
 
 	async function loadCollections() {
 		if (isLoading) {
@@ -92,55 +76,41 @@
 		}
 
 		isLoading = true;
-		error = null;
 
 		try {
 			let data;
-			const needsFullFetch = searchTerm.trim().length > 0 || sortmode === 'default';
 
-			if (limit === null || limit === -1 || needsFullFetch) {
-				data = await fetchCollections();
-				loadedFullCollectionList = true;
-			} else {
-				switch (sortmode) {
-					case 'latest':
-						data = await fetchLatestCollections(limit || 12);
-						break;
-					case 'popular':
-						data = await fetchPopularCollections(limit || 10);
-						break;
-					case 'random':
-						data = await fetchRandomCollections(limit || 10);
-						break;
-					case 'random-daily': {
-						const daily = await fetchRandomCollections(limit || 1, true); // Daily random
-						data = daily ? [daily] : [];
-						break;
-					}
-					default:
-						data = await fetchLatestCollections(limit || 12);
-						break;
+			switch (sortmode) {
+				case 'latest':
+					data = await fetchLatestCollections(limit || 12);
+					break;
+				case 'popular':
+					data = await fetchPopularCollections(limit || 10);
+					break;
+				case 'random':
+					data = await fetchRandomCollections(limit || 10);
+					break;
+				case 'random-daily': {
+					const daily = await fetchRandomCollections(limit || 1, true); // Daily random
+					data = daily ? [daily] : [];
+					break;
 				}
+				default:
+					data = await fetchLatestCollections(limit || 12);
+					break;
 			}
 
 			if (data) {
 				fetchedCollections = data;
 			} else {
 				fetchedCollections = [];
-				error = 'Failed to load collections';
 			}
 		} catch (err) {
 			console.error('Error loading collections:', err);
-			error = 'Failed to load collections';
 			fetchedCollections = [];
 		} finally {
 			isLoading = false;
 		}
-	}
-
-	// Retry function for error states
-	async function retryLoad() {
-		await loadCollections();
 	}
 
 	$: processedCollections = (() => {
@@ -169,7 +139,6 @@
 	// Determine layout classes (additive)
 	$: layoutClass = (() => {
 		let classes = [];
-		if (windowWidth < 650 || condensed) classes.push('condensed');
 		if (grid) classes.push('grid');
 		if (list) classes.push('list');
 		return classes.join(' ');
@@ -215,11 +184,6 @@
 					<CollectionCard />
 				{/each}
 			</ul>
-		{:else if error}
-			<div class="error-state">
-				<p>{error}</p>
-				<button class="retry-button" on:click={retryLoad}>Retry</button>
-			</div>
 		{:else if filteredCollections.length === 0}
 			<div class="empty-state">
 				<p>No collections available</p>
@@ -336,12 +300,6 @@
 		text-align: center;
 		padding: 2rem;
 		color: #666;
-	}
-
-	.error-state {
-		text-align: center;
-		padding: 2rem;
-		color: #d32f2f;
 	}
 
 	.retry-button {

@@ -22,20 +22,6 @@ export interface Collection {
     [key: string]: any;
 }
 
-// Fetch all collections
-export async function fetchCollections(): Promise<Collection[] | undefined> {
-    console.log("Fetching collections from API");
-    const url = `${import.meta.env.VITE_API_URL}/collections`;
-    try {
-        const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error("Failed to fetch collections");
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching collections:", error);
-        return undefined;
-    }
-}
-
 export async function fetchUserCollections(uid): Promise<Collection[] | undefined> {
     const url = `/collections/user/${uid}`;
 
@@ -55,6 +41,18 @@ export async function fetchLatestCollections(limit = 12): Promise<Collection[] |
     try {
         const response = await fetch(url, { method: "GET" });
         if (!response.ok) throw new Error("Failed to fetch latest collections");
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching latest collections:", error);
+        return undefined;
+    }
+}
+
+export async function fetchTaggedCollections(tag = "", limit = 12): Promise<Collection[] | undefined> {
+    const url = `${import.meta.env.VITE_API_URL}/collections/taggedCategories?limit=${limit}&tag=${encodeURIComponent(tag)}`;
+    try {
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error("Failed to fetch tagged collections");
         return await response.json();
     } catch (error) {
         console.error("Error fetching latest collections:", error);
