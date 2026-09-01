@@ -75,6 +75,7 @@ export async function createCollection(category) {
 export async function removeItem(itemId, category) {
     try {
         const usr = getCurrentUser();
+        console.log("Removing item with ID:", itemId, "from category:", category, "for user:", usr.public_id);
         const result = await apiFetch('/items/delete', 'DELETE', {
             category,
             itemId,
