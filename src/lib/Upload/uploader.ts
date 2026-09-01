@@ -74,9 +74,11 @@ export async function createCollection(category) {
 // Remove item
 export async function removeItem(itemId, category) {
     try {
+        const usr = getCurrentUser();
         const result = await apiFetch('/items/delete', 'DELETE', {
             category,
-            itemId
+            itemId,
+            author_id: usr.public_id
         });
         return result;
     } catch (error) {
@@ -261,9 +263,9 @@ export async function uploadQuestion(data) {
             uuid: uuidv4(),
             question: data.question,
             answer:
-            Array.isArray(data.answers)
-                ? data.answers
-                : data.answer,
+                Array.isArray(data.answers)
+                    ? data.answers
+                    : data.answer,
             category: data.category,
             type: data.type,
             questionType: data.questionType || 'text',
