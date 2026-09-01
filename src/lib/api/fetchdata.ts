@@ -1,4 +1,6 @@
 import { getSession } from "$lib/api/supabaseClient";
+import { logOut } from "$lib/api/auth";
+import { addToast } from "$store/toast";
 
 async function getAuthHeaders(requireAuth = true): Promise<Record<string, string>> {
     const session = await getSession();
@@ -28,6 +30,17 @@ export async function apiFetch(endpoint, method = 'GET', body = null, isFormData
     });
 
     if (!response.ok) {
+        // Handle token expiration (401 Unauthorized)
+        if (response.status === 401) {
+            console.error('Token expired. Logging out user.');
+            addToast({
+                message: 'Your session has expired. Please log in again.',
+                type: 'error',
+                duration: 5000
+            });
+            await logOut();
+        }
+
         console.error('API Request failed:', {
             endpoint,
             status: response.status,
