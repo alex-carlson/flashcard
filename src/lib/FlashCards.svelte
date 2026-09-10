@@ -7,6 +7,7 @@
 	import Card from './Card.svelte';
 	import Toolbar from './components/quiz/Toolbar.svelte';
 	import QuizActions from './components/quiz/QuizActions.svelte';
+	import QuizAnswer from './components/quiz/QuizAnswer.svelte';
 	import { quiz } from '$store/quiz.js';
 
 	const dispatch = createEventDispatcher();
@@ -15,6 +16,17 @@
 	$: practiceMode = $quiz.isPractice;
 	$: columns = $quiz.columns ?? 1;
 	$: currentMode = $quiz.currentMode;
+	let activeCardIndex = -1;
+	$: {
+		const nextActiveIndex = cards.findIndex((card) => !card?.revealed && !card?.hidden);
+		if (
+			nextActiveIndex !== -1 &&
+			(activeCardIndex === -1 || cards[activeCardIndex]?.revealed || cards[activeCardIndex]?.hidden)
+		) {
+			activeCardIndex = nextActiveIndex;
+		}
+	}
+	$: activeCard = cards[activeCardIndex] ?? null;
 
 	let isProcessingAnswer = false;
 	let answerProcessingTimeout;
@@ -27,6 +39,18 @@
 		updated[index].revealed = value;
 		if (playerId) updated[index].answerer = playerId;
 		quiz.setCards(updated);
+	}
+
+	function setActiveCard(index) {
+		if (index < 0 || index >= cards.length) return;
+		if (cards[index]?.revealed || cards[index]?.hidden) return;
+		activeCardIndex = index;
+	}
+
+	function handleCardAnswer(event) {
+		const { cardId, patch } = event.detail || {};
+		if (!cardId || !patch) return;
+		quiz.updateCardById(cardId, patch);
 	}
 
 	function onCorrectAnswer(event) {
@@ -116,11 +140,21 @@
 					bind:this={cardRefs[i]}
 					{card}
 					{i}
+					isActive={i === activeCardIndex}
+					on:click={() => setActiveCard(i)}
 					on:correctAnswer={onCorrectAnswer}
 					on:giveUp={(e) => setRevealed(e.detail.index, true)}
 				/>
 			{/each}
 		</div>
+
+		{#if activeCard}
+			<QuizAnswer
+				card={activeCard}
+				showTextInput={Boolean(activeCard && !activeCard.revealed)}
+				on:answer={handleCardAnswer}
+			/>
+		{/if}
 
 		<QuizActions
 			{currentMode}

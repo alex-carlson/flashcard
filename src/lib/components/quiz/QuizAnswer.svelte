@@ -1,11 +1,15 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import { quiz } from '$store/quiz';
 	import { AnswerType } from '$lib/types/enums';
 	import { areStringsClose } from '$lib/api/utils';
 	import Fa from 'svelte-fa';
 	import { faFlag, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 
+	const dispatch = createEventDispatcher();
+
 	export let card;
+	export let showTextInput = false;
 	let selectedChoice = null;
 	let isCorrectChoice = null;
 	let lastId = null;
@@ -20,24 +24,20 @@
 
 	$: if (item?.id && item.id !== lastId) {
 		lastId = item.id;
-
 		isLockedIn = false;
 		selectedChoice = null;
 		isCorrectChoice = null;
-
 		draftAnswer = '';
 		draftAnswers = item.num_required ? Array(item.num_required).fill('') : [];
-
 		lockedAnswers = [];
 		usedCorrect = new Set();
-
 		optionsCacheMap.delete(item.id);
 	}
 
 	let isLockedIn = false;
 
 	function updateCard(patch) {
-		quiz.updateCardById(item.id, patch);
+		dispatch('answer', { cardId: item.id, patch });
 	}
 
 	function normalize(v) {
@@ -48,32 +48,21 @@
 
 	function checkFillAnswer(values) {
 		if (isLockedIn) return;
-
-		// If num_required is null or undefined, set to 1
-		if (item.num_required == null) {
-			item.num_required = 1;
-		}
+		if (item.num_required == null) item.num_required = 1;
 
 		const inputValues = Array.isArray(values) ? values : [values];
-
 		const correctArr = getCorrectAnswer()
 			.filter(Boolean)
 			.map((v) => v.toString().trim().toLowerCase());
-
-		console.log("Checking answers", { inputValues, correctArr });
-
-		// Track which input and which correct answer have been matched
 		let matchedInputs = new Set();
-		let matchedCorrect = new Set(usedCorrect); // preserve already used
+		let matchedCorrect = new Set(usedCorrect);
 
-		// For each correct answer, try to find a matching input
 		correctArr.forEach((correct, ci) => {
 			if (matchedCorrect.has(ci)) return;
 			let found = false;
 			inputValues.forEach((val, i) => {
 				if (lockedAnswers[i] || matchedInputs.has(i)) return;
 				const normalized = (val ?? '').toString().trim().toLowerCase();
-				// 1. Try exact match
 				if (normalized === correct) {
 					lockedAnswers[i] = true;
 					matchedInputs.add(i);
@@ -84,7 +73,6 @@
 				}
 			});
 			if (!found) {
-				// Fallback to fuzzy match
 				inputValues.forEach((val, i) => {
 					if (lockedAnswers[i] || matchedInputs.has(i)) return;
 					const normalized = (val ?? '').toString().trim().toLowerCase();
@@ -100,15 +88,9 @@
 			}
 		});
 
-		// Mark complete if enough answers are correct
 		if (usedCorrect.size >= item.num_required) {
 			isLockedIn = true;
-			updateCard({
-				revealed: true,
-				userAnswer: inputValues,
-				isCorrect: true
-			});
-			console.log("All required correct!");
+			updateCard({ revealed: true, userAnswer: inputValues, isCorrect: true });
 		}
 	}
 
@@ -118,9 +100,7 @@
 
 	function getMultipleChoiceOptions(count = 2) {
 		if (!item) return [];
-		if (optionsCacheMap.has(item.id)) {
-			return optionsCacheMap.get(item.id);
-		}
+		if (optionsCacheMap.has(item.id)) return optionsCacheMap.get(item.id);
 
 		const correct = getCorrectAnswer();
 		const wrongPool = $quiz.cards
@@ -131,7 +111,6 @@
 
 		const shuffledWrong = wrongPool.sort(() => Math.random() - 0.5);
 		const selectedWrong = shuffledWrong.slice(0, count - 1);
-
 		const options = [correct, ...selectedWrong].filter(Boolean).sort(() => Math.random() - 0.5);
 		optionsCacheMap.set(item.id, options);
 		return options;
@@ -139,32 +118,21 @@
 
 	function handleMultipleChoiceClick(choice) {
 		if (isLockedIn) return;
-
 		const correct = getCorrectAnswer();
-
 		const isCorrect = correct.some((c) => normalize(choice) === normalize(c));
-
 		isLockedIn = true;
 		selectedChoice = choice;
 		isCorrectChoice = isCorrect;
-
-		updateCard({
-			revealed: true,
-			userAnswer: choice,
-			isCorrect
-		});
+		updateCard({ revealed: true, userAnswer: choice, isCorrect });
 	}
 
 	function handleHint() {
 		const correctArr = getCorrectAnswer();
 		if (!correctArr || correctArr.length === 0) return;
-
-		const correct = String(correctArr[0]); // use first answer
+		const correct = String(correctArr[0]);
 		let current = draftAnswer || '';
-
 		let nextCharIndex = correct.length - 1;
 
-		// Find the next character that is not already revealed
 		for (let i = 0; i < correct.length; i++) {
 			if (current[i] !== correct[i]) {
 				nextCharIndex = i;
@@ -172,22 +140,15 @@
 			}
 		}
 
-		// Reveal up to that character
 		draftAnswer = correct.slice(0, nextCharIndex + 1);
 	}
 
 	function getChoiceClass(choice) {
-		if (!isLockedIn && selectedChoice === null) {
-			return 'choice-option';
-		}
-
+		if (!isLockedIn && selectedChoice === null) return 'choice-option';
 		const correct = getCorrectAnswer();
-
 		const isCorrect = correct.some((c) => normalize(choice) === normalize(c));
-
 		if (isLockedIn && isCorrect) return 'choice-option correct';
 		if (choice === selectedChoice && !isCorrectChoice) return 'choice-option incorrect';
-
 		return 'choice-option';
 	}
 
@@ -225,7 +186,6 @@
 			{/each}
 		</div>
 	{:else if item.answerType === AnswerType.MULTIPLE_CHOICE}
-		<!-- MULTIPLE CHOICE -->
 		<div class="multiple-choice-inputs">
 			{#each item.answers || [] as choice}
 				<button
@@ -233,18 +193,10 @@
 					class="choice-option"
 					on:click={() => {
 						if (isLockedIn) return;
-
 						isLockedIn = true;
-
 						const correct = getCorrectAnswer();
-
 						const isCorrect = correct.some((c) => normalize(choice) === normalize(c));
-
-						updateCard({
-							revealed: true,
-							userAnswer: choice,
-							isCorrect
-						});
+						updateCard({ revealed: true, userAnswer: choice, isCorrect });
 					}}
 					disabled={isLockedIn}
 				>
@@ -252,7 +204,7 @@
 				</button>
 			{/each}
 		</div>
-	{:else if !item.revealed}
+	{:else if !item.revealed && showTextInput}
 		<div class="input-row">
 			<button class="flag-btn" on:click={() => updateCard({ revealed: true, isCorrect: false })}>
 				<Fa icon={faFlag} />
@@ -267,7 +219,6 @@
 							disabled={lockedAnswers[index]}
 							on:input={(e) => {
 								if (isLockedIn || lockedAnswers[index]) return;
-
 								draftAnswers[index] = e.target.value;
 								checkFillAnswer(draftAnswers);
 							}}
@@ -280,14 +231,11 @@
 						bind:value={draftAnswer}
 						on:input={(e) => {
 							if (isLockedIn) return;
-
 							draftAnswer = e.target.value;
 							checkFillAnswer([draftAnswer]);
 						}}
 						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								e.target.blur();
-							}
+							if (e.key === 'Enter') e.target.blur();
 						}}
 					/>
 				{/if}
@@ -298,21 +246,6 @@
 				</button>
 			{/if}
 		</div>
-	{:else}
-		{#if item.audio}
-			<img src={`https://img.youtube.com/vi/${item.audio}/default.jpg`} alt="Answer image" class="img-fluid mb-2" />
-			<span>{item.yt_title}</span>
-		{/if}
-		<span class={item.isCorrect ? 'answer correct' : 'answer incorrect'}>
-			{#if item.num_required > 1}
-				{item.answer.join(', ')}
-			{:else}
-				{item.answer[0]}
-			{/if}
-		</span>
-		{#if item.extra}
-			<span>{item.extra}</span>
-		{/if}
 	{/if}
 </div>
 
@@ -355,20 +288,20 @@
 		transition: all 0.15s ease;
 	}
 
-	.correct {
-		background: green;
-		color: white;
-	}
-
-	.incorrect {
-		background: red;
-		color: white;
-	}
-
 	.input-row {
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		z-index: 50;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+		background: rgba(255, 255, 255, 0.96);
+		backdrop-filter: blur(6px);
+		border-top: 1px solid #e5e7eb;
+		box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
 	}
 
 	.flag-btn,
@@ -396,5 +329,15 @@
 
 	.input-row .form-control.answer-box {
 		flex: 1 1 auto;
+	}
+
+	@media (min-width: 768px) {
+		.input-row {
+			left: 1rem;
+			width: min(760px, calc(100% - 2rem));
+			border-radius: 0.75rem 0.75rem 0 0;
+			border: 1px solid #e5e7eb;
+			border-bottom: none;
+		}
 	}
 </style>
