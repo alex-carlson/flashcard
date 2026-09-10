@@ -344,6 +344,65 @@ ul {
     margin: 4px;
     gap: 4px;
     box-sizing: border-box;
+
+    .toolbar-select-control {
+        display: inline-flex;
+        align-items: stretch;
+        gap: 0;
+        height: var(--form-element-height);
+        width: 100%;
+        max-width: 130px;
+        border-radius: 6px;
+        border: 0;
+        border-bottom: solid 3px black;
+        background-color: var(--button-color);
+        overflow: hidden;
+        box-shadow: none;
+        flex: 0 0 auto;
+        transition: box-shadow 0.2s ease, filter 0.2s ease;
+
+        &:hover,
+        &:focus-within {
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+            filter: brightness(0.98);
+        }
+    }
+
+    .toolbar-select-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        min-width: 2.5rem;
+        color: var(--button-text-color);
+        background-color: var(--button-color);
+        font-size: 1.1em;
+        padding: 0 0.5rem;
+        border-right: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .toolbar-select {
+        cursor: pointer;
+        font-size: 1.2em;
+        padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+        transition: all 0.3s ease-in-out;
+        height: 100%;
+        width: 100%;
+        min-width: 72px;
+        border: 0;
+        background-color: var(--button-color);
+        color: var(--button-text-color);
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--button-text-color) 50%), linear-gradient(135deg, var(--button-text-color) 50%, transparent 50%);
+        background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+        background-size: 6px 6px, 6px 6px;
+        background-repeat: no-repeat;
+
+        &:focus {
+            outline: none;
+            box-shadow: none;
+        }
+    }
 }
 
 footer {

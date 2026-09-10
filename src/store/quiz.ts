@@ -31,7 +31,7 @@ const getInitialState = () => ({
     showModal: false,
     currentMode: 'FILL_IN_THE_BLANK',
     isPractice: false,
-    isGrid: false,
+    columns: 1,
     isFullscreen: false,
     isShuffle: true,
     showCategory: false,
@@ -64,15 +64,18 @@ function createQuizStore() {
         setCollectionId: (collectionId) => patch({ collectionId }),
 
         setCollection: (collection) =>
-        update((state) => ({
-            ...state,
-            collection
-        })),
+            update((state) => ({
+                ...state,
+                collection
+            })),
 
         setMode: (currentMode) => patch({ currentMode }),
         setIsPractice: (isPractice) => patch({ isPractice }),
+        setColumns: (value) => update((s) => ({
+            ...s,
+            columns: Math.min(Math.max(Number(value) || 1, 1), 6)
+        })),
 
-        toggleGrid: () => update(s => ({ ...s, isGrid: !s.isGrid })),
         toggleFullscreen: () => update(s => ({ ...s, isFullscreen: !s.isFullscreen })),
 
         setFullscreen: (v) => update(s => ({ ...s, isFullscreen: v })),
@@ -165,10 +168,10 @@ function createQuizStore() {
         },
 
         addCard: (card) =>
-        update((state) => ({
-            ...state,
-            cards: [...state.cards, card]
-        })),
+            update((state) => ({
+                ...state,
+                cards: [...state.cards, card]
+            })),
 
         uploadData: async (item, uuid, forceJpg) => {
             return uploaderUploadData(item, uuid, forceJpg);

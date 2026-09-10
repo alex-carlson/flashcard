@@ -12089,6 +12089,7 @@ ul img {
   gap: 4px;
   height: 100%;
   max-width: 320px;
+  overflow: visible;
 }
 @media (max-width: 600px) {
   .list.grid ul li {
@@ -12333,6 +12334,59 @@ ul img {
   gap: 4px;
   box-sizing: border-box;
 }
+.toolbar .toolbar-select-control {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  height: var(--form-element-height);
+  width: 100%;
+  max-width: 130px;
+  border-radius: 6px;
+  border: 0;
+  border-bottom: solid 3px black;
+  background-color: var(--button-color);
+  overflow: hidden;
+  box-shadow: none;
+  flex: 0 0 auto;
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+}
+.toolbar .toolbar-select-control:hover, .toolbar .toolbar-select-control:focus-within {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  filter: brightness(0.98);
+}
+.toolbar .toolbar-select-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  color: var(--button-text-color);
+  background-color: var(--button-color);
+  font-size: 1.1em;
+  padding: 0 0.5rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.2);
+}
+.toolbar .toolbar-select {
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  transition: all 0.3s ease-in-out;
+  height: 100%;
+  width: 100%;
+  min-width: 72px;
+  border: 0;
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--button-text-color) 50%), linear-gradient(135deg, var(--button-text-color) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.toolbar .toolbar-select:focus {
+  outline: none;
+  box-shadow: none;
+}
 
 footer {
   font-size: 18px;
@@ -12449,9 +12503,10 @@ header ul li.user-tab a .profile-picture img {
 }
 
 .flashcards.grid {
+  --columns: 1;
   padding: 4px;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
   background-color: white;
   gap: 4px;
   justify-content: center;
@@ -12461,15 +12516,15 @@ header ul li.user-tab a .profile-picture img {
   padding: 0;
   height: 100%;
   display: inline-table;
-  min-width: 200px;
-  max-width: 240px;
-  flex: 1 1 200px;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  flex: none;
 }
 
 @media (max-width: 600px) {
   .flashcards.grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(min(var(--columns), 2), minmax(0, 1fr));
     gap: 8px;
   }
   .flashcards.grid .card {

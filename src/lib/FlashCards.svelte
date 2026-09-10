@@ -13,7 +13,7 @@
 
 	$: cards = $quiz.cards || [];
 	$: practiceMode = $quiz.isPractice;
-	$: isGrid = $quiz.isGrid;
+	$: columns = $quiz.columns ?? 1;
 	$: currentMode = $quiz.currentMode;
 
 	let isProcessingAnswer = false;
@@ -107,7 +107,10 @@
 			</select>
 		{/if}
 
-		<div class={'flashcards ' + (isGrid ? 'grid' : 'vertical')}>
+		<div
+			class={'flashcards ' + (columns > 1 ? 'grid' : 'vertical')}
+			style={columns > 1 ? `--columns: ${columns};` : ''}
+		>
 			{#each cards as card, i (card.id || i)}
 				<Card
 					bind:this={cardRefs[i]}

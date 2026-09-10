@@ -8,9 +8,10 @@
 }
 
 .flashcards.grid {
+    --columns: 1;
     padding: 4px;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
     background-color: white;
     gap: 4px;
     justify-content: center;
@@ -20,15 +21,15 @@
     padding: 0;
     height: 100%;
     display: inline-table;
-    min-width: 200px;
-    max-width: 240px;
-    flex: 1 1 200px;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    flex: none;
 }
 
 @media (max-width: 600px) {
     .flashcards.grid {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(min(var(--columns), 2), minmax(0, 1fr));
         gap: 8px;
     }
 

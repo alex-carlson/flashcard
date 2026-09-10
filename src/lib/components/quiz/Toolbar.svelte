@@ -3,11 +3,10 @@
 	import {
 		faEyeSlash,
 		faEye,
-		faTableCells,
-		faList,
 		faExpand,
 		faCompress,
-		faPencil
+		faPencil,
+		faTableColumns
 	} from '@fortawesome/free-solid-svg-icons';
 
 	import { quiz } from '$store/quiz.js';
@@ -15,7 +14,7 @@
 	import { get } from 'svelte/store';
 
 	$: cards = $quiz.cards || [];
-	$: isGrid = $quiz.isGrid;
+	$: columns = $quiz.columns ?? 1;
 	$: isFullscreen = $quiz.isFullscreen;
 	$: showEditButton = $quiz.canEditCollection;
 	$: areAnyCardsRevealed = cards.some((card) => card?.revealed);
@@ -34,7 +33,7 @@
 	}
 
 	function goFullscreen() {
-		if (isGrid) quiz.toggleGrid();
+		if (columns > 1) quiz.setColumns(1);
 
 		quiz.setFullscreen(true);
 
@@ -67,12 +66,21 @@
 		<Fa icon={areAnyCardsRevealed ? faEyeSlash : faEye} />
 	</button>
 	{#if !isFullscreen}
-		<button
-			on:click={quiz.toggleGrid}
-			title={isGrid ? 'Switch to list view' : 'Switch to grid view'}
-		>
-			<Fa icon={isGrid ? faList : faTableCells} />
-		</button>
+		<div class="toolbar-select-control" title="Choose card columns">
+			<span class="toolbar-select-icon" aria-hidden="true">
+				<Fa icon={faTableColumns} />
+			</span>
+			<select
+				class="toolbar-select"
+				aria-label="Choose card columns"
+				value={columns}
+				on:change={(event) => quiz.setColumns(Number(event.currentTarget.value))}
+			>
+				{#each Array.from({ length: 6 }, (_, index) => index + 1) as value}
+					<option value={value}>{value}</option>
+				{/each}
+			</select>
+		</div>
 	{/if}
 	<button on:click={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
 		<Fa icon={isFullscreen ? faCompress : faExpand} />
