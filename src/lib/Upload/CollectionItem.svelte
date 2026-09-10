@@ -233,6 +233,22 @@
 		return Array.isArray(answer) ? answer : answer ? [answer] : [];
 	}
 
+	function isQuestionCard(itemToCheck) {
+		if (!itemToCheck) return false;
+		const questionType = String(itemToCheck.questionType ?? '').toLowerCase();
+		return (
+			questionType === QuestionType.TEXT ||
+			questionType === 'question' ||
+			(!itemToCheck.image && !itemToCheck.audio && !itemToCheck.url && !itemToCheck.thumbnail && itemToCheck.question !== undefined)
+		);
+	}
+
+	function isAudioCard(itemToCheck) {
+		if (!itemToCheck) return false;
+		const questionType = String(itemToCheck.questionType ?? '').toLowerCase();
+		return questionType === QuestionType.AUDIO || questionType === 'audio' || itemToCheck.audio != null;
+	}
+
 	async function uploadChangedImage(file, fileName = null) {
 		try {
 			// Set the originalname property on the file
@@ -430,17 +446,18 @@
 					</div>
 				{/if}
 			{/if}
-			{#if item.questionType == QuestionType.TEXT}
+			{#if isQuestionCard(item)}
 				<div class="form-group mb-3">
-					<input
+					<label for="editedQuestion">Question</label>
+					<textarea
 						id="editedQuestion"
-						type="text"
 						bind:value={item.question}
 						placeholder="Enter a question"
 						class="form-control"
-					/>
+						rows="3"
+					></textarea>
 				</div>
-			{:else if item.audio != null}
+			{:else if isAudioCard(item)}
 				<div class="form-group mb-3">
 					<input
 						id="editedAudio"
